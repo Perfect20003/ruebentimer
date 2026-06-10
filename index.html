@@ -31,23 +31,6 @@
     overflow-x: hidden;
   }
 
-  body::before {
-    content: "";
-    position: fixed;
-    bottom: 0;
-    right: 5%;
-    width: 500px;
-    height: 650px;
-    background-image: url('./image_811360.jpg');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: bottom right;
-    mix-blend-mode: luminosity;
-    opacity: 0.07; 
-    pointer-events: none;
-    z-index: -1;
-  }
-
   header {
     background: rgba(26, 29, 39, 0.95);
     backdrop-filter: blur(8px);
@@ -94,7 +77,6 @@
     padding: 7px 14px;
     transition: all 0.15s;
   }
-  button:active { transform: scale(0.97); }
 
   .btn-primary { background: var(--accent); color: #0f1117; }
   .btn-primary:hover { background: #16a34a; }
@@ -110,7 +92,7 @@
   .sync-dot {
     width: 8px; height: 8px;
     border-radius: 50%;
-    background: var(--muted);
+    background: var(--warning);
   }
   .sync-dot.connected { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
 
@@ -118,14 +100,6 @@
     padding: 16px 20px;
     max-width: 1600px;
     margin: 0 auto;
-    position: relative;
-    z-index: 1;
-  }
-
-  .hint {
-    font-size: 0.78rem;
-    color: var(--muted);
-    margin-bottom: 16px;
   }
 
   .grid {
@@ -135,188 +109,102 @@
   }
 
   .card {
-    background: rgba(11, 14, 20, 0.88);
-    backdrop-filter: blur(4px);
+    background: #11141d;
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 14px;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    position: relative;
   }
 
-  .card-header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 6px;
-  }
-
-  .card-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #fff;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 140px;
-  }
-
-  .status-text {
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--muted);
-  }
-
-  .card-body-layout {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-  }
-
-  .card-left-cell { flex-shrink: 0; }
-  .card-right-cell { flex-grow: 1; }
-
-  .turnip-img-box {
-    width: 58px;
-    height: 58px;
-    background: #151922;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    cursor: pointer;
-    user-select: none;
-    position: relative;
-    border: 1px solid #1e2433;
-  }
-
-  .multiplier {
-    position: absolute;
-    top: -4px; left: -4px;
-    background: #f59e0b;
-    color: #0f1117;
-    font-size: 0.6rem;
-    font-weight: 800;
-    border-radius: 50%;
-    padding: 2px 4px;
-    display: flex; align-items: center; justify-content: center;
-    white-space: nowrap;
-  }
-
+  .card-header { display: flex; align-items: baseline; justify-content: space-between; }
+  .card-title { font-size: 1.1rem; font-weight: 700; color: #fff; }
+  .status-text { font-size: 0.8rem; color: var(--muted); }
+  .card-body-layout { display: flex; align-items: center; gap: 12px; }
   .stats { display: flex; flex-direction: column; gap: 4px; width: 100%; }
-
-  .stat-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.82rem;
-  }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; }
   .stat-label { color: #fff; }
   .stat-value { font-weight: 700; color: #fff; }
-  .stat-value.active-timer { color: #38bdf8; }
-  .stat-value.warning { color: var(--warning); }
-
-  .progress-bar {
-    width: 100%;
-    height: 5px;
-    background: #151922;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 4px;
-  }
-  .progress-fill { height: 100%; border-radius: 4px; width: 0%; }
+  
+  .progress-bar { width: 100%; height: 5px; background: #151922; border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; width: 0%; }
   .progress-fill.ripe { background: var(--ripe); }
   .progress-fill.water { background: var(--water); }
   .progress-fill.rot { background: var(--warning); }
 
   .timer-btns { display: flex; gap: 6px; }
-  .timer-btn {
-    flex: 1;
-    padding: 8px 4px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    border-radius: 8px;
-    color: #fff;
-    text-align: center;
-    cursor: pointer;
-  }
+  .timer-btn { flex: 1; padding: 8px 4px; font-size: 0.85rem; font-weight: 700; border-radius: 8px; color: #fff; text-align: center; }
   .tbtn-water { background: #16a34a; }
-  .tbtn-water:hover { background: #15803d; }
   .tbtn-rot { background: #d97706; }
-  .tbtn-rot:hover { background: #b45309; }
   .tbtn-neg { background: #7c3aed; }
-  .tbtn-neg:hover { background: #6d28d9; }
 
   .card-actions { display: flex; gap: 6px; }
-  .action-btn {
-    padding: 10px 4px;
-    background: #1f2431;
-    color: #fff;
-    font-size: 0.85rem;
-    font-weight: 600;
-    border-radius: 8px;
-    text-align: center;
-    flex: 1;
-    cursor: pointer;
-  }
-  .action-btn:hover { background: #2d3446; }
-  .btn-action-delete { flex: 1.3; background: #dc2626; color: white; }
-  .btn-action-delete:hover { background: #b91c1c; }
+  .action-btn { padding: 10px 4px; background: #1f2431; color: #fff; font-size: 0.85rem; border-radius: 8px; text-align: center; flex: 1; }
+  .btn-action-delete { background: #dc2626; }
 
-  .card-input-base {
-    width: 75px;
-    padding: 3px 6px;
-    font-size: 0.8rem;
-    text-align: right;
-  }
+  .card-input-base { width: 75px; padding: 3px 6px; font-size: 0.8rem; text-align: right; }
 
-  /* Mutation Modal */
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 200;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .modal {
-    background: #1a1d27;
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 24px;
-    width: 340px;
-    max-width: 95vw;
-  }
-  .modal h3 { font-size: 1rem; margin-bottom: 16px; color: #fff; }
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: center; justify-content: center; }
+  .modal { background: #1a1d27; border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 340px; }
   .mutation-options { display: flex; flex-direction: column; gap: 12px; }
-  .mutation-option {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    color: #fff;
-  }
-  .mutation-option label { display: flex; align-items: center; gap: 8px; cursor: pointer; width: 100%; }
-  .mutation-option input[type="checkbox"] { cursor: pointer; accent-color: var(--accent); width: 16px; height: 16px; }
-  .mutation-option input[type="number"] { width: 70px; padding: 4px; font-size: 0.8rem; text-align: right; }
-  .mutation-option select { width: 130px; padding: 4px; font-size: 0.8rem; }
-  .modal-btns { margin-top: 16px; display: flex; justify-content: flex-end; }
-  .btn-close-modal { background: #2a2f45; color: #fff; cursor: pointer; }
+  .mutation-option { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); color: #fff; }
+  .btn-close-modal { background: #2a2f45; color: #fff; }
 
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-state .emoji { font-size: 3rem; }
+  
+  #db-error-banner {
+    background: #ef4444; color: white; padding: 10px 20px; font-weight: bold; text-align: center; display: none;
   }
-  .empty-state .emoji { font-size: 3rem; margin-bottom: 12px; }
-  .empty-state p { font-size: 0.9rem; }
 </style>
 </head>
+<body>
+
+<div id="db-error-banner">⚠️ FEHLER: Firebase blockiert die Verbindung! Bitte überprüfe deine Firebase-Sicherheitsregeln (Rules).</div>
+
+<header>
+  <div class="logo">🟫 Rübentimer</div>
+  <div class="header-controls">
+    <input type="text" id="newName" placeholder="Beetname eingeben..." />
+    <button class="btn-primary" id="btnAddBeet">+ Beet hinzufügen</button>
+  </div>
+  <div class="sync-status">
+    <div class="sync-dot" id="syncDot"></div>
+    <span id="syncLabel">Verbinde…</span>
+  </div>
+</header>
+
+<main>
+  <p style="font-size: 0.78rem; color: var(--muted); margin-bottom: 16px;">Auf das Icon (🥬/👑) klicken = Mutationen & Details öffnen.</p>
+  <div class="grid" id="grid"></div>
+  <div class="empty-state" id="emptyState">
+    <div class="emoji">🌱</div>
+    <p>Noch keine Beete geladen oder Verbindung wird aufgebaut...</p>
+  </div>
+</main>
+
+<div class="modal-overlay" id="mutModal" style="display:none">
+  <div class="modal">
+    <h3>🧬 Mutationen — <span id="mutModalTitle"></span></h3>
+    <div class="mutation-options">
+      <div class="mutation-option">
+        <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="mut-gold"> <span>⭐ Gold <small style="color:var(--muted)">(10x Preis)</small></span></label>
+      </div>
+      <div class="mutation-option" style="flex-direction: column; align-items: flex-start; gap: 6px;">
+        <span style="font-size: 0.85rem;">🔷 Form-Mutation:</span>
+        <select id="mut-shape-select">
+          <option value="">Keine Sonderform</option>
+          <option value="stachelig">Stachelig (+50.000)</option>
+          <option value="quadratisch">Quadratisch (+100.000)</option>
+          <option value="explosiv">Explosiv (+500.000)</option>
+          <option value="lebendig">Lebendig (+1.000.000)</option>
+        </select>
+      </div>
+      <div class="mutation-option">
+        <span style="font-size: 0.85rem;">⚖️ Gewichtszuwachs:</span>
+        <div><input type="number" id="mut-weight-pct" min="0" placeholder="0"> %</div>
+      </div>
+    </div>
+    <div class
