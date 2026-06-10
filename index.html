@@ -2,63 +2,80 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>🟫 Rübentimer</title>
+<title>🟫 Rübentimer Pro</title>
 <style>
   :root { --bg: #0f1117; --accent: #22c55e; --text: #e2e8f0; --border: #1e2230; }
   body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
   .card { background: #1a1d27; padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
-  input { background: #0f1117; border: 1px solid var(--border); color: white; padding: 5px; border-radius: 4px; }
-  button { cursor: pointer; background: var(--accent); border: none; padding: 8px 12px; border-radius: 6px; color: #0f1117; font-weight: bold; }
+  input { background: #0b0e14; border: 1px solid var(--border); color: white; padding: 5px; border-radius: 4px; }
+  button { cursor: pointer; background: var(--accent); border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; }
+  .stat { font-size: 0.85rem; color: #94a3b8; }
 </style>
 </head>
 <body>
 
 <div style="margin-bottom: 20px;">
   <input type="text" id="newName" placeholder="Beetname...">
-  <button id="btnAdd">Beet hinzufügen</button>
+  <button id="btnAdd">+ Hinzufügen</button>
 </div>
 
 <div class="grid" id="grid"></div>
 
 <script>
-let beete = JSON.parse(localStorage.getItem('rueben_data') || '{}');
+let beete = JSON.parse(localStorage.getItem('rueben_full_v5') || '{}');
 
-function save() { localStorage.setItem('rueben_data', JSON.stringify(beete)); render(); }
+function save() { localStorage.setItem('rueben_full_v5', JSON.stringify(beete)); }
+
+// Funktion zum Berechnen der verbleibenden Zeit
+function formatTime(ms) {
+  if (ms <= 0) return "0s";
+  let h = Math.floor(ms / 3600000);
+  let m = Math.floor((ms % 3600000) / 60000);
+  return `${h}h ${m}m`;
+}
 
 function render() {
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
+  
   Object.keys(beete).forEach(id => {
     const b = beete[id];
+    // Reifezeit (48h)
+    const planted = b.plantedAt || Date.now();
+    const ripeTime = 48 * 60 * 60 * 1000;
+    const timeLeft = Math.max(0, (planted + ripeTime) - Date.now());
+
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
       <h3>${b.name}</h3>
-      <p>Basispreis: <input type="number" value="${b.basePrice || 100}" onchange="updatePrice('${id}', this.value)"></p>
-      <p>Marktwert: <b>${Math.round(b.basePrice || 100)} 🪙</b></p>
-      <button onclick="del('${id}')">Löschen</button>
+      <div class="stat">Bis reif: ${formatTime(timeLeft)}</div>
+      <div style="margin: 10px 0;">
+        Basispreis: <input type="number" value="${b.basePrice || 100}" 
+        onchange="beete['${id}'].basePrice = parseInt(this.value); save(); render();">
+      </div>
+      <div>Marktwert: <b>${Math.round(b.basePrice || 100)} 🪙</b></div>
+      <button onclick="deleteBeet('${id}')" style="margin-top:10px; background:#dc2626; color:white;">Löschen</button>
     `;
     grid.appendChild(card);
   });
 }
 
-function updatePrice(id, val) {
-  beete[id].basePrice = parseInt(val) || 0;
-  save();
-}
-
-function del(id) { delete beete[id]; save(); }
+function deleteBeet(id) { delete beete[id]; save(); render(); }
 
 document.getElementById('btnAdd').addEventListener('click', () => {
   const name = document.getElementById('newName').value.trim();
   if(!name) return;
   const id = 'b_' + Date.now();
-  beete[id] = { name, basePrice: 100 };
+  beete[id] = { name, basePrice: 100, plantedAt: Date.now() };
   document.getElementById('newName').value = '';
   save();
+  render();
 });
 
+// Timer: Aktualisiert nur die Zeit-Anzeige, nicht die ganze Karte
+setInterval(render, 60000); 
 render();
 </script>
 </body>
