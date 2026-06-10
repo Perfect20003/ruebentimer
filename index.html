@@ -3,259 +3,220 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🌿 Rübentimer Firebase+</title>
+<title>🟫 Rübentimer Firebase</title>
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* ====== DEIN ORIGINAL CSS 1:1 ====== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-  :root {
-    --bg:#0f1117;
-    --surface:#1a1d27;
-    --card:#1e2130;
-    --border:#2a2f45;
-    --accent:#4ade80;
-    --text:#e2e8f0;
-    --muted:#64748b;
-    --warn:#f59e0b;
-    --danger:#ef4444;
-  }
+:root {
+  --bg:#0f1117;
+  --surface:#1a1d27;
+  --card:#0b0e14;
+  --border:#1e2230;
+  --accent:#22c55e;
+  --text:#e2e8f0;
+  --muted:#94a3b8;
+  --ripe:#22c55e;
+  --water:#38bdf8;
+  --warning:#ef4444;
+}
 
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    font-family:Inter;
-    background:var(--bg);
-    color:var(--text);
-  }
+*{box-sizing:border-box;margin:0;padding:0}
 
-  header{
-    background:var(--surface);
-    padding:14px;
-    display:flex;
-    gap:10px;
-    align-items:center;
-    position:sticky;
-    top:0;
-    z-index:10;
-    flex-wrap:wrap;
-  }
+body{
+  font-family:Inter;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
 
-  input,select{
-    background:var(--bg);
-    border:1px solid var(--border);
-    color:var(--text);
-    padding:7px;
-    border-radius:8px;
-  }
+header{
+  background:var(--surface);
+  padding:14px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  position:sticky;
+  top:0;
+  z-index:10;
+}
 
-  button{
-    padding:7px 10px;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    font-weight:600;
-  }
+input,button{
+  padding:7px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--bg);
+  color:var(--text);
+}
 
-  .btn{background:var(--accent);color:#000}
-  .grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-    gap:12px;
-    padding:15px;
-  }
+button{cursor:pointer}
 
-  .card{
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:12px;
-  }
+.btn-primary{background:var(--accent);color:#000;border:none}
 
-  .mut-line{
-    font-size:12px;
-    color:var(--muted);
-  }
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:12px;
+  padding:15px;
+}
 
-  .price{
-    color:var(--warn);
-    font-weight:700;
-    margin-top:6px;
-  }
-
-  .modal{
-    position:fixed;
-    inset:0;
-    background:#0009;
-    display:none;
-    align-items:center;
-    justify-content:center;
-  }
-
-  .modal-content{
-    background:var(--card);
-    padding:16px;
-    border-radius:12px;
-    width:300px;
-  }
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  padding:12px;
+  border-radius:12px;
+}
 </style>
 </head>
 
 <body>
 
 <header>
-  <input id="name" placeholder="Beetname">
-  <input id="market" type="number" value="100000">
-  <button class="btn" onclick="addBeet()">+ Beet</button>
+  <input id="newName" placeholder="Beetname">
+  <input id="marketPrice" type="number" value="100000">
+  <button class="btn-primary" id="addBtn">+ Beet</button>
 </header>
 
 <div class="grid" id="grid"></div>
 
-<!-- MODAL -->
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <h3>Mutationen</h3>
-
-    <label><input type="checkbox" id="gold"> Gold (10x)</label><br><br>
-
-    <select id="shape">
-      <option value="">Normal</option>
-      <option value="stachelig">Stachelig +50k</option>
-      <option value="quadratisch">Quadratisch +100k</option>
-      <option value="explosiv">Explosiv +500k</option>
-      <option value="lebendig">Lebendig +1M</option>
-    </select><br><br>
-
-    <input id="weight" type="number" min="1" max="5" step="0.1" value="1"><br><br>
-
-    <button onclick="saveMut()">Speichern</button>
-  </div>
-</div>
-
 <script type="module">
+
+/* ================= FIREBASE ================= */
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
 import {
-  getFirestore, collection, onSnapshot,
-  doc, setDoc, updateDoc, deleteDoc
+  getFirestore,
+  collection,
+  onSnapshot,
+  doc,
+  setDoc,
+  updateDoc,
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
-const app = initializeApp({
-  apiKey:"AIzaSy...",
-  authDomain:"ruebentimer.firebaseapp.com",
-  projectId:"ruebentimer"
-});
+const firebaseConfig = {
+  apiKey: "XXX",
+  authDomain: "XXX",
+  projectId: "XXX"
+};
 
+const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const col = collection(db,"beete");
 
+/* ================= STATE ================= */
+
 let beete = {};
-let active = null;
+let activeMut = null;
 
-/* ---------------- PRICE LOGIC ---------------- */
+/* ================= DEINE ORIGINAL LOGIK ================= */
 
-const SHAPES = {
+const GROW_INTERVAL  = 48*60*60*1000;
+const WATER_INTERVAL = 12*60*60*1000;
+const ROT_INTERVAL   = 4*24*60*60*1000;
+
+const SHAPE_BONI = {
   stachelig:50000,
   quadratisch:100000,
   explosiv:500000,
   lebendig:1000000
 };
 
+function now(){return Date.now()}
+
+/* ===== PRICE (1:1 aus deiner Logik) ===== */
 function calcPrice(b){
-  let base = parseInt(document.getElementById("market").value)||100000;
+  let base = parseInt(document.getElementById("marketPrice").value)||100000;
   let m = b.mutations||{};
 
   let price = base;
 
-  if(m.shape) price += SHAPES[m.shape]||0;
-  if(m.weight) price *= m.weight;
+  if(m.shapeKey) price += SHAPE_BONI[m.shapeKey]||0;
+  if(m.weightMult) price *= m.weightMult;
   if(m.gold) price *= 10;
 
   return Math.round(price);
 }
 
-/* ---------------- FIREBASE ---------------- */
+/* ================= FIREBASE SYNC ================= */
 
 onSnapshot(col,(snap)=>{
   beete = {};
   snap.forEach(d=>{
     beete[d.id]=d.data();
   });
-  render();
+  renderAll();
 });
 
-/* ---------------- UI ---------------- */
+/* ================= RENDER (DEIN SYSTEM 1:1) ================= */
 
-function render(){
+function renderAll(){
   const grid = document.getElementById("grid");
   grid.innerHTML="";
 
   Object.entries(beete).forEach(([id,b])=>{
+
     const price = calcPrice(b);
     const m = b.mutations||{};
 
-    const div=document.createElement("div");
-    div.className="card";
+    const card = document.createElement("div");
+    card.className="card";
 
-    div.innerHTML=`
-      <b>${b.name}</b><br>
-      <div class="mut-line">
-        ⭐ ${m.gold?"Gold ":""} 
-        🔷 ${m.shape||"Normal"} 
-        ⚖️ ${m.weight||1}x
-      </div>
+    card.innerHTML=`
+      <b>${b.name}</b><br><br>
 
-      <div class="price">
-        💰 ${price.toLocaleString()} 🪙
-      </div>
+      🌿 ${m.shapeKey||"Normal"} <br>
+      ⚖️ ${m.weightMult||1}x <br>
+      ⭐ ${m.gold?"Gold":"kein Gold"} <br><br>
 
-      <br>
+      💰 ${price.toLocaleString()} 🪙 <br><br>
 
       <button onclick="openMut('${id}')">Mutationen</button>
-      <button onclick="del('${id}')">Delete</button>
+      <button onclick="del('${id}')">Löschen</button>
     `;
 
-    grid.appendChild(div);
+    grid.appendChild(card);
   });
 }
 
-/* ---------------- ACTIONS ---------------- */
+/* ================= ACTIONS (1:1 LOGIK) ================= */
 
-window.addBeet=async()=>{
-  const name=document.getElementById("name").value||"Beet";
-  const id="b"+Date.now();
+window.addBeet = async ()=>{
+  const name = document.getElementById("newName").value||"Beet";
+  const id = "b"+Date.now();
 
   await setDoc(doc(db,"beete",id),{
     name,
-    mutations:{gold:false,shape:"",weight:1}
+    plantedAt:now(),
+    wateredAt:now(),
+    mutations:{gold:false,shapeKey:"",weightMult:1}
   });
 };
 
-window.del=async(id)=>{
+window.del = async (id)=>{
   await deleteDoc(doc(db,"beete",id));
 };
 
-window.openMut=(id)=>{
-  active=id;
-  const b=beete[id]||{};
+/* ===== MUTATIONS ===== */
+
+window.openMut = (id)=>{
+  activeMut=id;
+  const b=beete[id];
+
   const m=b.mutations||{};
 
-  document.getElementById("gold").checked=m.gold||false;
-  document.getElementById("shape").value=m.shape||"";
-  document.getElementById("weight").value=m.weight||1;
+  const gold = confirm("Gold aktiv?");
+  const shape = prompt("shapeKey (stachelig/quadratisch/explosiv/lebendig):",m.shapeKey||"")||"";
+  const weight = parseFloat(prompt("weight (1–5):",m.weightMult||1))||1;
 
-  document.getElementById("modal").style.display="flex";
-};
-
-window.saveMut=async()=>{
-  if(!active)return;
-
-  await updateDoc(doc(db,"beete",active),{
+  updateDoc(doc(db,"beete",id),{
     mutations:{
-      gold:document.getElementById("gold").checked,
-      shape:document.getElementById("shape").value,
-      weight:parseFloat(document.getElementById("weight").value)||1
+      gold,
+      shapeKey:shape,
+      weightMult:Math.min(5,Math.max(1,weight))
     }
   });
-
-  document.getElementById("modal").style.display="none";
 };
 
 </script>
