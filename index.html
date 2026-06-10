@@ -1,1196 +1,264 @@
 <!DOCTYPE html>
-
 <html lang="de">
-
 <head>
-
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>🟫 Rübentimer</title>
+<title>🌿 Rübentimer Firebase+</title>
 
 <style>
-
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-
-
   :root {
-
-    --bg: #0f1117;
-
-    --surface: #1a1d27;
-
-    --card: #0b0e14;
-
-    --border: #1e2230;
-
-    --accent: #22c55e;
-
-    --text: #e2e8f0;
-
-    --muted: #94a3b8;
-
-    --ripe: #22c55e;
-
-    --water: #38bdf8;
-
-    --warning: #ef4444;
-
+    --bg:#0f1117;
+    --surface:#1a1d27;
+    --card:#1e2130;
+    --border:#2a2f45;
+    --accent:#4ade80;
+    --text:#e2e8f0;
+    --muted:#64748b;
+    --warn:#f59e0b;
+    --danger:#ef4444;
   }
 
-
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-
-
-  body {
-
-    font-family: 'Inter', sans-serif;
-
-    background-color: var(--bg);
-
-    color: var(--text);
-
-    min-height: 100vh;
-
-    position: relative;
-
-    overflow-x: hidden;
-
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:Inter;
+    background:var(--bg);
+    color:var(--text);
   }
 
-
-
-  body::before {
-
-    content: "";
-
-    position: fixed;
-
-    bottom: 0;
-
-    right: 5%;
-
-    width: 500px;
-
-    height: 650px;
-
-    background-image: url('./image_811360.jpg');
-
-    background-size: contain;
-
-    background-repeat: no-repeat;
-
-    background-position: bottom right;
-
-    mix-blend-mode: luminosity;
-
-    opacity: 0.07; 
-
-    pointer-events: none;
-
-    z-index: -1;
-
+  header{
+    background:var(--surface);
+    padding:14px;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    position:sticky;
+    top:0;
+    z-index:10;
+    flex-wrap:wrap;
   }
 
-
-
-  header {
-
-    background: rgba(26, 29, 39, 0.95);
-
-    backdrop-filter: blur(8px);
-
-    border-bottom: 1px solid var(--border);
-
-    padding: 14px 20px;
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 16px;
-
-    flex-wrap: wrap;
-
-    position: sticky;
-
-    top: 0;
-
-    z-index: 100;
-
+  input,select{
+    background:var(--bg);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:7px;
+    border-radius:8px;
   }
 
-
-
-  .logo { font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-
-
-
-  .header-controls {
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 8px;
-
-    flex: 1;
-
-    flex-wrap: wrap;
-
+  button{
+    padding:7px 10px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:600;
   }
 
-
-
-  input[type="text"], input[type="number"], select {
-
-    background: var(--bg);
-
-    border: 1px solid var(--border);
-
-    color: var(--text);
-
-    padding: 7px 12px;
-
-    border-radius: 8px;
-
-    font-size: 0.85rem;
-
-    outline: none;
-
-    transition: border-color 0.2s;
-
+  .btn{background:var(--accent);color:#000}
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+    gap:12px;
+    padding:15px;
   }
 
-  input[type="text"] { width: 180px; }
-
-  input[type="text"]:focus, input[type="number"]:focus, select:focus { border-color: var(--accent); }
-
-
-
-  button {
-
-    cursor: pointer;
-
-    border: none;
-
-    border-radius: 8px;
-
-    font-size: 0.82rem;
-
-    font-weight: 600;
-
-    padding: 7px 14px;
-
-    transition: all 0.15s;
-
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px;
   }
 
-  button:active { transform: scale(0.97); }
-
-
-
-  .btn-primary { background: var(--accent); color: #0f1117; }
-
-  .btn-primary:hover { background: #16a34a; }
-
-
-
-  .sync-status {
-
-    margin-left: auto;
-
-    font-size: 0.75rem;
-
-    color: var(--accent);
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 6px;
-
+  .mut-line{
+    font-size:12px;
+    color:var(--muted);
   }
 
-  .sync-dot {
-
-    width: 8px; height: 8px;
-
-    border-radius: 50%;
-
-    background: var(--accent);
-
-    box-shadow: 0 0 6px var(--accent);
-
+  .price{
+    color:var(--warn);
+    font-weight:700;
+    margin-top:6px;
   }
 
-
-
-  main {
-
-    padding: 16px 20px;
-
-    max-width: 1600px;
-
-    margin: 0 auto;
-
-    position: relative;
-
-    z-index: 1;
-
+  .modal{
+    position:fixed;
+    inset:0;
+    background:#0009;
+    display:none;
+    align-items:center;
+    justify-content:center;
   }
 
-
-
-  .hint { font-size: 0.78rem; color: var(--muted); margin-bottom: 16px; }
-
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
-
-
-
-  .card {
-
-    background: rgba(11, 14, 20, 0.88);
-
-    backdrop-filter: blur(4px);
-
-    border: 1px solid var(--border);
-
-    border-radius: 14px;
-
-    padding: 14px;
-
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 10px;
-
-    position: relative;
-
+  .modal-content{
+    background:var(--card);
+    padding:16px;
+    border-radius:12px;
+    width:300px;
   }
-
-
-
-  .card-header { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
-
-  .card-title { font-size: 1.1rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
-
-  .status-text { font-size: 0.8rem; font-weight: 500; color: var(--muted); }
-
-  .card-body-layout { display: flex; align-items: center; gap: 12px; width: 100%; }
-
-  .card-left-cell { flex-shrink: 0; }
-
-  .card-right-cell { flex-grow: 1; }
-
-
-
-  .turnip-img-box {
-
-    width: 58px; height: 58px;
-
-    background: #151922;
-
-    border-radius: 12px;
-
-    display: flex; align-items: center; justify-content: center;
-
-    font-size: 2rem; cursor: pointer; user-select: none;
-
-    position: relative; border: 1px solid #1e2433;
-
-  }
-
-
-
-  .multiplier {
-
-    position: absolute;
-
-    top: -4px; left: -4px;
-
-    background: #f59e0b; color: #0f1117;
-
-    font-size: 0.6rem; font-weight: 800;
-
-    border-radius: 50%; width: 18px; height: 18px;
-
-    display: flex; align-items: center; justify-content: center;
-
-  }
-
-
-
-  .stats { display: flex; flex-direction: column; gap: 4px; width: 100%; }
-
-  .stat-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; }
-
-  .stat-label { color: #fff; }
-
-  .stat-value { font-weight: 700; color: #fff; }
-
-  .stat-value.active-timer { color: #38bdf8; }
-
-  .stat-value.warning { color: var(--warning); }
-
-
-
-  .progress-bar { width: 100%; height: 5px; background: #151922; border-radius: 4px; overflow: hidden; margin-bottom: 4px; }
-
-  .progress-fill { height: 100%; border-radius: 4px; width: 0%; }
-
-  .progress-fill.ripe { background: var(--ripe); }
-
-  .progress-fill.water { background: var(--water); }
-
-  .progress-fill.rot { background: var(--warning); }
-
-
-
-  .timer-btns { display: flex; gap: 6px; }
-
-  .timer-btn { flex: 1; padding: 8px 4px; font-size: 0.85rem; font-weight: 700; border-radius: 8px; color: #fff; text-align: center; cursor: pointer; }
-
-  .tbtn-water { background: #16a34a; }
-
-  .tbtn-water:hover { background: #15803d; }
-
-  .tbtn-rot { background: #d97706; }
-
-  .tbtn-rot:hover { background: #b45309; }
-
-  .tbtn-neg { background: #7c3aed; }
-
-  .tbtn-neg:hover { background: #6d28d9; }
-
-
-
-  .card-actions { display: flex; gap: 6px; }
-
-  .action-btn { padding: 10px 4px; background: #1f2431; color: #fff; font-size: 0.85rem; font-weight: 600; border-radius: 8px; text-align: center; flex: 1; cursor: pointer; }
-
-  .action-btn:hover { background: #2d3446; }
-
-  .btn-action-delete { flex: 1.3; background: #dc2626; color: white; }
-
-  .btn-action-delete:hover { background: #b91c1c; }
-
-
-
-  /* Mutation Modal */
-
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: center; justify-content: center; }
-
-  .modal { background: #1a1d27; border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 340px; max-width: 95vw; }
-
-  .modal h3 { font-size: 1rem; margin-bottom: 16px; color: #fff; }
-
-  .mutation-options { display: flex; flex-direction: column; gap: 12px; }
-
-  .mutation-option { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-radius: 8px; border: 1px solid var(--border); color: #fff; }
-
-  .mutation-option-col { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-
-  .modal-btns { margin-top: 16px; display: flex; justify-content: flex-end; }
-
-  .btn-close-modal { background: #2a2f45; color: #fff; cursor: pointer; }
-
-
-
-  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
-
-  .empty-state .emoji { font-size: 3rem; margin-bottom: 12px; }
-
-  .empty-state p { font-size: 0.9rem; }
-
 </style>
-
 </head>
 
 <body>
 
-
-
 <header>
-
-  <div class="logo">🟫 Rübentimer</div>
-
-  <div class="header-controls">
-
-   <input type="text" id="newName" placeholder="Beetname eingeben..." />
-
-<input
-  type="number"
-  id="marketPrice"
-  placeholder="Marktpreis"
-  value="100000"
-  min="0"
-  style="width:140px;"
-/>
-
-<button class="btn-primary" id="btnAddBeet">
-  + Beet hinzufügen
-</button>
-  </div>
-
-  <div class="sync-status">
-
-    <div class="sync-dot"></div>
-
-    <span>Lokal Bereit</span>
-
-  </div>
-
+  <input id="name" placeholder="Beetname">
+  <input id="market" type="number" value="100000">
+  <button class="btn" onclick="addBeet()">+ Beet</button>
 </header>
 
+<div class="grid" id="grid"></div>
 
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3>Mutationen</h3>
 
-<main>
+    <label><input type="checkbox" id="gold"> Gold (10x)</label><br><br>
 
-  <p class="hint">Auf das Icon klicken = Mutationen öffnen und Marktwerte berechnen.</p>
+    <select id="shape">
+      <option value="">Normal</option>
+      <option value="stachelig">Stachelig +50k</option>
+      <option value="quadratisch">Quadratisch +100k</option>
+      <option value="explosiv">Explosiv +500k</option>
+      <option value="lebendig">Lebendig +1M</option>
+    </select><br><br>
 
-  <div class="grid" id="grid"></div>
+    <input id="weight" type="number" min="1" max="5" step="0.1" value="1"><br><br>
 
-  <div class="empty-state" id="emptyState" style="display:none">
-
-    <div class="emoji">🌱</div>
-
-    <p>Noch keine Beete. Füge dein erstes Beet hinzu!</p>
-
+    <button onclick="saveMut()">Speichern</button>
   </div>
-
-</main>
-
-
-
-<div class="modal-overlay" id="mutModal" style="display:none">
-
-  <div class="modal">
-
-    <h3>🧬 Mutationen — <span id="mutModalTitle"></span></h3>
-
-    <div class="mutation-options">
-
-      <label class="mutation-option" style="cursor: pointer;">
-
-        <span style="display: flex; align-items: center; gap: 8px;">⭐ Goldene Rübe <small style="color:var(--muted)">(10x Gesamtpreis)</small></span>
-
-        <input type="checkbox" id="mut-gold" style="width:18px; height:18px; accent-color:var(--accent);">
-
-      </label>
-
-      
-
-      <div class="mutation-option mutation-option-col">
-
-        <span>🔷 Form-Mutation:</span>
-
-        <select id="mut-shape-select" style="width: 100%; padding: 6px;">
-
-          <option value="">Normalform (+0)</option>
-
-          <option value="stachelig">Stachelig (+50.000 🪙)</option>
-
-          <option value="quadratisch">Quadratisch (+100.000 🪙)</option>
-
-          <option value="explosiv">Explosiv (+500.000 🪙)</option>
-
-          <option value="lebendig">Lebendig (+1.000.000 🪙)</option>
-
-        </select>
-
-      </div>
-
-
-
-      <div class="mutation-option mutation-option-col">
-
-        <span>⚖️ Gewichts-Multiplikator:</span>
-
-        <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
-
-          <input type="number" id="mut-weight-mult" min="1" max="5" step="0.1" value="1" style="width: 80px;">
-
-          <span style="font-size: 0.85rem; color: var(--muted);">x (Maximal 5-fach)</span>
-
-        </div>
-
-      </div>
-
-    </div>
-
-    <div class="modal-btns">
-
-      <button class="btn-close-modal" id="btnCloseModal">Schließen</button>
-
-    </div>
-
-  </div>
-
 </div>
 
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+import {
+  getFirestore, collection, onSnapshot,
+  doc, setDoc, updateDoc, deleteDoc
+} from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
+const app = initializeApp({
+  apiKey:"AIzaSy...",
+  authDomain:"ruebentimer.firebaseapp.com",
+  projectId:"ruebentimer"
+});
 
-<script>
+const db = getFirestore(app);
+const col = collection(db,"beete");
 
-let beete = JSON.parse(localStorage.getItem('rueben_beete_v3')) || {};
+let beete = {};
+let active = null;
 
-let activeMutId = null;
-let globalMarketPrice =
-  parseInt(localStorage.getItem('globalMarketPrice')) || 100000;
+/* ---------------- PRICE LOGIC ---------------- */
 
-
-const GROW_INTERVAL  = 48 * 60 * 60 * 1000; 
-
-const WATER_INTERVAL = 12 * 60 * 60 * 1000; 
-
-const ROT_INTERVAL   = 4 * 24 * 60 * 60 * 1000; 
-
-
-
-// Form-Boni Definitionen
-
-const SHAPE_BONI = {
-
-  stachelig: { name: 'Stachelig', bonus: 50000 },
-
-  quadratisch: { name: 'Quadratisch', bonus: 100000 },
-
-  explosiv: { name: 'Explosiv', bonus: 500000 },
-
-  lebendig: { name: 'Lebendig', bonus: 1000000 }
-
+const SHAPES = {
+  stachelig:50000,
+  quadratisch:100000,
+  explosiv:500000,
+  lebendig:1000000
 };
 
+function calcPrice(b){
+  let base = parseInt(document.getElementById("market").value)||100000;
+  let m = b.mutations||{};
 
+  let price = base;
 
-const grid = document.getElementById('grid');
+  if(m.shape) price += SHAPES[m.shape]||0;
+  if(m.weight) price *= m.weight;
+  if(m.gold) price *= 10;
 
-
-
-function saveToStorage() {
-
-  localStorage.setItem('rueben_beete_v3', JSON.stringify(beete));
-
+  return Math.round(price);
 }
 
-
-
-function now() { return Date.now(); }
-
-
-
-function fmtTime(ms) {
-
-  if (ms <= 0) return '0s';
-
-  const h = Math.floor(ms / 3600000);
-
-  const m = Math.floor((ms % 3600000) / 60000);
-
-  if (h > 0) return `${h}h ${m}m`;
-
-  return `${m}m`;
-
-}
-
-
-
-function renderCard(b) {
-
-  let card = document.getElementById('card-' + b.id);
-
-  const isNew = !card;
-
-  if (isNew) {
-
-    card = document.createElement('div');
-
-    card.id = 'card-' + b.id;
-
-    card.className = 'card';
-
-  }
-
-
-
-  const planted = b.plantedAt || now();
-
-  const lastWatered = b.wateredAt || planted;
-
-  
-
-  const ripeLeft  = Math.max(0, (planted + GROW_INTERVAL) - now());
-
-  const isRipe    = ripeLeft <= 0;
-
-  
-
-  const waterLeft = Math.max(0, (lastWatered + WATER_INTERVAL) - now());
-
-  const isWatered = waterLeft > 0;
-
-
-
-  const waterEmptyAt = lastWatered + WATER_INTERVAL;
-
-  let rotLeft = ROT_INTERVAL;
-
-  let isRotten = false;
-
-
-
-  if (!isWatered) {
-
-    rotLeft = Math.max(0, (waterEmptyAt + ROT_INTERVAL) - now());
-
-    if (rotLeft <= 0) isRotten = true;
-
-  }
-
-
-
-  const ripePct  = Math.min(100, ((now() - planted) / GROW_INTERVAL) * 100);
-
-  const waterPct = Math.min(100, (waterLeft / WATER_INTERVAL) * 100);
-
-  const rotPct   = isWatered ? 0 : Math.min(100, ((now() - waterEmptyAt) / ROT_INTERVAL) * 100);
-
-
-
-  let statusStr = isRipe ? 'reif' : 'wächst';
-
-  statusStr += isRotten ? ' + verdorrt' : (isWatered ? ' + bewässert' : ' + trocken');
-
-
-
-  // --- PREISBERECHNUNG START ---
-
-const basePrice = globalMarketPrice;// Standard-Basispreis falls nicht gesetzt
-
-  let calculatedPrice = basePrice;
-
-  const mut = b.mutations || {};
-
-
-
-  // 1. Form-Bonus addieren
-
-  let shapeName = '';
-
-  if (mut.shapeKey && SHAPE_BONI[mut.shapeKey]) {
-
-    calculatedPrice += SHAPE_BONI[mut.shapeKey].bonus;
-
-    shapeName = SHAPE_BONI[mut.shapeKey].name;
-
-  }
-
-
-
-  // 2. Gewichts-Multiplikator anwenden
-
-  const weightMult = parseFloat(mut.weightMult) || 1;
-
-  if (weightMult > 1) {
-
-    calculatedPrice *= weightMult;
-
-  }
-
-
-
-  // 3. Gold-Multiplikator anwenden (Mal 10)
-
-  if (mut.gold) {
-
-    calculatedPrice *= 10;
-
-  }
-
-  // --- PREISBERECHNUNG ENDE ---
-
-
-
-  // Mutationstext für die UI zusammenbauen
-
-  let mutStr = 'Keine';
-
-  const activeMuts = [];
-
-  if (mut.gold) activeMuts.push('⭐ Gold');
-
-  if (shapeName) activeMuts.push(`🔷 ${shapeName}`);
-
-  if (weightMult > 1) activeMuts.push(`⚖️ Gewicht (${weightMult}x)`);
-
-  if (activeMuts.length) mutStr = activeMuts.join(', ');
-
-
-
-  // Gesamt-Anzeige-Multiplikator links auf dem Icon
-
-  let displayMulti = 1;
-
-  if (mut.gold) displayMulti *= 10;
-
-  if (weightMult > 1) displayMulti *= weightMult;
-
-  let multiBadgeHtml = displayMulti > 1 ? `<div class="multiplier" style="width:auto; padding:0 4px; border-radius:9px;">${displayMulti.toFixed(1)}x</div>` : '';
-
-
-
-  card.innerHTML = `
-
-    <div class="card-header">
-
-      <span class="card-title" title="${b.name}">${b.name}</span>
-
-      <span class="status-text">${statusStr}</span>
-
-    </div>
-
-
-
-    <div class="card-body-layout">
-
-      <div class="card-left-cell">
-
-        <div class="turnip-img-box btn-trigger-mut">
-
-          ${multiBadgeHtml}
-
-          ${mut.gold ? '👑' : '🥬'}
-
-        </div>
-
+/* ---------------- FIREBASE ---------------- */
+
+onSnapshot(col,(snap)=>{
+  beete = {};
+  snap.forEach(d=>{
+    beete[d.id]=d.data();
+  });
+  render();
+});
+
+/* ---------------- UI ---------------- */
+
+function render(){
+  const grid = document.getElementById("grid");
+  grid.innerHTML="";
+
+  Object.entries(beete).forEach(([id,b])=>{
+    const price = calcPrice(b);
+    const m = b.mutations||{};
+
+    const div=document.createElement("div");
+    div.className="card";
+
+    div.innerHTML=`
+      <b>${b.name}</b><br>
+      <div class="mut-line">
+        ⭐ ${m.gold?"Gold ":""} 
+        🔷 ${m.shape||"Normal"} 
+        ⚖️ ${m.weight||1}x
       </div>
 
-      <div class="card-right-cell">
-
-        <div class="stats">
-
-          <div class="stat-row">
-
-            <span class="stat-label">Bis reif</span>
-
-            <span class="stat-value">${isRipe ? 'REIF' : fmtTime(ripeLeft)}</span>
-
-          </div>
-
-          <div class="progress-bar"><div class="progress-fill ripe" style="width:${ripePct}%"></div></div>
-
-
-
-          <div class="stat-row">
-
-            <span class="stat-label">Wasser</span>
-
-            <span class="stat-value ${isWatered ? 'active-timer' : 'warning'}">${isWatered ? fmtTime(waterLeft) : '0s'}</span>
-
-          </div>
-
-          <div class="progress-bar"><div class="progress-fill water" style="width:${waterPct}%"></div></div>
-
-
-
-          <div class="stat-row">
-
-            <span class="stat-label">Verdorrung</span>
-
-            <span class="stat-value ${isRotten ? 'warning' : ''}">${isWatered ? 'pausiert' : (isRotten ? 'VERDORRT' : fmtTime(rotLeft))}</span>
-
-          </div>
-
-          <div class="progress-bar"><div class="progress-fill rot" style="width:${rotPct}%"></div></div>
-
-        </div>
-
+      <div class="price">
+        💰 ${price.toLocaleString()} 🪙
       </div>
 
-    </div>
+      <br>
 
+      <button onclick="openMut('${id}')">Mutationen</button>
+      <button onclick="del('${id}')">Delete</button>
+    `;
 
-
-    <div class="stat-row" style="margin-top: 2px; font-size: 0.85rem;">
-
-      <span class="stat-label" style="color: var(--muted);">Mutationen</span>
-
-      <span class="stat-value" style="font-weight:500; text-align:right; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${mutStr}</span>
-
-    </div>
-
-
-
-    <div class="stat-row" style="margin-top: 2px; font-size: 0.9rem; color: #f59e0b; font-weight: bold; background: rgba(245,158,11,0.06); padding: 4px 6px; border-radius: 6px;">
-
-      <span>Marktwert:</span>
-
-      <span>${Math.round(calculatedPrice).toLocaleString('de-DE')} 🪙</span>
-
-    </div>
-
-
-
-    <div class="timer-btns" style="margin-top:4px;">
-
-      <button class="timer-btn tbtn-water btn-add-w12">💧 12h</button>
-
-      <button class="timer-btn tbtn-rot btn-add-w24">💧 24h</button>
-
-      <button class="timer-btn tbtn-neg btn-add-p4">🌱 -4h</button>
-
-    </div>
-
-
-
-    <div class="card-actions">
-
-      <button class="action-btn btn-rename">Name</button>
-
-      <button class="action-btn btn-reset">Neu</button>
-
-      <button class="action-btn btn-action-delete btn-delete">&#128465; Löschen</button>
-
-    </div>
-
-  `;
-
-
-
-  card.querySelector('.btn-trigger-mut').addEventListener('click', () => openMutModal(b.id));
-
-  card.querySelector('.btn-add-w12').addEventListener('click', () => addTime(b.id, 'water', 12));
-
-  card.querySelector('.btn-add-w24').addEventListener('click', () => addTime(b.id, 'water', 24));
-
-  card.querySelector('.btn-add-p4').addEventListener('click', () => addTime(b.id, 'plant', -4));
-
-  card.querySelector('.btn-rename').addEventListener('click', () => triggerRename(b.id));
-
-  card.querySelector('.btn-reset').addEventListener('click', () => resetBeet(b.id));
-
-  card.querySelector('.btn-delete').addEventListener('click', () => deleteBeet(b.id));
-
-
-
-  if (isNew) grid.appendChild(card);
-
+    grid.appendChild(div);
+  });
 }
 
+/* ---------------- ACTIONS ---------------- */
 
+window.addBeet=async()=>{
+  const name=document.getElementById("name").value||"Beet";
+  const id="b"+Date.now();
 
-function renderAll() {
+  await setDoc(doc(db,"beete",id),{
+    name,
+    mutations:{gold:false,shape:"",weight:1}
+  });
+};
 
-  const ids = Object.keys(beete);
+window.del=async(id)=>{
+  await deleteDoc(doc(db,"beete",id));
+};
 
+window.openMut=(id)=>{
+  active=id;
+  const b=beete[id]||{};
+  const m=b.mutations||{};
 
+  document.getElementById("gold").checked=m.gold||false;
+  document.getElementById("shape").value=m.shape||"";
+  document.getElementById("weight").value=m.weight||1;
 
-  [...grid.children].forEach(c => {
+  document.getElementById("modal").style.display="flex";
+};
 
-    const id = c.id.replace('card-', '');
+window.saveMut=async()=>{
+  if(!active)return;
 
-    if (!beete[id]) c.remove();
-
+  await updateDoc(doc(db,"beete",active),{
+    mutations:{
+      gold:document.getElementById("gold").checked,
+      shape:document.getElementById("shape").value,
+      weight:parseFloat(document.getElementById("weight").value)||1
+    }
   });
 
-
-
-  ids.sort((a, b) => (beete[a].plantedAt || 0) - (beete[b].plantedAt || 0))
-
-     .forEach(id => renderCard(beete[id]));
-
-
-
-  document.getElementById('emptyState').style.display = ids.length ? 'none' : 'block';
-
-}
-
-
-
-setInterval(() => {
-
-  Object.values(beete).forEach(b => {
-
-    const el = document.getElementById('card-' + b.id);
-
-    if (el) renderCard(b);
-
-  });
-
-}, 1000);
-
-
-
-function addBeet() {
-
-  const inp = document.getElementById('newName');
-
-  const name = inp.value.trim();
-
-  
-
-  if (!name) {
-
-    alert('Bitte gib einen Namen für das Beet ein.');
-
-    return;
-
-  }
-
-
-
-  const nameExists = Object.values(beete).some(b => b.name.toLowerCase() === name.toLowerCase());
-
-  if (nameExists) {
-
-    alert(`Ein Beet mit dem Namen "${name}" existiert bereits!`);
-
-    return;
-
-  }
-
-
-
-  const id = 'beet_' + Date.now();
-
-  beete[id] = {
-
-    id, name, plantedAt: now(), wateredAt: now(), basePrice: 100, mutations: { gold: false, shapeKey: "", weightMult: 1 }
-
-  };
-
-  inp.value = '';
-
-  saveToStorage();
-
-const marketPriceInput = document.getElementById('marketPrice');
-
-marketPriceInput.value = globalMarketPrice;
-
-marketPriceInput.addEventListener('input', () => {
-  globalMarketPrice = parseInt(marketPriceInput.value) || 0;
-
-  localStorage.setItem(
-    'globalMarketPrice',
-    globalMarketPrice
-  );
-
-  renderAll();
-});
-
-renderAll();
-
-}
-
-
-
-function triggerRename(id) {
-
-  const b = beete[id];
-
-  if (!b) return;
-
-  
-
-  const newName = prompt("Gib einen neuen Namen für das Beet ein:", b.name);
-
-  if (newName === null) return; 
-
-  
-
-  const trimmedName = newName.trim();
-
-  if (!trimmedName) {
-
-    alert("Der Name darf nicht leer sein.");
-
-    return;
-
-  }
-
-
-
-  const nameExists = Object.values(beete).some(item => item.id !== id && item.name.toLowerCase() === trimmedName.toLowerCase());
-
-  if (nameExists) {
-
-    alert(`Ein Beet mit dem Namen "${trimmedName}" existiert bereits!`);
-
-    return;
-
-  }
-
-
-
-  beete[id].name = trimmedName;
-
-  saveToStorage();
-
-  renderCard(beete[id]);
-
-}
-
-
-
-function deleteBeet(id) {
-
-  if (!confirm('Beet löschen?')) return;
-
-  delete beete[id];
-
-  saveToStorage();
-
-  renderAll();
-
-}
-
-
-
-function resetBeet(id) {
-
-  beete[id].plantedAt = now();
-
-  beete[id].wateredAt = now();
-
-  beete[id].mutations = { gold: false, shapeKey: "", weightMult: 1 };
-
-  saveToStorage();
-
-  renderCard(beete[id]);
-
-}
-
-
-
-function addTime(id, field, hours) {
-
-  const b = beete[id];
-
-  if (!b) return;
-
-  const key = field === 'water' ? 'wateredAt' : 'plantedAt';
-
-  const cur = b[key] || now();
-
-  beete[id][key] = cur + hours * 3600000;
-
-  saveToStorage();
-
-  renderCard(beete[id]);
-
-}
-
-
-
-function openMutModal(id) {
-
-  activeMutId = id;
-
-  const b = beete[id];
-
-  document.getElementById('mutModalTitle').textContent = b.name;
-
-  
-
-  const mut = b.mutations || {};
-
-  document.getElementById('mut-gold').checked = !!mut.gold;
-
-  document.getElementById('mut-shape-select').value = mut.shapeKey || "";
-
-  document.getElementById('mut-weight-mult').value = mut.weightMult || 1;
-
-  
-
-  document.getElementById('mutModal').style.display = 'flex';
-
-}
-
-
-
-function closeMutModal() {
-
-  document.getElementById('mutModal').style.display = 'none';
-
-  activeMutId = null;
-
-}
-
-
-
-function saveMutation() {
-
-  if (!activeMutId) return;
-
-  
-
-  let wMult = parseFloat(document.getElementById('mut-weight-mult').value) || 1;
-
-  if (wMult < 1) wMult = 1;
-
-  if (wMult > 5) wMult = 5; // Begrenzung laut deinen Regeln auf das 5-Fache
-
-
-
-  beete[activeMutId].mutations = {
-
-    gold: document.getElementById('mut-gold').checked,
-
-    shapeKey: document.getElementById('mut-shape-select').value,
-
-    weightMult: wMult
-
-  };
-
-  
-
-  saveToStorage();
-
-  renderCard(beete[activeMutId]);
-
-}
-
-
-
-document.getElementById('btnAddBeet').addEventListener('click', addBeet);
-
-document.getElementById('newName').addEventListener('keydown', e => {
-
-  if (e.key === 'Enter') addBeet();
-
-});
-
-document.getElementById('btnCloseModal').addEventListener('click', closeMutModal);
-
-document.getElementById('mutModal').addEventListener('click', (e) => {
-
-  if (e.target === document.getElementById('mutModal')) closeMutModal();
-
-});
-
-
-
-// Event Listener für die neuen Form- und Gewichtsfelder im Menü
-
-document.getElementById('mut-gold').addEventListener('change', saveMutation);
-
-document.getElementById('mut-shape-select').addEventListener('change', saveMutation);
-
-document.getElementById('mut-weight-mult').addEventListener('input', saveMutation);
-
-
-
-renderAll();
+  document.getElementById("modal").style.display="none";
+};
 
 </script>
 
 </body>
-
-</html> 
-
+</html>
