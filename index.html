@@ -10,13 +10,17 @@
   :root {
     --bg: #0f1117;
     --surface: #1a1d27;
-    --card: #0b0e14;
-    --border: #1e2230;
-    --accent: #22c55e;
+    --card: #1e2130;
+    --border: #2a2f45;
+    --accent: #4ade80;
+    --accent2: #f59e0b;
+    --accent3: #a78bfa;
+    --danger: #ef4444;
     --text: #e2e8f0;
-    --muted: #94a3b8;
-    --ripe: #22c55e;
-    --warning: #ef4444;
+    --muted: #64748b;
+    --ripe: #4ade80;
+    --water: #38bdf8;
+    --rot: #f87171;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -76,7 +80,12 @@
   button:active { transform: scale(0.97); }
 
   .btn-primary { background: var(--accent); color: #0f1117; }
-  .btn-primary:hover { background: #16a34a; }
+  .btn-primary:hover { background: #22c55e; }
+  .btn-secondary { background: var(--border); color: var(--text); }
+  .btn-secondary:hover { background: #374151; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #dc2626; }
+  .btn-sm { padding: 5px 10px; font-size: 0.78rem; }
 
   .sync-status {
     margin-left: auto;
@@ -107,73 +116,70 @@
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
   }
 
   .card {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px;
+    border-radius: 12px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
+    transition: border-color 0.2s;
     position: relative;
   }
 
+  .card.ripe { border-color: var(--ripe); box-shadow: 0 0 12px rgba(74,222,128,0.15); }
+
   .card-header {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 6px;
   }
 
   .card-title {
-    font-size: 1.1rem;
+    font-size: 0.82rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 140px;
+    max-width: 130px;
   }
 
-  .status-text {
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--muted);
+  .badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+    white-space: nowrap;
   }
+  .badge-ripe { background: rgba(74,222,128,0.15); color: var(--ripe); }
+  .badge-growing { background: rgba(251,191,36,0.12); color: var(--accent2); }
 
-  .card-body-layout {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-  }
-
-  .card-left-cell { flex-shrink: 0; }
-  .card-right-cell { flex-grow: 1; }
-
-  .turnip-img-box {
-    width: 58px;
-    height: 58px;
-    background: #151922;
-    border-radius: 12px;
+  .turnip-img {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
+    font-size: 2.4rem;
     cursor: pointer;
     user-select: none;
+    transition: transform 0.15s;
     position: relative;
-    border: 1px solid #1e2433;
   }
+  .turnip-img:hover { transform: scale(1.1); }
 
   .multiplier {
     position: absolute;
     top: -4px; left: -4px;
-    background: #f59e0b;
+    background: var(--accent2);
     color: #0f1117;
     font-size: 0.6rem;
     font-weight: 800;
@@ -182,65 +188,91 @@
     display: flex; align-items: center; justify-content: center;
   }
 
-  .stats { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+  .stats { display: flex; flex-direction: column; gap: 4px; }
 
   .stat-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.82rem;
+    font-size: 0.75rem;
   }
-  .stat-label { color: #fff; }
-  .stat-value { font-weight: 700; color: #fff; }
-  .stat-value.active-timer { color: #38bdf8; }
-  .stat-value.warning { color: var(--warning); }
+  .stat-label { color: var(--muted); }
+  .stat-value { font-weight: 600; }
+  .stat-value.ripe-text { color: var(--ripe); }
+  .stat-value.warning { color: var(--rot); }
 
   .progress-bar {
     width: 100%;
-    height: 5px;
-    background: #151922;
+    height: 4px;
+    background: var(--border);
     border-radius: 4px;
     overflow: hidden;
-    margin-bottom: 4px;
+    margin-top: 2px;
   }
-  .progress-fill { height: 100%; border-radius: 4px; width: 0%; }
-  .progress-fill.ripe { background: var(--ripe); }
-  .progress-fill.water { background: #38bdf8; }
-  .progress-fill.rot { background: var(--warning); }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent2);
+    border-radius: 4px;
+    transition: width 1s linear;
+  }
+  .progress-fill.ripe { background: var(--accent); }
 
-  .timer-btns { display: flex; gap: 6px; }
+  .mutation-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+  }
+  .mutation-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    justify-content: flex-end;
+  }
+  .mutation-tag {
+    font-size: 0.62rem;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 10px;
+  }
+  .tag-gold { background: rgba(251,191,36,0.2); color: #fbbf24; }
+  .tag-weight { background: rgba(167,139,250,0.2); color: #a78bfa; }
+  .tag-shape { background: rgba(56,189,248,0.2); color: #38bdf8; }
+  .tag-none { color: var(--muted) !important; font-size: 0.72rem; }
+
+  .timer-btns {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+  }
   .timer-btn {
     flex: 1;
-    padding: 8px 4px;
-    font-size: 0.85rem;
+    padding: 5px 4px;
+    font-size: 0.72rem;
     font-weight: 700;
-    border-radius: 8px;
-    color: #fff;
-    text-align: center;
+    border-radius: 7px;
+    border: none;
     cursor: pointer;
+    transition: all 0.15s;
   }
-  .tbtn-water { background: #16a34a; }
-  .tbtn-water:hover { background: #15803d; }
-  .tbtn-rot { background: #d97706; }
-  .tbtn-rot:hover { background: #b45309; }
-  .tbtn-neg { background: #7c3aed; }
-  .tbtn-neg:hover { background: #6d28d9; }
+  .timer-btn:active { transform: scale(0.96); }
+  .tbtn-water { background: rgba(56,189,248,0.2); color: #38bdf8; }
+  .tbtn-water:hover { background: rgba(56,189,248,0.35); }
+  .tbtn-rot { background: rgba(251,191,36,0.15); color: #f59e0b; }
+  .tbtn-rot:hover { background: rgba(251,191,36,0.3); }
+  .tbtn-neg { background: rgba(239,68,68,0.15); color: #f87171; }
+  .tbtn-neg:hover { background: rgba(239,68,68,0.3); }
 
-  .card-actions { display: flex; gap: 6px; }
-  .action-btn {
-    padding: 10px 4px;
-    background: #1f2431;
-    color: #fff;
-    font-size: 0.85rem;
-    font-weight: 600;
-    border-radius: 8px;
-    text-align: center;
-    flex: 1;
-    cursor: pointer;
+  .card-actions {
+    display: flex;
+    gap: 5px;
+    align-items: center;
   }
-  .action-btn:hover { background: #2d3446; }
-  .btn-action-delete { flex: 1.3; background: #dc2626; }
-  .btn-action-delete:hover { background: #b91c1c; }
+  .card-actions input {
+    width: 100%;
+    font-size: 0.75rem;
+    padding: 5px 8px;
+  }
 
   /* Mutation Modal */
   .modal-overlay {
@@ -253,14 +285,14 @@
     justify-content: center;
   }
   .modal {
-    background: #1a1d27;
+    background: var(--card);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 24px;
     width: 320px;
     max-width: 95vw;
   }
-  .modal h3 { font-size: 1rem; margin-bottom: 16px; color: #fff; }
+  .modal h3 { font-size: 1rem; margin-bottom: 16px; }
   .mutation-options { display: flex; flex-direction: column; gap: 10px; }
   .mutation-option {
     display: flex;
@@ -271,7 +303,320 @@
     border-radius: 8px;
     border: 1px solid var(--border);
     transition: background 0.15s;
-    color: #fff;
   }
   .mutation-option:hover { background: var(--border); }
   .mutation-option input[type="checkbox"] { cursor: pointer; accent-color: var(--accent); width: 16px; height: 16px; }
+  .mutation-option label { cursor: pointer; font-size: 0.85rem; flex: 1; }
+  .modal-btns { margin-top: 16px; display: flex; justify-content: flex-end; }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state .emoji { font-size: 3rem; margin-bottom: 12px; }
+  .empty-state p { font-size: 0.9rem; }
+
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🟫 Rübentimer</div>
+  <div class="header-controls">
+    <input type="text" id="newName" placeholder="Beetname eingeben..." />
+    <button class="btn-primary" onclick="addBeet()">+ Beet hinzufügen</button>
+  </div>
+  <div class="sync-status">
+    <div class="sync-dot" id="syncDot"></div>
+    <span id="syncLabel">Verbinde…</span>
+  </div>
+</header>
+
+<main>
+  <p class="hint">Auf das Beet klicken = Mutationen öffnen. Mehrere Mutationen können gleichzeitig aktiv sein.</p>
+  <div class="grid" id="grid"></div>
+  <div class="empty-state" id="emptyState" style="display:none">
+    <div class="emoji">🌱</div>
+    <p>Noch keine Beete. Füge dein erstes Beet hinzu!</p>
+  </div>
+</main>
+
+<div class="modal-overlay" id="mutModal" style="display:none" onclick="closeMutModal(event)">
+  <div class="modal">
+    <h3>🧬 Mutationen — <span id="mutModalTitle"></span></h3>
+    <div class="mutation-options">
+      <label class="mutation-option">
+        <input type="checkbox" id="mut-gold" onchange="saveMutation()">
+        <span>⭐ Gold <small style="color:var(--muted)">(+Multiplikator)</small></span>
+      </label>
+      <label class="mutation-option">
+        <input type="checkbox" id="mut-weight" onchange="saveMutation()">
+        <span>⚖️ Gewicht <small style="color:var(--muted)">(schwerer)</small></span>
+      </label>
+      <label class="mutation-option">
+        <input type="checkbox" id="mut-shape" onchange="saveMutation()">
+        <span>🔷 Form <small style="color:var(--muted)">(besondere Form)</small></span>
+      </label>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeMutModal()">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB6dxEUrQsk3FAIHDGA0rObqwXSYE3jt1w",
+  authDomain: "ruebentimer.firebaseapp.com",
+  projectId: "ruebentimer",
+  storageBucket: "ruebentimer.firebasestorage.app",
+  messagingSenderId: "193161065289",
+  appId: "1:193161065289:web:1ec75431795e1c3596a098",
+  measurementId: "G-51F6VB9VP8"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const colRef = collection(db, "beete");
+
+// 48 Hours Grow Interval, 12h Water, 24h Rot
+const GROW_INTERVAL  = 48 * 60 * 60 * 1000;
+const WATER_INTERVAL = 12 * 60 * 60 * 1000;
+const ROT_INTERVAL   = 24 * 60 * 60 * 1000;
+
+let beete = {};
+let activeMutId = null;
+
+const syncDot = document.getElementById('syncDot');
+const syncLabel = document.getElementById('syncLabel');
+
+onSnapshot(colRef, (snap) => {
+  syncDot.classList.add('connected');
+  syncLabel.textContent = 'Verbunden';
+  beete = {};
+  snap.forEach(d => { beete[d.id] = { id: d.id, ...d.data() }; });
+  renderAll();
+}, (err) => {
+  syncDot.classList.remove('connected');
+  syncLabel.textContent = 'Verbindungsfehler';
+  console.error(err);
+});
+
+function now() { return Date.now(); }
+
+function fmtTime(ms) {
+  if (ms <= 0) return 'REIF';
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+function getMutTags(mut) {
+  const tags = [];
+  if (mut?.gold)   tags.push({ label: 'Gold', cls: 'tag-gold' });
+  if (mut?.weight) tags.push({ label: 'Gewicht', cls: 'tag-weight' });
+  if (mut?.shape)  tags.push({ label: 'Form', cls: 'tag-shape' });
+  return tags;
+}
+
+function getMultiplier(mut) {
+  let m = 1;
+  if (mut?.gold)   m *= 2;
+  if (mut?.weight) m *= 1.5;
+  if (mut?.shape)  m *= 1.5;
+  return m > 1 ? `${m}x` : null;
+}
+
+function renderCard(b) {
+  const el = document.getElementById('card-' + b.id);
+  const isNew = !el;
+  const card = isNew ? document.createElement('div') : el;
+  if (isNew) { card.id = 'card-' + b.id; card.className = 'card'; }
+
+  const planted = b.plantedAt || now();
+  const lastWatered = b.wateredAt || planted;
+  const waterLeft = Math.max(0, (lastWatered + WATER_INTERVAL) - now());
+  const rotLeft   = Math.max(0, (lastWatered + ROT_INTERVAL) - now());
+  const ripeLeft  = Math.max(0, (planted + GROW_INTERVAL) - now());
+  const isRipe    = ripeLeft <= 0;
+  const ripePct   = Math.min(100, ((now() - planted) / GROW_INTERVAL) * 100);
+
+  if (isRipe) card.classList.add('ripe'); else card.classList.remove('ripe');
+
+  const mut = b.mutations || {};
+  const tags = getMutTags(mut);
+  const multi = getMultiplier(mut);
+
+  card.innerHTML = `
+    <div class="card-header">
+      <span class="card-title" title="${b.name}">${b.name}</span>
+      <span class="badge ${isRipe ? 'badge-ripe' : 'badge-growing'}">${isRipe ? 'reif' : 'wächst'}</span>
+    </div>
+
+    <div class="turnip-img" onclick="openMutModal('${b.id}')">
+      ${multi ? `<div class="multiplier">${multi}</div>` : ''}
+      🟫
+    </div>
+
+    <div class="stats">
+      <div class="stat-row">
+        <span class="stat-label">Bis reif</span>
+        <span class="stat-value ${isRipe ? 'ripe-text' : ''}">${fmtTime(ripeLeft)}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill ${isRipe ? 'ripe' : ''}" style="width:${ripePct}%"></div></div>
+
+      <div class="stat-row" style="margin-top:4px">
+        <span class="stat-label">💧 Wasser</span>
+        <span class="stat-value ${waterLeft <= 0 ? 'warning' : ''}">${fmtTime(waterLeft)}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">🟡 Verderb</span>
+        <span class="stat-value ${rotLeft < 3600000 ? 'warning' : ''}">${fmtTime(rotLeft)}</span>
+      </div>
+    </div>
+
+    <div class="mutation-row">
+      <span class="stat-label" style="font-size:0.75rem">Mutation</span>
+      <div class="mutation-tags">
+        ${tags.length ? tags.map(t => `<span class="mutation-tag ${t.cls}">${t.label}</span>`).join('') : '<span class="tag-none">Keine</span>'}
+      </div>
+    </div>
+
+    <div class="timer-btns">
+      <button class="timer-btn tbtn-water" onclick="addTime('${b.id}','water', 12)">💧 12h</button>
+      <button class="timer-btn tbtn-rot"   onclick="addTime('${b.id}','water', 24)">🌙 24h</button>
+      <button class="timer-btn tbtn-neg"   onclick="addTime('${b.id}','plant', -4)">⏪ -4h</button>
+    </div>
+
+    <div class="card-actions">
+      <input type="text" placeholder="Umbenennen…" id="rename-${b.id}" onkeydown="if(event.key==='Enter')renameBeet('${b.id}')" />
+      <button class="btn-secondary btn-sm" onclick="renameBeet('${b.id}')">✏️</button>
+      <button class="btn-secondary btn-sm" onclick="resetBeet('${b.id}')">🔄</button>
+      <button class="btn-danger btn-sm" onclick="deleteBeet('${b.id}')">🗑️</button>
+    </div>
+  `;
+
+  if (isNew) document.getElementById('grid').appendChild(card);
+}
+
+function renderAll() {
+  const grid = document.getElementById('grid');
+  const ids = Object.keys(beete);
+
+  [...grid.children].forEach(c => {
+    const id = c.id.replace('card-', '');
+    if (!beete[id]) c.remove();
+  });
+
+  ids.sort((a, b) => (beete[a].plantedAt || 0) - (beete[b].plantedAt || 0))
+     .forEach(id => renderCard(beete[id]));
+
+  document.getElementById('emptyState').style.display = ids.length ? 'none' : 'block';
+}
+
+setInterval(() => {
+  Object.values(beete).forEach(b => {
+    const el = document.getElementById('card-' + b.id);
+    if (el) renderCard(b);
+  });
+}, 1000);
+
+window.addBeet = async function() {
+  const inp = document.getElementById('newName');
+  const name = inp.value.trim();
+  
+  if (!name) {
+    alert('Bitte gib einen Namen für das Beet ein.');
+    return;
+  }
+
+  // Duplicate Check
+  const nameExists = Object.values(beete).some(b => b.name.toLowerCase() === name.toLowerCase());
+  if (nameExists) {
+    alert(`Ein Beet mit dem Namen "${name}" existiert bereits! Bitte wähle einen anderen Namen.`);
+    return;
+  }
+
+  const id = 'beet_' + Date.now();
+  await setDoc(doc(db, 'beete', id), {
+    name, plantedAt: now(), wateredAt: now(), mutations: {}
+  });
+  inp.value = '';
+};
+
+window.deleteBeet = async function(id) {
+  if (!confirm('Beet löschen?')) return;
+  await deleteDoc(doc(db, 'beete', id));
+};
+
+window.resetBeet = async function(id) {
+  await updateDoc(doc(db, 'beete', id), { plantedAt: now(), wateredAt: now() });
+};
+
+window.renameBeet = async function(id) {
+  const inp = document.getElementById('rename-' + id);
+  const name = inp.value.trim();
+  if (!name) return;
+
+  // Duplicate Check on Rename
+  const nameExists = Object.values(beete).some(b => b.id !== id && b.name.toLowerCase() === name.toLowerCase());
+  if (nameExists) {
+    alert(`Ein Beet mit dem Namen "${name}" existiert bereits!`);
+    return;
+  }
+
+  await updateDoc(doc(db, 'beete', id), { name });
+  inp.value = '';
+};
+
+window.addTime = async function(id, field, hours) {
+  const b = beete[id];
+  if (!b) return;
+  const key = field === 'water' ? 'wateredAt' : 'plantedAt';
+  const cur = b[key] || now();
+  await updateDoc(doc(db, 'beete', id), { [key]: cur + hours * 3600000 });
+};
+
+window.openMutModal = function(id) {
+  activeMutId = id;
+  const b = beete[id];
+  document.getElementById('mutModalTitle').textContent = b.name;
+  const mut = b.mutations || {};
+  document.getElementById('mut-gold').checked   = !!mut.gold;
+  document.getElementById('mut-weight').checked = !!mut.weight;
+  document.getElementById('mut-shape').checked  = !!mut.shape;
+  document.getElementById('mutModal').style.display = 'flex';
+};
+
+window.closeMutModal = function(e) {
+  if (e && e.target !== document.getElementById('mutModal')) return;
+  document.getElementById('mutModal').style.display = 'none';
+  activeMutId = null;
+};
+
+window.saveMutation = async function() {
+  if (!activeMutId) return;
+  const mutations = {
+    gold:   document.getElementById('mut-gold').checked,
+    weight: document.getElementById('mut-weight').checked,
+    shape:  document.getElementById('mut-shape').checked,
+  };
+  await updateDoc(doc(db, 'beete', activeMutId), { mutations });
+};
+
+document.getElementById('newName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') window.addBeet();
+});
+</script>
+</body>
+</html>
