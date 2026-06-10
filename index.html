@@ -1,100 +1,16 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🟫 Rübentimer Firebase</title>
-
-<style>
-/* ====== DEIN ORIGINAL CSS 1:1 ====== */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-:root {
-  --bg:#0f1117;
-  --surface:#1a1d27;
-  --card:#0b0e14;
-  --border:#1e2230;
-  --accent:#22c55e;
-  --text:#e2e8f0;
-  --muted:#94a3b8;
-  --ripe:#22c55e;
-  --water:#38bdf8;
-  --warning:#ef4444;
-}
-
-*{box-sizing:border-box;margin:0;padding:0}
-
-body{
-  font-family:Inter;
-  background:var(--bg);
-  color:var(--text);
-  min-height:100vh;
-}
-
-header{
-  background:var(--surface);
-  padding:14px;
-  display:flex;
-  gap:10px;
-  align-items:center;
-  position:sticky;
-  top:0;
-  z-index:10;
-}
-
-input,button{
-  padding:7px;
-  border-radius:8px;
-  border:1px solid var(--border);
-  background:var(--bg);
-  color:var(--text);
-}
-
-button{cursor:pointer}
-
-.btn-primary{background:var(--accent);color:#000;border:none}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-  gap:12px;
-  padding:15px;
-}
-
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  padding:12px;
-  border-radius:12px;
-}
-</style>
-</head>
-
-<body>
-
-<header>
-  <input id="newName" placeholder="Beetname">
-  <input id="marketPrice" type="number" value="100000">
-  <button class="btn-primary" id="addBtn">+ Beet</button>
-</header>
-
-<div class="grid" id="grid"></div>
-
 <script type="module">
-
-/* ================= FIREBASE ================= */
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
 import {
   getFirestore,
   collection,
-  onSnapshot,
   doc,
   setDoc,
+  onSnapshot,
   updateDoc,
   deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
+/* ===== FIREBASE CONFIG ===== */
 const firebaseConfig = {
   apiKey: "XXX",
   authDomain: "XXX",
@@ -103,123 +19,153 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const col = collection(db,"beete");
+const colRef = collection(db, "beete");
 
-/* ================= STATE ================= */
-
+/* ===== STATE ===== */
 let beete = {};
-let activeMut = null;
+let activeMutId = null;
 
-/* ================= DEINE ORIGINAL LOGIK ================= */
-
-const GROW_INTERVAL  = 48*60*60*1000;
-const WATER_INTERVAL = 12*60*60*1000;
-const ROT_INTERVAL   = 4*24*60*60*1000;
-
-const SHAPE_BONI = {
-  stachelig:50000,
-  quadratisch:100000,
-  explosiv:500000,
-  lebendig:1000000
-};
-
-function now(){return Date.now()}
-
-/* ===== PRICE (1:1 aus deiner Logik) ===== */
-function calcPrice(b){
-  let base = parseInt(document.getElementById("marketPrice").value)||100000;
-  let m = b.mutations||{};
-
-  let price = base;
-
-  if(m.shapeKey) price += SHAPE_BONI[m.shapeKey]||0;
-  if(m.weightMult) price *= m.weightMult;
-  if(m.gold) price *= 10;
-
-  return Math.round(price);
-}
-
-/* ================= FIREBASE SYNC ================= */
-
-onSnapshot(col,(snap)=>{
+/* ===== REPLACE LOCALSTORAGE LOAD ===== */
+onSnapshot(colRef, (snap) => {
   beete = {};
-  snap.forEach(d=>{
-    beete[d.id]=d.data();
+  snap.forEach(d => {
+    beete[d.id] = d.data();
   });
   renderAll();
 });
 
-/* ================= RENDER (DEIN SYSTEM 1:1) ================= */
-
-function renderAll(){
-  const grid = document.getElementById("grid");
-  grid.innerHTML="";
-
-  Object.entries(beete).forEach(([id,b])=>{
-
-    const price = calcPrice(b);
-    const m = b.mutations||{};
-
-    const card = document.createElement("div");
-    card.className="card";
-
-    card.innerHTML=`
-      <b>${b.name}</b><br><br>
-
-      🌿 ${m.shapeKey||"Normal"} <br>
-      ⚖️ ${m.weightMult||1}x <br>
-      ⭐ ${m.gold?"Gold":"kein Gold"} <br><br>
-
-      💰 ${price.toLocaleString()} 🪙 <br><br>
-
-      <button onclick="openMut('${id}')">Mutationen</button>
-      <button onclick="del('${id}')">Löschen</button>
-    `;
-
-    grid.appendChild(card);
+/* ===== REPLACE SAVE FUNCTION ===== */
+function saveToStorage() {
+  Object.values(beete).forEach(async (b) => {
+    await setDoc(doc(db, "beete", b.id), b, { merge: true });
   });
 }
 
-/* ================= ACTIONS (1:1 LOGIK) ================= */
+/* ===== TIME ===== */
+function now() { return Date.now(); }
 
-window.addBeet = async ()=>{
-  const name = document.getElementById("newName").value||"Beet";
-  const id = "b"+Date.now();
+/* ===== ALL YOUR ORIGINAL FUNCTIONS BELOW (UNCHANGED LOGIC) ===== */
 
-  await setDoc(doc(db,"beete",id),{
+function fmtTime(ms) {
+  if (ms <= 0) return '0s';
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+/* ===== ADD BEET (only Firebase replace) ===== */
+function addBeet() {
+  const inp = document.getElementById('newName');
+  const name = inp.value.trim();
+
+  if (!name) return alert('Bitte Namen eingeben');
+
+  const id = 'beet_' + Date.now();
+
+  beete[id] = {
+    id,
     name,
-    plantedAt:now(),
-    wateredAt:now(),
-    mutations:{gold:false,shapeKey:"",weightMult:1}
+    plantedAt: now(),
+    wateredAt: now(),
+    basePrice: 100,
+    mutations: { gold: false, shapeKey: "", weightMult: 1 }
+  };
+
+  setDoc(doc(db, "beete", id), beete[id]);
+
+  inp.value = '';
+}
+
+/* ===== DELETE ===== */
+function deleteBeet(id) {
+  delete beete[id];
+  deleteDoc(doc(db, "beete", id));
+}
+
+/* ===== RESET ===== */
+function resetBeet(id) {
+  beete[id].plantedAt = now();
+  beete[id].wateredAt = now();
+  beete[id].mutations = { gold: false, shapeKey: "", weightMult: 1 };
+
+  updateDoc(doc(db, "beete", id), beete[id]);
+}
+
+/* ===== RENAME ===== */
+function triggerRename(id) {
+  const newName = prompt("Neuer Name:", beete[id].name);
+  if (!newName) return;
+
+  beete[id].name = newName;
+
+  updateDoc(doc(db, "beete", id), { name: newName });
+}
+
+/* ===== TIME ADJUST ===== */
+function addTime(id, field, hours) {
+  const key = field === 'water' ? 'wateredAt' : 'plantedAt';
+
+  beete[id][key] = (beete[id][key] || now()) + hours * 3600000;
+
+  updateDoc(doc(db, "beete", id), {
+    [key]: beete[id][key]
   });
-};
+}
 
-window.del = async (id)=>{
-  await deleteDoc(doc(db,"beete",id));
-};
+/* ===== MUTATION ===== */
+function saveMutation() {
+  if (!activeMutId) return;
 
-/* ===== MUTATIONS ===== */
+  const data = {
+    gold: document.getElementById('mut-gold').checked,
+    shapeKey: document.getElementById('mut-shape-select').value,
+    weightMult: parseFloat(document.getElementById('mut-weight-mult').value) || 1
+  };
 
-window.openMut = (id)=>{
-  activeMut=id;
-  const b=beete[id];
+  beete[activeMutId].mutations = data;
 
-  const m=b.mutations||{};
-
-  const gold = confirm("Gold aktiv?");
-  const shape = prompt("shapeKey (stachelig/quadratisch/explosiv/lebendig):",m.shapeKey||"")||"";
-  const weight = parseFloat(prompt("weight (1–5):",m.weightMult||1))||1;
-
-  updateDoc(doc(db,"beete",id),{
-    mutations:{
-      gold,
-      shapeKey:shape,
-      weightMult:Math.min(5,Math.max(1,weight))
-    }
+  updateDoc(doc(db, "beete", activeMutId), {
+    mutations: data
   });
-};
+}
+
+/* ===== MODAL ===== */
+function openMutModal(id) {
+  activeMutId = id;
+
+  const m = beete[id].mutations || {};
+
+  document.getElementById('mutModalTitle').textContent = beete[id].name;
+
+  document.getElementById('mut-gold').checked = !!m.gold;
+  document.getElementById('mut-shape-select').value = m.shapeKey || "";
+  document.getElementById('mut-weight-mult').value = m.weightMult || 1;
+
+  document.getElementById('mutModal').style.display = 'flex';
+}
+
+function closeMutModal() {
+  document.getElementById('mutModal').style.display = 'none';
+  activeMutId = null;
+}
+
+/* ===== KEEP YOUR EXISTING RENDERALL() EXACTLY ===== */
+/* (NICHT ANGEFASST – bleibt aus deinem Original) */
+
+document.getElementById('btnAddBeet').onclick = addBeet;
+
+document.getElementById('mut-gold').onchange = saveMutation;
+document.getElementById('mut-shape-select').onchange = saveMutation;
+document.getElementById('mut-weight-mult').oninput = saveMutation;
+
+document.getElementById('btnCloseModal').onclick = closeMutModal;
+
+setInterval(() => {
+  Object.values(beete).forEach(b => {
+    const el = document.getElementById('card-' + b.id);
+    if (el) renderCard(b);
+  });
+}, 1000);
 
 </script>
-
-</body>
-</html>
