@@ -169,7 +169,6 @@
   .stat-value.active-timer { color: #38bdf8; }
   .stat-value.warning { color: var(--warning); }
 
-  /* Spezifisches Input für den Basispreis auf der Karte */
   .card-baseprice-input {
     width: 75px;
     padding: 2px 6px;
@@ -250,20 +249,3 @@
       <div class="mutation-option mutation-option-col">
         <span>🔷 Form-Mutation:</span>
         <select id="mut-shape-select" style="width: 100%; padding: 6px;">
-          <option value="">Normalform (+0)</option>
-          <option value="stachelig">Stachelig (+50.000 🪙)</option>
-          <option value="quadratisch">Quadratisch (+100.000 🪙)</option>
-          <option value="explosiv">Explosiv (+500.000 🪙)</option>
-          <option value="lebendig">Lebendig (+1.000.000 🪙)</option>
-        </select>
-      </div>
-
-      <div class="mutation-option mutation-option-col">
-        <span>⚖️ Gewichts-Multiplikator:</span>
-        <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
-          <input type="number" id="mut-weight-mult" min="1" max="5" step="0.1" value="1" style="width: 80px;">
-          <span style="font-size: 0.85rem; color: var(--muted);">x (Maximal 5-fach)</span>
-        </div>
-      </div>
-    </div>
-    <div class="modal-btns">
