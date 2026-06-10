@@ -2,250 +2,64 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🟫 Rübentimer</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-  :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --card: #0b0e14;
-    --border: #1e2230;
-    --accent: #22c55e;
-    --text: #e2e8f0;
-    --muted: #94a3b8;
-    --ripe: #22c55e;
-    --water: #38bdf8;
-    --warning: #ef4444;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    position: relative;
-    overflow-x: hidden;
-  }
-
-  body::before {
-    content: "";
-    position: fixed;
-    bottom: 0;
-    right: 5%;
-    width: 500px;
-    height: 650px;
-    background-image: url('./image_811360.jpg');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: bottom right;
-    mix-blend-mode: luminosity;
-    opacity: 0.07; 
-    pointer-events: none;
-    z-index: -1;
-  }
-
-  header {
-    background: rgba(26, 29, 39, 0.95);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 20px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-
-  .logo { font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-
-  .header-controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex: 1;
-    flex-wrap: wrap;
-  }
-
-  input[type="text"], input[type="number"], select {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 7px 12px;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  input[type="text"] { width: 180px; }
-  input[type="text"]:focus, input[type="number"]:focus, select:focus { border-color: var(--accent); }
-
-  button {
-    cursor: pointer;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    padding: 7px 14px;
-    transition: all 0.15s;
-  }
-  button:active { transform: scale(0.97); }
-
-  .btn-primary { background: var(--accent); color: #0f1117; }
-  .btn-primary:hover { background: #16a34a; }
-
-  .sync-status {
-    margin-left: auto;
-    font-size: 0.75rem;
-    color: var(--accent);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .sync-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 6px var(--accent);
-  }
-
-  main {
-    padding: 16px 20px;
-    max-width: 1600px;
-    margin: 0 auto;
-    position: relative;
-    z-index: 1;
-  }
-
-  .hint { font-size: 0.78rem; color: var(--muted); margin-bottom: 16px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
-
-  .card {
-    background: rgba(11, 14, 20, 0.88);
-    backdrop-filter: blur(4px);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    position: relative;
-  }
-
-  .card-header { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
-  .card-title { font-size: 1.1rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
-  .status-text { font-size: 0.8rem; font-weight: 500; color: var(--muted); }
-  .card-body-layout { display: flex; align-items: center; gap: 12px; width: 100%; }
-  .card-left-cell { flex-shrink: 0; }
-  .card-right-cell { flex-grow: 1; }
-
-  .turnip-img-box {
-    width: 58px; height: 58px;
-    background: #151922;
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 2rem; cursor: pointer; user-select: none;
-    position: relative; border: 1px solid #1e2433;
-  }
-
-  .multiplier {
-    position: absolute;
-    top: -4px; left: -4px;
-    background: #f59e0b; color: #0f1117;
-    font-size: 0.6rem; font-weight: 800;
-    border-radius: 50%; width: 18px; height: 18px;
-    display: flex; align-items: center; justify-content: center;
-  }
-
-  .stats { display: flex; flex-direction: column; gap: 4px; width: 100%; }
-  .stat-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; }
-  .stat-label { color: #fff; }
-  .stat-value { font-weight: 700; color: #fff; }
-  .stat-value.active-timer { color: #38bdf8; }
-  .stat-value.warning { color: var(--warning); }
-
-  .card-baseprice-input {
-    width: 75px;
-    padding: 2px 6px;
-    font-size: 0.8rem;
-    text-align: right;
-    border-radius: 6px;
-    background: #151922;
-  }
-
-  .progress-bar { width: 100%; height: 5px; background: #151922; border-radius: 4px; overflow: hidden; margin-bottom: 4px; }
-  .progress-fill { height: 100%; border-radius: 4px; width: 0%; }
-  .progress-fill.ripe { background: var(--ripe); }
-  .progress-fill.water { background: var(--water); }
-  .progress-fill.rot { background: var(--warning); }
-
-  .timer-btns { display: flex; gap: 6px; }
-  .timer-btn { flex: 1; padding: 8px 4px; font-size: 0.85rem; font-weight: 700; border-radius: 8px; color: #fff; text-align: center; cursor: pointer; }
-  .tbtn-water { background: #16a34a; }
-  .tbtn-water:hover { background: #15803d; }
-  .tbtn-rot { background: #d97706; }
-  .tbtn-rot:hover { background: #b45309; }
-  .tbtn-neg { background: #7c3aed; }
-  .tbtn-neg:hover { background: #6d28d9; }
-
-  .card-actions { display: flex; gap: 6px; }
-  .action-btn { padding: 10px 4px; background: #1f2431; color: #fff; font-size: 0.85rem; font-weight: 600; border-radius: 8px; text-align: center; flex: 1; cursor: pointer; }
-  .action-btn:hover { background: #2d3446; }
-  .btn-action-delete { flex: 1.3; background: #dc2626; color: white; }
-  .btn-action-delete:hover { background: #b91c1c; }
-
-  /* Mutation Modal */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: center; justify-content: center; }
-  .modal { background: #1a1d27; border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 340px; max-width: 95vw; }
-  .modal h3 { font-size: 1rem; margin-bottom: 16px; color: #fff; }
-  .mutation-options { display: flex; flex-direction: column; gap: 12px; }
-  .mutation-option { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-radius: 8px; border: 1px solid var(--border); color: #fff; }
-  .mutation-option-col { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-  .modal-btns { margin-top: 16px; display: flex; justify-content: flex-end; }
-  .btn-close-modal { background: #2a2f45; color: #fff; cursor: pointer; }
-
-  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
-  .empty-state .emoji { font-size: 3rem; margin-bottom: 12px; }
-  .empty-state p { font-size: 0.9rem; }
+  :root { --bg: #0f1117; --accent: #22c55e; --text: #e2e8f0; --border: #1e2230; }
+  body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+  .card { background: #1a1d27; padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
+  input { background: #0f1117; border: 1px solid var(--border); color: white; padding: 5px; border-radius: 4px; }
+  button { cursor: pointer; background: var(--accent); border: none; padding: 8px 12px; border-radius: 6px; color: #0f1117; font-weight: bold; }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="logo">🟫 Rübentimer</div>
-  <div class="header-controls">
-    <input type="text" id="newName" placeholder="Beetname eingeben..." />
-    <button class="btn-primary" id="btnAddBeet">+ Beet hinzufügen</button>
-  </div>
-  <div class="sync-status">
-    <div class="sync-dot"></div>
-    <span>Lokal Bereit</span>
-  </div>
-</header>
+<div style="margin-bottom: 20px;">
+  <input type="text" id="newName" placeholder="Beetname...">
+  <button id="btnAdd">Beet hinzufügen</button>
+</div>
 
-<main>
-  <p class="hint">Auf das Icon klicken = Mutationen öffnen. Basispreis lässt sich direkt auf der Karte eintippen!</p>
-  <div class="grid" id="grid"></div>
-  <div class="empty-state" id="emptyState" style="display:none">
-    <div class="emoji">🌱</div>
-    <p>Noch keine Beete. Füge dein erstes Beet hinzu!</p>
-  </div>
-</main>
+<div class="grid" id="grid"></div>
 
-<div class="modal-overlay" id="mutModal" style="display:none">
-  <div class="modal">
-    <h3>🧬 Mutationen — <span id="mutModalTitle"></span></h3>
-    <div class="mutation-options">
-      <label class="mutation-option" style="cursor: pointer;">
-        <span style="display: flex; align-items: center; gap: 8px;">⭐ Goldene Rübe <small style="color:var(--muted)">(10x Gesamtpreis)</small></span>
-        <input type="checkbox" id="mut-gold" style="width:18px; height:18px; accent-color:var(--accent);">
-      </label>
-      
-      <div class="mutation-option mutation-option-col">
-        <span>🔷 Form-Mutation:</span>
-        <select id="mut-shape-select" style="width: 100%; padding: 6px;">
+<script>
+let beete = JSON.parse(localStorage.getItem('rueben_data') || '{}');
+
+function save() { localStorage.setItem('rueben_data', JSON.stringify(beete)); render(); }
+
+function render() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  Object.keys(beete).forEach(id => {
+    const b = beete[id];
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <h3>${b.name}</h3>
+      <p>Basispreis: <input type="number" value="${b.basePrice || 100}" onchange="updatePrice('${id}', this.value)"></p>
+      <p>Marktwert: <b>${Math.round(b.basePrice || 100)} 🪙</b></p>
+      <button onclick="del('${id}')">Löschen</button>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function updatePrice(id, val) {
+  beete[id].basePrice = parseInt(val) || 0;
+  save();
+}
+
+function del(id) { delete beete[id]; save(); }
+
+document.getElementById('btnAdd').addEventListener('click', () => {
+  const name = document.getElementById('newName').value.trim();
+  if(!name) return;
+  const id = 'b_' + Date.now();
+  beete[id] = { name, basePrice: 100 };
+  document.getElementById('newName').value = '';
+  save();
+});
+
+render();
+</script>
+</body>
+</html>
