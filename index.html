@@ -107,7 +107,7 @@
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 14px;
   }
 
@@ -145,7 +145,6 @@
     color: var(--muted);
   }
 
-  /* Flexbox-Layout für Icon + Balken */
   .card-body-layout {
     display: flex;
     align-items: center;
@@ -153,13 +152,8 @@
     width: 100%;
   }
 
-  .card-left-cell {
-    flex-shrink: 0;
-  }
-
-  .card-right-cell {
-    flex-grow: 1;
-  }
+  .card-left-cell { flex-shrink: 0; }
+  .card-right-cell { flex-grow: 1; }
 
   .turnip-img-box {
     width: 58px;
@@ -214,10 +208,7 @@
   .progress-fill.water { background: #38bdf8; }
   .progress-fill.rot { background: var(--warning); }
 
-  .timer-btns {
-    display: flex;
-    gap: 6px;
-  }
+  .timer-btns { display: flex; gap: 6px; }
   .timer-btn {
     flex: 1;
     padding: 8px 4px;
@@ -226,6 +217,7 @@
     border-radius: 8px;
     color: #fff;
     text-align: center;
+    cursor: pointer;
   }
   .tbtn-water { background: #16a34a; }
   .tbtn-water:hover { background: #15803d; }
@@ -234,10 +226,7 @@
   .tbtn-neg { background: #7c3aed; }
   .tbtn-neg:hover { background: #6d28d9; }
 
-  .card-actions {
-    display: flex;
-    gap: 6px;
-  }
+  .card-actions { display: flex; gap: 6px; }
   .action-btn {
     padding: 10px 4px;
     background: #1f2431;
@@ -247,10 +236,9 @@
     border-radius: 8px;
     text-align: center;
     flex: 1;
+    cursor: pointer;
   }
   .action-btn:hover { background: #2d3446; }
-  .btn-action-name { flex: 1; }
-  .btn-action-reset { flex: 1; }
   .btn-action-delete { flex: 1.3; background: #dc2626; }
   .btn-action-delete:hover { background: #b91c1c; }
 
@@ -287,32 +275,3 @@
   }
   .mutation-option:hover { background: var(--border); }
   .mutation-option input[type="checkbox"] { cursor: pointer; accent-color: var(--accent); width: 16px; height: 16px; }
-  .mutation-option label { cursor: pointer; font-size: 0.85rem; flex: 1; }
-  .modal-btns { margin-top: 16px; display: flex; justify-content: flex-end; }
-  .btn-close-modal { background: #2a2f45; color: #fff; }
-
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
-  }
-  .empty-state .emoji { font-size: 3rem; margin-bottom: 12px; }
-  .empty-state p { font-size: 0.9rem; }
-</style>
-</head>
-<body>
-
-<header>
-  <div class="logo">🟫 Rübentimer</div>
-  <div class="header-controls">
-    <input type="text" id="newName" placeholder="Beetname eingeben..." />
-    <button class="btn-primary" onclick="addBeet()">+ Beet hinzufügen</button>
-  </div>
-  <div class="sync-status">
-    <div class="sync-dot" id="syncDot"></div>
-    <span id="syncLabel">Verbinde…</span>
-  </div>
-</header>
-
-<main>
-  <p class="hint">Auf das
