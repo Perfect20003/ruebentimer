@@ -10,17 +10,14 @@
   :root {
     --bg: #0f1117;
     --surface: #1a1d27;
-    --card: #1e2130;
-    --border: #2a2f45;
-    --accent: #4ade80;
-    --accent2: #f59e0b;
-    --accent3: #a78bfa;
-    --danger: #ef4444;
+    --card: #0b0e14;
+    --border: #1e2230;
+    --accent: #22c55e;
     --text: #e2e8f0;
-    --muted: #64748b;
-    --ripe: #4ade80;
+    --muted: #94a3b8;
+    --ripe: #22c55e;
     --water: #38bdf8;
-    --rot: #f87171;
+    --warning: #ef4444;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -80,12 +77,7 @@
   button:active { transform: scale(0.97); }
 
   .btn-primary { background: var(--accent); color: #0f1117; }
-  .btn-primary:hover { background: #22c55e; }
-  .btn-secondary { background: var(--border); color: var(--text); }
-  .btn-secondary:hover { background: #374151; }
-  .btn-danger { background: var(--danger); color: #fff; }
-  .btn-danger:hover { background: #dc2626; }
-  .btn-sm { padding: 5px 10px; font-size: 0.78rem; }
+  .btn-primary:hover { background: #16a34a; }
 
   .sync-status {
     margin-left: auto;
@@ -116,70 +108,73 @@
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
   }
 
   .card {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px;
+    border-radius: 14px;
+    padding: 14px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    transition: border-color 0.2s;
+    gap: 10px;
     position: relative;
   }
 
-  .card.ripe { border-color: var(--ripe); box-shadow: 0 0 12px rgba(74,222,128,0.15); }
-
   .card-header {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     justify-content: space-between;
     gap: 6px;
   }
 
   .card-title {
-    font-size: 0.82rem;
+    font-size: 1.1rem;
     font-weight: 700;
-    color: var(--text);
+    color: #fff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 130px;
+    max-width: 140px;
   }
 
-  .badge {
-    font-size: 0.65rem;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 20px;
-    white-space: nowrap;
+  .status-text {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
   }
-  .badge-ripe { background: rgba(74,222,128,0.15); color: var(--ripe); }
-  .badge-growing { background: rgba(251,191,36,0.12); color: var(--accent2); }
 
-  .turnip-img {
-    width: 56px;
-    height: 56px;
-    margin: 0 auto;
+  .card-body-layout {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .card-left-cell { flex-shrink: 0; }
+  .card-right-cell { flex-grow: 1; }
+
+  .turnip-img-box {
+    width: 58px;
+    height: 58px;
+    background: #151922;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.4rem;
+    font-size: 2rem;
     cursor: pointer;
     user-select: none;
-    transition: transform 0.15s;
     position: relative;
+    border: 1px solid #1e2433;
   }
-  .turnip-img:hover { transform: scale(1.1); }
 
   .multiplier {
     position: absolute;
     top: -4px; left: -4px;
-    background: var(--accent2);
+    background: #f59e0b;
     color: #0f1117;
     font-size: 0.6rem;
     font-weight: 800;
@@ -188,91 +183,65 @@
     display: flex; align-items: center; justify-content: center;
   }
 
-  .stats { display: flex; flex-direction: column; gap: 4px; }
+  .stats { display: flex; flex-direction: column; gap: 4px; width: 100%; }
 
   .stat-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.75rem;
+    font-size: 0.82rem;
   }
-  .stat-label { color: var(--muted); }
-  .stat-value { font-weight: 600; }
-  .stat-value.ripe-text { color: var(--ripe); }
-  .stat-value.warning { color: var(--rot); }
+  .stat-label { color: #fff; }
+  .stat-value { font-weight: 700; color: #fff; }
+  .stat-value.active-timer { color: #38bdf8; }
+  .stat-value.warning { color: var(--warning); }
 
   .progress-bar {
     width: 100%;
-    height: 4px;
-    background: var(--border);
+    height: 5px;
+    background: #151922;
     border-radius: 4px;
     overflow: hidden;
-    margin-top: 2px;
+    margin-bottom: 4px;
   }
-  .progress-fill {
-    height: 100%;
-    background: var(--accent2);
-    border-radius: 4px;
-    transition: width 1s linear;
-  }
-  .progress-fill.ripe { background: var(--accent); }
+  .progress-fill { height: 100%; border-radius: 4px; width: 0%; }
+  .progress-fill.ripe { background: var(--ripe); }
+  .progress-fill.water { background: var(--water); }
+  .progress-fill.rot { background: var(--warning); }
 
-  .mutation-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.75rem;
-  }
-  .mutation-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 3px;
-    justify-content: flex-end;
-  }
-  .mutation-tag {
-    font-size: 0.62rem;
-    font-weight: 600;
-    padding: 1px 6px;
-    border-radius: 10px;
-  }
-  .tag-gold { background: rgba(251,191,36,0.2); color: #fbbf24; }
-  .tag-weight { background: rgba(167,139,250,0.2); color: #a78bfa; }
-  .tag-shape { background: rgba(56,189,248,0.2); color: #38bdf8; }
-  .tag-none { color: var(--muted) !important; font-size: 0.72rem; }
-
-  .timer-btns {
-    display: flex;
-    gap: 5px;
-    justify-content: center;
-  }
+  .timer-btns { display: flex; gap: 6px; }
   .timer-btn {
     flex: 1;
-    padding: 5px 4px;
-    font-size: 0.72rem;
+    padding: 8px 4px;
+    font-size: 0.85rem;
     font-weight: 700;
-    border-radius: 7px;
-    border: none;
+    border-radius: 8px;
+    color: #fff;
+    text-align: center;
     cursor: pointer;
-    transition: all 0.15s;
   }
-  .timer-btn:active { transform: scale(0.96); }
-  .tbtn-water { background: rgba(56,189,248,0.2); color: #38bdf8; }
-  .tbtn-water:hover { background: rgba(56,189,248,0.35); }
-  .tbtn-rot { background: rgba(251,191,36,0.15); color: #f59e0b; }
-  .tbtn-rot:hover { background: rgba(251,191,36,0.3); }
-  .tbtn-neg { background: rgba(239,68,68,0.15); color: #f87171; }
-  .tbtn-neg:hover { background: rgba(239,68,68,0.3); }
+  .tbtn-water { background: #16a34a; }
+  .tbtn-water:hover { background: #15803d; }
+  .tbtn-rot { background: #d97706; }
+  .tbtn-rot:hover { background: #b45309; }
+  .tbtn-neg { background: #7c3aed; }
+  .tbtn-neg:hover { background: #6d28d9; }
 
-  .card-actions {
-    display: flex;
-    gap: 5px;
-    align-items: center;
+  .card-actions { display: flex; gap: 6px; }
+  .action-btn {
+    padding: 10px 4px;
+    background: #1f2431;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 8px;
+    text-align: center;
+    flex: 1;
+    cursor: pointer;
   }
-  .card-actions input {
-    width: 100%;
-    font-size: 0.75rem;
-    padding: 5px 8px;
-  }
+  .action-btn:hover { background: #2d3446; }
+  .btn-action-delete { flex: 1.3; background: #dc2626; color: white; }
+  .btn-action-delete:hover { background: #b91c1c; }
 
   /* Mutation Modal */
   .modal-overlay {
@@ -285,14 +254,14 @@
     justify-content: center;
   }
   .modal {
-    background: var(--card);
+    background: #1a1d27;
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 24px;
     width: 320px;
     max-width: 95vw;
   }
-  .modal h3 { font-size: 1rem; margin-bottom: 16px; }
+  .modal h3 { font-size: 1rem; margin-bottom: 16px; color: #fff; }
   .mutation-options { display: flex; flex-direction: column; gap: 10px; }
   .mutation-option {
     display: flex;
@@ -303,11 +272,12 @@
     border-radius: 8px;
     border: 1px solid var(--border);
     transition: background 0.15s;
+    color: #fff;
   }
   .mutation-option:hover { background: var(--border); }
   .mutation-option input[type="checkbox"] { cursor: pointer; accent-color: var(--accent); width: 16px; height: 16px; }
-  .mutation-option label { cursor: pointer; font-size: 0.85rem; flex: 1; }
   .modal-btns { margin-top: 16px; display: flex; justify-content: flex-end; }
+  .btn-close-modal { background: #2a2f45; color: #fff; cursor: pointer; }
 
   .empty-state {
     text-align: center;
@@ -316,10 +286,6 @@
   }
   .empty-state .emoji { font-size: 3rem; margin-bottom: 12px; }
   .empty-state p { font-size: 0.9rem; }
-
-  @media (max-width: 600px) {
-    .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
-  }
 </style>
 </head>
 <body>
@@ -328,7 +294,7 @@
   <div class="logo">🟫 Rübentimer</div>
   <div class="header-controls">
     <input type="text" id="newName" placeholder="Beetname eingeben..." />
-    <button class="btn-primary" onclick="addBeet()">+ Beet hinzufügen</button>
+    <button class="btn-primary" id="btnAddBeet">+ Beet hinzufügen</button>
   </div>
   <div class="sync-status">
     <div class="sync-dot" id="syncDot"></div>
@@ -337,7 +303,7 @@
 </header>
 
 <main>
-  <p class="hint">Auf das Beet klicken = Mutationen öffnen. Mehrere Mutationen können gleichzeitig aktiv sein.</p>
+  <p class="hint">Auf das Icon klicken = Mutationen öffnen.</p>
   <div class="grid" id="grid"></div>
   <div class="empty-state" id="emptyState" style="display:none">
     <div class="emoji">🌱</div>
@@ -345,25 +311,25 @@
   </div>
 </main>
 
-<div class="modal-overlay" id="mutModal" style="display:none" onclick="closeMutModal(event)">
+<div class="modal-overlay" id="mutModal" style="display:none">
   <div class="modal">
     <h3>🧬 Mutationen — <span id="mutModalTitle"></span></h3>
     <div class="mutation-options">
       <label class="mutation-option">
-        <input type="checkbox" id="mut-gold" onchange="saveMutation()">
+        <input type="checkbox" id="mut-gold">
         <span>⭐ Gold <small style="color:var(--muted)">(+Multiplikator)</small></span>
       </label>
       <label class="mutation-option">
-        <input type="checkbox" id="mut-weight" onchange="saveMutation()">
+        <input type="checkbox" id="mut-weight">
         <span>⚖️ Gewicht <small style="color:var(--muted)">(schwerer)</small></span>
       </label>
       <label class="mutation-option">
-        <input type="checkbox" id="mut-shape" onchange="saveMutation()">
+        <input type="checkbox" id="mut-shape">
         <span>🔷 Form <small style="color:var(--muted)">(besondere Form)</small></span>
       </label>
     </div>
     <div class="modal-btns">
-      <button class="btn-secondary" onclick="closeMutModal()">Schließen</button>
+      <button class="btn-close-modal" id="btnCloseModal">Schließen</button>
     </div>
   </div>
 </div>
@@ -386,16 +352,16 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const colRef = collection(db, "beete");
 
-// 48 Hours Grow Interval, 12h Water, 24h Rot
-const GROW_INTERVAL  = 48 * 60 * 60 * 1000;
-const WATER_INTERVAL = 12 * 60 * 60 * 1000;
-const ROT_INTERVAL   = 24 * 60 * 60 * 1000;
+const GROW_INTERVAL  = 48 * 60 * 60 * 1000; // 48 Stunden bis Reife
+const WATER_INTERVAL = 12 * 60 * 60 * 1000; // 12 Stunden Wasser
+const ROT_INTERVAL   = 4 * 24 * 60 * 60 * 1000; // 4 Tage Verdorren
 
 let beete = {};
 let activeMutId = null;
 
 const syncDot = document.getElementById('syncDot');
 const syncLabel = document.getElementById('syncLabel');
+const grid = document.getElementById('grid');
 
 onSnapshot(colRef, (snap) => {
   syncDot.classList.add('connected');
@@ -412,105 +378,129 @@ onSnapshot(colRef, (snap) => {
 function now() { return Date.now(); }
 
 function fmtTime(ms) {
-  if (ms <= 0) return 'REIF';
+  if (ms <= 0) return '0s';
   const h = Math.floor(ms / 3600000);
   const m = Math.floor((ms % 3600000) / 60000);
-  const s = Math.floor((ms % 60000) / 1000);
   if (h > 0) return `${h}h ${m}m`;
-  if (m > 0) return `${m}m ${s}s`;
-  return `${s}s`;
-}
-
-function getMutTags(mut) {
-  const tags = [];
-  if (mut?.gold)   tags.push({ label: 'Gold', cls: 'tag-gold' });
-  if (mut?.weight) tags.push({ label: 'Gewicht', cls: 'tag-weight' });
-  if (mut?.shape)  tags.push({ label: 'Form', cls: 'tag-shape' });
-  return tags;
-}
-
-function getMultiplier(mut) {
-  let m = 1;
-  if (mut?.gold)   m *= 2;
-  if (mut?.weight) m *= 1.5;
-  if (mut?.shape)  m *= 1.5;
-  return m > 1 ? `${m}x` : null;
+  return `${m}m`;
 }
 
 function renderCard(b) {
-  const el = document.getElementById('card-' + b.id);
-  const isNew = !el;
-  const card = isNew ? document.createElement('div') : el;
-  if (isNew) { card.id = 'card-' + b.id; card.className = 'card'; }
+  let card = document.getElementById('card-' + b.id);
+  const isNew = !card;
+  if (isNew) {
+    card = document.createElement('div');
+    card.id = 'card-' + b.id;
+    card.className = 'card';
+  }
 
   const planted = b.plantedAt || now();
   const lastWatered = b.wateredAt || planted;
-  const waterLeft = Math.max(0, (lastWatered + WATER_INTERVAL) - now());
-  const rotLeft   = Math.max(0, (lastWatered + ROT_INTERVAL) - now());
+  
   const ripeLeft  = Math.max(0, (planted + GROW_INTERVAL) - now());
   const isRipe    = ripeLeft <= 0;
-  const ripePct   = Math.min(100, ((now() - planted) / GROW_INTERVAL) * 100);
+  
+  const waterLeft = Math.max(0, (lastWatered + WATER_INTERVAL) - now());
+  const isWatered = waterLeft > 0;
 
-  if (isRipe) card.classList.add('ripe'); else card.classList.remove('ripe');
+  // Verdorrungslogik: Startet erst, wenn Wasser auf 0 ist
+  const waterEmptyAt = lastWatered + WATER_INTERVAL;
+  let rotLeft = ROT_INTERVAL;
+  let isRotten = false;
+
+  if (!isWatered) {
+    rotLeft = Math.max(0, (waterEmptyAt + ROT_INTERVAL) - now());
+    if (rotLeft <= 0) isRotten = true;
+  }
+
+  const ripePct  = Math.min(100, ((now() - planted) / GROW_INTERVAL) * 100);
+  const waterPct = Math.min(100, (waterLeft / WATER_INTERVAL) * 100);
+  const rotPct   = isWatered ? 0 : Math.min(100, ((now() - waterEmptyAt) / ROT_INTERVAL) * 100);
+
+  let statusStr = isRipe ? 'reif' : 'wächst';
+  statusStr += isRotten ? ' + verdorrt' : (isWatered ? ' + bewässert' : ' + trocken');
 
   const mut = b.mutations || {};
-  const tags = getMutTags(mut);
-  const multi = getMultiplier(mut);
+  let mutStr = 'Keine';
+  const activeMuts = [];
+  if (mut.gold) activeMuts.push('Gold');
+  if (mut.weight) activeMuts.push('Gewicht');
+  if (mut.shape) activeMuts.push('Form');
+  if (activeMuts.length) mutStr = activeMuts.join(', ');
+
+  let multi = null;
+  let m = 1;
+  if (mut.gold) m *= 2;
+  if (mut.weight) m *= 1.5;
+  if (mut.shape) m *= 1.5;
+  if (m > 1) multi = `${m}x`;
 
   card.innerHTML = `
     <div class="card-header">
       <span class="card-title" title="${b.name}">${b.name}</span>
-      <span class="badge ${isRipe ? 'badge-ripe' : 'badge-growing'}">${isRipe ? 'reif' : 'wächst'}</span>
+      <span class="status-text">${statusStr}</span>
     </div>
 
-    <div class="turnip-img" onclick="openMutModal('${b.id}')">
-      ${multi ? `<div class="multiplier">${multi}</div>` : ''}
-      🟫
+    <div class="card-body-layout">
+      <div class="card-left-cell">
+        <div class="turnip-img-box btn-trigger-mut">
+          ${multi ? `<div class="multiplier">${multi}</div>` : ''}
+          🥬
+        </div>
+      </div>
+      <div class="card-right-cell">
+        <div class="stats">
+          <div class="stat-row">
+            <span class="stat-label">Bis reif</span>
+            <span class="stat-value">${isRipe ? 'REIF' : fmtTime(ripeLeft)}</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill ripe" style="width:${ripePct}%"></div></div>
+
+          <div class="stat-row">
+            <span class="stat-label">Wasser</span>
+            <span class="stat-value ${isWatered ? 'active-timer' : 'warning'}">${isWatered ? fmtTime(waterLeft) : '0s'}</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill water" style="width:${waterPct}%"></div></div>
+
+          <div class="stat-row">
+            <span class="stat-label">Verdorrung</span>
+            <span class="stat-value ${isRotten ? 'warning' : ''}">${isWatered ? 'pausiert' : (isRotten ? 'VERDORRT' : fmtTime(rotLeft))}</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill rot" style="width:${rotPct}%"></div></div>
+        </div>
+      </div>
     </div>
 
-    <div class="stats">
-      <div class="stat-row">
-        <span class="stat-label">Bis reif</span>
-        <span class="stat-value ${isRipe ? 'ripe-text' : ''}">${fmtTime(ripeLeft)}</span>
-      </div>
-      <div class="progress-bar"><div class="progress-fill ${isRipe ? 'ripe' : ''}" style="width:${ripePct}%"></div></div>
-
-      <div class="stat-row" style="margin-top:4px">
-        <span class="stat-label">💧 Wasser</span>
-        <span class="stat-value ${waterLeft <= 0 ? 'warning' : ''}">${fmtTime(waterLeft)}</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">🟡 Verderb</span>
-        <span class="stat-value ${rotLeft < 3600000 ? 'warning' : ''}">${fmtTime(rotLeft)}</span>
-      </div>
-    </div>
-
-    <div class="mutation-row">
-      <span class="stat-label" style="font-size:0.75rem">Mutation</span>
-      <div class="mutation-tags">
-        ${tags.length ? tags.map(t => `<span class="mutation-tag ${t.cls}">${t.label}</span>`).join('') : '<span class="tag-none">Keine</span>'}
-      </div>
+    <div class="stat-row" style="margin-top: 2px; font-size: 0.85rem;">
+      <span class="stat-label" style="color: var(--muted);">Mutation</span>
+      <span class="stat-value" style="font-weight:500;">${mutStr}</span>
     </div>
 
     <div class="timer-btns">
-      <button class="timer-btn tbtn-water" onclick="addTime('${b.id}','water', 12)">💧 12h</button>
-      <button class="timer-btn tbtn-rot"   onclick="addTime('${b.id}','water', 24)">🌙 24h</button>
-      <button class="timer-btn tbtn-neg"   onclick="addTime('${b.id}','plant', -4)">⏪ -4h</button>
+      <button class="timer-btn tbtn-water btn-add-w12">💧 12h</button>
+      <button class="timer-btn tbtn-rot btn-add-w24">🏆 24h</button>
+      <button class="timer-btn tbtn-neg btn-add-p4">🌱 -4h</button>
     </div>
 
     <div class="card-actions">
-      <input type="text" placeholder="Umbenennen…" id="rename-${b.id}" onkeydown="if(event.key==='Enter')renameBeet('${b.id}')" />
-      <button class="btn-secondary btn-sm" onclick="renameBeet('${b.id}')">✏️</button>
-      <button class="btn-secondary btn-sm" onclick="resetBeet('${b.id}')">🔄</button>
-      <button class="btn-danger btn-sm" onclick="deleteBeet('${b.id}')">🗑️</button>
+      <button class="action-btn btn-rename">Name</button>
+      <button class="action-btn btn-reset">Neu</button>
+      <button class="action-btn btn-action-delete btn-delete">&#128465; Löschen</button>
     </div>
   `;
 
-  if (isNew) document.getElementById('grid').appendChild(card);
+  card.querySelector('.btn-trigger-mut').addEventListener('click', () => openMutModal(b.id));
+  card.querySelector('.btn-add-w12').addEventListener('click', () => addTime(b.id, 'water', 12));
+  card.querySelector('.btn-add-w24').addEventListener('click', () => addTime(b.id, 'water', 24));
+  card.querySelector('.btn-add-p4').addEventListener('click', () => addTime(b.id, 'plant', -4));
+  card.querySelector('.btn-rename').addEventListener('click', () => triggerRename(b.id));
+  card.querySelector('.btn-reset').addEventListener('click', () => resetBeet(b.id));
+  card.querySelector('.btn-delete').addEventListener('click', () => deleteBeet(b.id));
+
+  if (isNew) grid.appendChild(card);
 }
 
 function renderAll() {
-  const grid = document.getElementById('grid');
   const ids = Object.keys(beete);
 
   [...grid.children].forEach(c => {
@@ -531,7 +521,7 @@ setInterval(() => {
   });
 }, 1000);
 
-window.addBeet = async function() {
+async function addBeet() {
   const inp = document.getElementById('newName');
   const name = inp.value.trim();
   
@@ -540,10 +530,9 @@ window.addBeet = async function() {
     return;
   }
 
-  // Duplicate Check
   const nameExists = Object.values(beete).some(b => b.name.toLowerCase() === name.toLowerCase());
   if (nameExists) {
-    alert(`Ein Beet mit dem Namen "${name}" existiert bereits! Bitte wähle einen anderen Namen.`);
+    alert(`Ein Beet mit dem Namen "${name}" existiert bereits!`);
     return;
   }
 
@@ -552,42 +541,48 @@ window.addBeet = async function() {
     name, plantedAt: now(), wateredAt: now(), mutations: {}
   });
   inp.value = '';
-};
+}
 
-window.deleteBeet = async function(id) {
-  if (!confirm('Beet löschen?')) return;
-  await deleteDoc(doc(db, 'beete', id));
-};
-
-window.resetBeet = async function(id) {
-  await updateDoc(doc(db, 'beete', id), { plantedAt: now(), wateredAt: now() });
-};
-
-window.renameBeet = async function(id) {
-  const inp = document.getElementById('rename-' + id);
-  const name = inp.value.trim();
-  if (!name) return;
-
-  // Duplicate Check on Rename
-  const nameExists = Object.values(beete).some(b => b.id !== id && b.name.toLowerCase() === name.toLowerCase());
-  if (nameExists) {
-    alert(`Ein Beet mit dem Namen "${name}" existiert bereits!`);
+async function triggerRename(id) {
+  const b = beete[id];
+  if (!b) return;
+  
+  const newName = prompt("Gib einen neuen Namen für das Beet ein:", b.name);
+  if (newName === null) return; 
+  
+  const trimmedName = newName.trim();
+  if (!trimmedName) {
+    alert("Der Name darf nicht leer sein.");
     return;
   }
 
-  await updateDoc(doc(db, 'beete', id), { name });
-  inp.value = '';
-};
+  const nameExists = Object.values(beete).some(item => item.id !== id && item.name.toLowerCase() === trimmedName.toLowerCase());
+  if (nameExists) {
+    alert(`Ein Beet mit dem Namen "${trimmedName}" existiert bereits!`);
+    return;
+  }
 
-window.addTime = async function(id, field, hours) {
+  await updateDoc(doc(db, 'beete', id), { name: trimmedName });
+}
+
+async function deleteBeet(id) {
+  if (!confirm('Beet löschen?')) return;
+  await deleteDoc(doc(db, 'beete', id));
+}
+
+async function resetBeet(id) {
+  await updateDoc(doc(db, 'beete', id), { plantedAt: now(), wateredAt: now() });
+}
+
+async function addTime(id, field, hours) {
   const b = beete[id];
   if (!b) return;
   const key = field === 'water' ? 'wateredAt' : 'plantedAt';
   const cur = b[key] || now();
   await updateDoc(doc(db, 'beete', id), { [key]: cur + hours * 3600000 });
-};
+}
 
-window.openMutModal = function(id) {
+function openMutModal(id) {
   activeMutId = id;
   const b = beete[id];
   document.getElementById('mutModalTitle').textContent = b.name;
@@ -596,15 +591,14 @@ window.openMutModal = function(id) {
   document.getElementById('mut-weight').checked = !!mut.weight;
   document.getElementById('mut-shape').checked  = !!mut.shape;
   document.getElementById('mutModal').style.display = 'flex';
-};
+}
 
-window.closeMutModal = function(e) {
-  if (e && e.target !== document.getElementById('mutModal')) return;
+function closeMutModal() {
   document.getElementById('mutModal').style.display = 'none';
   activeMutId = null;
-};
+}
 
-window.saveMutation = async function() {
+async function saveMutation() {
   if (!activeMutId) return;
   const mutations = {
     gold:   document.getElementById('mut-gold').checked,
@@ -612,11 +606,19 @@ window.saveMutation = async function() {
     shape:  document.getElementById('mut-shape').checked,
   };
   await updateDoc(doc(db, 'beete', activeMutId), { mutations });
-};
+}
 
+document.getElementById('btnAddBeet').addEventListener('click', addBeet);
 document.getElementById('newName').addEventListener('keydown', e => {
-  if (e.key === 'Enter') window.addBeet();
+  if (e.key === 'Enter') addBeet();
 });
+document.getElementById('btnCloseModal').addEventListener('click', closeMutModal);
+document.getElementById('mutModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('mutModal')) closeMutModal();
+});
+document.getElementById('mut-gold').addEventListener('change', saveMutation);
+document.getElementById('mut-weight').addEventListener('change', saveMutation);
+document.getElementById('mut-shape').addEventListener('change', saveMutation);
 </script>
 </body>
 </html>
