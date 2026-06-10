@@ -422,10 +422,20 @@
 
   <div class="header-controls">
 
-    <input type="text" id="newName" placeholder="Beetname eingeben..." />
+   <input type="text" id="newName" placeholder="Beetname eingeben..." />
 
-    <button class="btn-primary" id="btnAddBeet">+ Beet hinzufügen</button>
+<input
+  type="number"
+  id="marketPrice"
+  placeholder="Marktpreis"
+  value="100000"
+  min="0"
+  style="width:140px;"
+/>
 
+<button class="btn-primary" id="btnAddBeet">
+  + Beet hinzufügen
+</button>
   </div>
 
   <div class="sync-status">
@@ -531,7 +541,8 @@
 let beete = JSON.parse(localStorage.getItem('rueben_beete_v3')) || {};
 
 let activeMutId = null;
-
+let globalMarketPrice =
+  parseInt(localStorage.getItem('globalMarketPrice')) || 100000;
 
 
 const GROW_INTERVAL  = 48 * 60 * 60 * 1000; 
@@ -660,7 +671,7 @@ function renderCard(b) {
 
   // --- PREISBERECHNUNG START ---
 
-  const basePrice = b.basePrice || 100; // Standard-Basispreis falls nicht gesetzt
+const basePrice = globalMarketPrice;// Standard-Basispreis falls nicht gesetzt
 
   let calculatedPrice = basePrice;
 
@@ -958,7 +969,22 @@ function addBeet() {
 
   saveToStorage();
 
+const marketPriceInput = document.getElementById('marketPrice');
+
+marketPriceInput.value = globalMarketPrice;
+
+marketPriceInput.addEventListener('input', () => {
+  globalMarketPrice = parseInt(marketPriceInput.value) || 0;
+
+  localStorage.setItem(
+    'globalMarketPrice',
+    globalMarketPrice
+  );
+
   renderAll();
+});
+
+renderAll();
 
 }
 
