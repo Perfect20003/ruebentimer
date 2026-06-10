@@ -1,341 +1,322 @@
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🟫 Rübentimer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-const firebaseConfig = {
-  apiKey: "AIzaSyB6dxEUrQsk3FAIHDGA0rObqwXSYE3jt1w",
-  authDomain: "ruebentimer.firebaseapp.com",
-  projectId: "ruebentimer",
-  storageBucket: "ruebentimer.firebasestorage.app",
-  messagingSenderId: "193161065289",
-  appId: "1:193161065289:web:1ec75431795e1c3596a098",
-  measurementId: "G-51F6VB9VP8"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const colRef = collection(db, "beete");
-
-const GROW_INTERVAL  = 48 * 60 * 60 * 1000; // 48 Stunden bis Reife
-const WATER_INTERVAL = 12 * 60 * 60 * 1000; // 12 Stunden Wasser
-const ROT_INTERVAL   = 4 * 24 * 60 * 60 * 1000; // 4 Tage Verdorren
-
-const SHAPE_BONI = {
-  stachelig: { name: 'Stachelig', bonus: 50000 },
-  quadratisch: { name: 'Quadratisch', bonus: 100000 },
-  explosiv: { name: 'Explosiv', bonus: 500000 },
-  lebendig: { name: 'Lebendig', bonus: 1000000 }
-};
-
-let beete = {};
-let activeMutId = null;
-
-const syncDot = document.getElementById('syncDot');
-const syncLabel = document.getElementById('syncLabel');
-const grid = document.getElementById('grid');
-
-onSnapshot(colRef, (snap) => {
-  syncDot.classList.add('connected');
-  syncLabel.textContent = 'Verbunden';
-  beete = {};
-  snap.forEach(d => { beete[d.id] = { id: d.id, ...d.data() }; });
-  renderAll();
-}, (err) => {
-  syncDot.classList.remove('connected');
-  syncLabel.textContent = 'Verbindungsfehler';
-  console.error(err);
-});
-
-function now() { return Date.now(); }
-
-function fmtTime(ms) {
-  if (ms <= 0) return '0s';
-  const h = Math.floor(ms / 3600000);
-  const m = Math.floor((ms % 3600000) / 60000);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
-}
-
-function renderCard(b) {
-  let card = document.getElementById('card-' + b.id);
-  const isNew = !card;
-  if (isNew) {
-    card = document.createElement('div');
-    card.id = 'card-' + b.id;
-    card.className = 'card';
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --card: #0b0e14;
+    --border: #1e2230;
+    --accent: #22c55e;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --ripe: #22c55e;
+    --water: #38bdf8;
+    --warning: #ef4444;
   }
 
-  const planted = b.plantedAt || now();
-  const lastWatered = b.wateredAt || planted;
-  
-  const ripeLeft  = Math.max(0, (planted + GROW_INTERVAL) - now());
-  const isRipe    = ripeLeft <= 0;
-  
-  const waterLeft = Math.max(0, (lastWatered + WATER_INTERVAL) - now());
-  const isWatered = waterLeft > 0;
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  const waterEmptyAt = lastWatered + WATER_INTERVAL;
-  let rotLeft = ROT_INTERVAL;
-  let isRotten = false;
-
-  if (!isWatered) {
-    rotLeft = Math.max(0, (waterEmptyAt + ROT_INTERVAL) - now());
-    if (rotLeft <= 0) isRotten = true;
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
   }
 
-  const ripePct  = Math.min(100, ((now() - planted) / GROW_INTERVAL) * 100);
-  const waterPct = Math.min(100, (waterLeft / WATER_INTERVAL) * 100);
-  const rotPct   = isWatered ? 0 : Math.min(100, ((now() - waterEmptyAt) / ROT_INTERVAL) * 100);
-
-  let statusStr = isRipe ? 'reif' : 'wächst';
-  statusStr += isRotten ? ' + verdorrt' : (isWatered ? ' + bewässert' : ' + trocken');
-
-  // PREISBERECHNUNG (Sichergestellt, dass basePrice immer eine valide Zahl ist)
-  const basePrice = Number(b.basePrice) || 100;
-  const mut = b.mutations || {};
-  let calculatedPrice = basePrice;
-  
-  // 1. Form-Bonus addieren
-  let shapeText = '';
-  if (mut.shapeKey && SHAPE_BONI[mut.shapeKey]) {
-    calculatedPrice += SHAPE_BONI[mut.shapeKey].bonus;
-    shapeText = SHAPE_BONI[mut.shapeKey].name;
+  body::before {
+    content: "";
+    position: fixed;
+    bottom: 0;
+    right: 5%;
+    width: 500px;
+    height: 650px;
+    background-image: url('./image_811360.jpg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: bottom right;
+    mix-blend-mode: luminosity;
+    opacity: 0.07; 
+    pointer-events: none;
+    z-index: -1;
   }
 
-  // 2. Gewichts-Multiplikator berechnen aus Prozentwert
-  const weightPct = Number(mut.weightPct) || 0;
-  if (weightPct > 0) {
-    calculatedPrice *= (1 + (weightPct / 100));
+  header {
+    background: rgba(26, 29, 39, 0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
   }
 
-  // 3. Gold-Multiplikator (10x)
-  if (mut.gold) {
-    calculatedPrice *= 10;
+  .logo { font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    flex-wrap: wrap;
   }
 
-  // Infotexte für die Anzeige bauen
-  const activeMuts = [];
-  if (mut.gold) activeMuts.push('Gold');
-  if (shapeText) activeMuts.push(shapeText);
-  if (weightPct > 0) activeMuts.push(`+${weightPct}% Gew.`);
-  let mutStr = activeMuts.length ? activeMuts.join(', ') : 'Keine';
+  input[type="text"], input[type="number"], select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, select:focus { border-color: var(--accent); }
+  input[type="text"] { width: 180px; }
 
-  card.innerHTML = `
-    <div class="card-header">
-      <span class="card-title" title="${b.name}">${b.name}</span>
-      <span class="status-text">${statusStr}</span>
-    </div>
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 7px 14px;
+    transition: all 0.15s;
+  }
+  button:active { transform: scale(0.97); }
 
-    <div class="card-body-layout">
-      <div class="card-left-cell">
-        <div class="turnip-img-box btn-trigger-mut">
-          ${(mut.gold || mut.shapeKey || weightPct > 0) ? `<div class="multiplier">⭐ Mutiert</div>` : ''}
-          ${mut.gold ? '👑' : '🥬'}
-        </div>
-      </div>
-      <div class="card-right-cell">
-        <div class="stats">
-          <div class="stat-row">
-            <span class="stat-label">Bis reif</span>
-            <span class="stat-value">${isRipe ? 'REIF' : fmtTime(ripeLeft)}</span>
-          </div>
-          <div class="progress-bar"><div class="progress-fill ripe" style="width:${ripePct}%"></div></div>
+  .btn-primary { background: var(--accent); color: #0f1117; }
+  .btn-primary:hover { background: #16a34a; }
 
-          <div class="stat-row">
-            <span class="stat-label">Wasser</span>
-            <span class="stat-value ${isWatered ? 'active-timer' : 'warning'}">${isWatered ? fmtTime(waterLeft) : '0s'}</span>
-          </div>
-          <div class="progress-bar"><div class="progress-fill water" style="width:${waterPct}%"></div></div>
+  .sync-status {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sync-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+  .sync-dot.connected { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
 
-          <div class="stat-row">
-            <span class="stat-label">Verdorrung</span>
-            <span class="stat-value ${isRotten ? 'warning' : ''}">${isWatered ? 'pausiert' : (isRotten ? 'VERDORRT' : fmtTime(rotLeft))}</span>
-          </div>
-          <div class="progress-bar"><div class="progress-fill rot" style="width:${rotPct}%"></div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="stat-row" style="margin-top: 4px;">
-      <span class="stat-label" style="color: var(--muted); font-size: 0.85rem;">Basispreis</span>
-      <input type="number" class="card-input-base input-base-price" value="${basePrice}" min="0">
-    </div>
-
-    <div class="stat-row" style="font-size: 0.85rem;">
-      <span class="stat-label" style="color: var(--muted);">Mutation</span>
-      <span class="stat-value" style="font-weight:500;">${mutStr}</span>
-    </div>
-
-    <div class="stat-row" style="font-size: 0.85rem;">
-      <span class="stat-label" style="color: #f59e0b; font-weight: 600;">Marktwert</span>
-      <span class="stat-value" style="color: #f59e0b; font-weight:700;">${Math.round(calculatedPrice).toLocaleString('de-DE')} 🪙</span>
-    </div>
-
-    <div class="timer-btns">
-      <button class="timer-btn tbtn-water btn-add-w12">💧 12h</button>
-      <button class="timer-btn tbtn-rot btn-add-w24">💧 24h</button>
-      <button class="timer-btn tbtn-neg btn-add-p4">🌱 -4h</button>
-    </div>
-
-    <div class="card-actions">
-      <button class="action-btn btn-rename">Name</button>
-      <button class="action-btn btn-reset">Neu</button>
-      <button class="action-btn btn-action-delete btn-delete">&#128465; Löschen</button>
-    </div>
-  `;
-
-  // Event Listener verknüpfen
-  card.querySelector('.btn-trigger-mut').addEventListener('click', () => openMutModal(b.id));
-  card.querySelector('.btn-add-w12').addEventListener('click', () => addTime(b.id, 'water', 12));
-  card.querySelector('.btn-add-w24').addEventListener('click', () => addTime(b.id, 'water', 24));
-  card.querySelector('.btn-add-p4').addEventListener('click', () => addTime(b.id, 'plant', -4));
-  card.querySelector('.btn-rename').addEventListener('click', () => triggerRename(b.id));
-  card.querySelector('.btn-reset').addEventListener('click', () => resetBeet(b.id));
-  card.querySelector('.btn-delete').addEventListener('click', () => deleteBeet(b.id));
-  
-  card.querySelector('.input-base-price').addEventListener('change', async (e) => {
-    const val = parseInt(e.target.value) || 0;
-    await updateDoc(doc(db, 'beete', b.id), { basePrice: val });
-  });
-
-  if (isNew) grid.appendChild(card);
-}
-
-function renderAll() {
-  const ids = Object.keys(beete);
-
-  [...grid.children].forEach(c => {
-    const id = c.id.replace('card-', '');
-    if (!beete[id]) c.remove();
-  });
-
-  ids.sort((a, b) => (beete[a].plantedAt || 0) - (beete[b].plantedAt || 0))
-     .forEach(id => renderCard(beete[id]));
-
-  document.getElementById('emptyState').style.display = ids.length ? 'none' : 'block';
-}
-
-setInterval(() => {
-  Object.values(beete).forEach(b => {
-    const el = document.getElementById('card-' + b.id);
-    if (el) renderCard(b);
-  });
-}, 1000);
-
-async function addBeet() {
-  const inp = document.getElementById('newName');
-  const name = inp.value.trim();
-  
-  if (!name) {
-    alert('Bitte gib einen Namen für das Beet ein.');
-    return;
+  main {
+    padding: 16px 20px;
+    max-width: 1600px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
   }
 
-  const nameExists = Object.values(beete).some(b => b.name && b.name.toLowerCase() === name.toLowerCase());
-  if (nameExists) {
-    alert(`Ein Beet mit dem Namen "${name}" existiert bereits!`);
-    return;
+  .hint {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 16px;
   }
 
-  const id = 'beet_' + Date.now();
-  try {
-    await setDoc(doc(db, 'beete', id), {
-      name, 
-      plantedAt: now(), 
-      wateredAt: now(), 
-      basePrice: 100, 
-      mutations: { gold: false, shapeKey: "", weightPct: 0 }
-    });
-    inp.value = '';
-  } catch (error) {
-    console.error("Fehler beim Hinzufügen des Beets:", error);
-    alert("Konnte das Beet nicht in Firebase speichern. Überprüfe die Konsole.");
-  }
-}
-
-async function triggerRename(id) {
-  const b = beete[id];
-  if (!b) return;
-  
-  const newName = prompt("Gib einen neuen Namen für das Beet ein:", b.name);
-  if (newName === null) return; 
-  
-  const trimmedName = newName.trim();
-  if (!trimmedName) {
-    alert("Der Name darf nicht leer sein.");
-    return;
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
   }
 
-  const nameExists = Object.values(beete).some(item => item.id !== id && item.name && item.name.toLowerCase() === trimmedName.toLowerCase());
-  if (nameExists) {
-    alert(`Ein Beet mit dem Namen "${trimmedName}" existiert bereits!`);
-    return;
+  .card {
+    background: rgba(11, 14, 20, 0.88);
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
   }
 
-  await updateDoc(doc(db, 'beete', id), { name: trimmedName });
-}
+  .card-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+  }
 
-async function deleteBeet(id) {
-  if (!confirm('Beet löschen?')) return;
-  await deleteDoc(doc(db, 'beete', id));
-}
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+  }
 
-async function resetBeet(id) {
-  await updateDoc(doc(db, 'beete', id), { plantedAt: now(), wateredAt: now(), mutations: { gold: false, shapeKey: "", weightPct: 0 }, basePrice: 100 });
-}
+  .status-text {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
 
-async function addTime(id, field, hours) {
-  const b = beete[id];
-  if (!b) return;
-  const key = field === 'water' ? 'wateredAt' : 'plantedAt';
-  const cur = b[key] || now();
-  await updateDoc(doc(db, 'beete', id), { [key]: cur + hours * 3600000 });
-}
+  .card-body-layout {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
 
-function openMutModal(id) {
-  activeMutId = id;
-  const b = beete[id];
-  document.getElementById('mutModalTitle').textContent = b.name || "Unbekannt";
-  const mut = b.mutations || {};
-  
-  document.getElementById('mut-gold').checked = !!mut.gold;
-  document.getElementById('mut-shape-select').value = mut.shapeKey || "";
-  document.getElementById('mut-weight-pct').value = mut.weightPct !== undefined ? mut.weightPct : "";
-  
-  document.getElementById('mutModal').style.display = 'flex';
-}
+  .card-left-cell { flex-shrink: 0; }
+  .card-right-cell { flex-grow: 1; }
 
-function closeMutModal() {
-  document.getElementById('mutModal').style.display = 'none';
-  activeMutId = null;
-}
+  .turnip-img-box {
+    width: 58px;
+    height: 58px;
+    background: #151922;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    border: 1px solid #1e2433;
+  }
 
-async function saveMutation() {
-  if (!activeMutId) return;
-  
-  const gold = document.getElementById('mut-gold').checked;
-  const shapeKey = document.getElementById('mut-shape-select').value;
-  const weightPct = parseInt(document.getElementById('mut-weight-pct').value) || 0;
+  .multiplier {
+    position: absolute;
+    top: -4px; left: -4px;
+    background: #f59e0b;
+    color: #0f1117;
+    font-size: 0.6rem;
+    font-weight: 800;
+    border-radius: 50%;
+    padding: 2px 4px;
+    display: flex; align-items: center; justify-content: center;
+    white-space: nowrap;
+  }
 
-  const mutations = {
-    gold,
-    shapeKey,
-    weightPct
-  };
+  .stats { display: flex; flex-direction: column; gap: 4px; width: 100%; }
 
-  await updateDoc(doc(db, 'beete', activeMutId), { mutations });
-}
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+  }
+  .stat-label { color: #fff; }
+  .stat-value { font-weight: 700; color: #fff; }
+  .stat-value.active-timer { color: #38bdf8; }
+  .stat-value.warning { color: var(--warning); }
 
-document.getElementById('btnAddBeet').addEventListener('click', addBeet);
-document.getElementById('newName').addEventListener('keydown', e => {
-  if (e.key === 'Enter') addBeet();
-});
-document.getElementById('btnCloseModal').addEventListener('click', closeMutModal);
-document.getElementById('mutModal').addEventListener('click', (e) => {
-  if (e.target === document.getElementById('mutModal')) closeMutModal();
-});
+  .progress-bar {
+    width: 100%;
+    height: 5px;
+    background: #151922;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+  .progress-fill { height: 100%; border-radius: 4px; width: 0%; }
+  .progress-fill.ripe { background: var(--ripe); }
+  .progress-fill.water { background: var(--water); }
+  .progress-fill.rot { background: var(--warning); }
 
-document.getElementById('mut-gold').addEventListener('change', saveMutation);
-document.getElementById('mut-shape-select').addEventListener('change', saveMutation);
-document.getElementById('mut-weight-pct').addEventListener('input', saveMutation);
-</script>
+  .timer-btns { display: flex; gap: 6px; }
+  .timer-btn {
+    flex: 1;
+    padding: 8px 4px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-radius: 8px;
+    color: #fff;
+    text-align: center;
+    cursor: pointer;
+  }
+  .tbtn-water { background: #16a34a; }
+  .tbtn-water:hover { background: #15803d; }
+  .tbtn-rot { background: #d97706; }
+  .tbtn-rot:hover { background: #b45309; }
+  .tbtn-neg { background: #7c3aed; }
+  .tbtn-neg:hover { background: #6d28d9; }
+
+  .card-actions { display: flex; gap: 6px; }
+  .action-btn {
+    padding: 10px 4px;
+    background: #1f2431;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 8px;
+    text-align: center;
+    flex: 1;
+    cursor: pointer;
+  }
+  .action-btn:hover { background: #2d3446; }
+  .btn-action-delete { flex: 1.3; background: #dc2626; color: white; }
+  .btn-action-delete:hover { background: #b91c1c; }
+
+  .card-input-base {
+    width: 75px;
+    padding: 3px 6px;
+    font-size: 0.8rem;
+    text-align: right;
+  }
+
+  /* Mutation Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal {
+    background: #1a1d27;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    width: 340px;
+    max-width: 95vw;
+  }
+  .modal h3 { font-size: 1rem; margin-bottom: 16px; color: #fff; }
+  .mutation-options { display: flex; flex-direction: column; gap: 12px; }
+  .mutation-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    color: #fff;
+  }
+  .mutation-option label { display: flex; align-items: center; gap: 8px; cursor: pointer; width: 100%; }
+  .mutation-option input[type="checkbox"] { cursor: pointer; accent-color: var(--accent); width: 16px; height: 16px; }
+  .mutation-option input[type="number"] { width: 70px; padding: 4px; font-size: 0.8rem; text-align: right; }
+  .mutation-option select { width: 130px; padding: 4px; font-size: 0.8rem; }
+  .modal-btns { margin-top: 16px; display: flex; justify-content: flex-end; }
+  .btn-close-modal { background: #2a2f45; color: #fff; cursor: pointer; }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state .emoji { font-size: 3rem; margin-bottom: 12px; }
+  .empty-state p { font-size: 0.9rem; }
+</style>
+</head>
