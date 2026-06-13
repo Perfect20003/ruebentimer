@@ -214,6 +214,69 @@
   .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
   .empty-state .emoji { font-size: 3rem; margin-bottom: 12px; }
   .empty-state p { font-size: 0.9rem; }
+
+  /* Preisverlauf */
+  .history-panel {
+    background: rgba(11, 14, 20, 0.88);
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .history-header h2 { font-size: 1rem; font-weight: 700; color: #fff; }
+  .btn-clear-history {
+    background: #1f2431; color: #fff; font-size: 0.75rem; font-weight: 600;
+    padding: 6px 10px; border-radius: 8px; cursor: pointer;
+  }
+  .btn-clear-history:hover { background: #2d3446; }
+
+  .history-body {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 14px;
+    align-items: stretch;
+  }
+  @media (max-width: 700px) {
+    .history-body { grid-template-columns: 1fr; }
+  }
+
+  .chart-wrap { position: relative; min-height: 160px; }
+  .chart-wrap svg { width: 100%; height: 160px; display: block; }
+  .chart-empty {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); font-size: 0.82rem;
+  }
+
+  .history-list {
+    list-style: none;
+    max-height: 160px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-right: 4px;
+  }
+  .history-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    padding: 5px 8px;
+    border-radius: 6px;
+    background: #151922;
+  }
+  .history-price { font-weight: 700; color: #f59e0b; }
+  .history-date { color: var(--muted); }
+  .history-empty { color: var(--muted); justify-content: center; }
 </style>
 </head>
 <body>
@@ -240,6 +303,21 @@
 
 <main>
   <p class="hint">Auf das Icon klicken = Mutationen öffnen und Marktwerte berechnen. Alle Änderungen werden live mit allen geteilt.</p>
+
+  <section class="history-panel">
+    <div class="history-header">
+      <h2>📈 Marktpreis-Verlauf</h2>
+      <button class="btn-clear-history" id="btnClearHistory">Verlauf leeren</button>
+    </div>
+    <div class="history-body">
+      <div class="chart-wrap">
+        <svg id="priceChart" viewBox="0 0 600 160" preserveAspectRatio="none"></svg>
+        <div class="chart-empty" id="chartEmpty">Noch keine Preise erfasst.</div>
+      </div>
+      <ul class="history-list" id="historyList"></ul>
+    </div>
+  </section>
+
   <div class="grid" id="grid"></div>
   <div class="empty-state" id="emptyState" style="display:none">
     <div class="emoji">🌱</div>
@@ -283,7 +361,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, addDoc, query, orderBy, limit, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB6dxEUrQsk3FAIHDGA0rObqwXSYE3jt1w",
@@ -299,6 +377,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const colRef = collection(db, "beete");
 const settingsRef = doc(db, "settings", "global");
+const historyColRef = collection(db, "settings", "global", "priceHistory");
 
 let beete = {};
 let activeMutId = null;
@@ -487,6 +566,61 @@ function renderAll() {
   document.getElementById('emptyState').style.display = ids.length ? 'none' : 'block';
 }
 
+function renderHistoryList(entriesDesc) {
+  const list = document.getElementById('historyList');
+  if (!entriesDesc.length) {
+    list.innerHTML = '<li class="history-empty">Noch keine Preise erfasst.</li>';
+    return;
+  }
+  list.innerHTML = entriesDesc.map(e => {
+    const dateStr = new Date(e.timestamp).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
+    return `<li><span class="history-price">${Math.round(e.price).toLocaleString('de-DE')} 🪙</span><span class="history-date">${dateStr}</span></li>`;
+  }).join('');
+}
+
+function renderPriceChart(entriesAsc) {
+  const svg = document.getElementById('priceChart');
+  const chartEmpty = document.getElementById('chartEmpty');
+
+  if (!entriesAsc.length) {
+    svg.innerHTML = '';
+    chartEmpty.style.display = 'flex';
+    return;
+  }
+  chartEmpty.style.display = 'none';
+
+  const W = 600, H = 160, PAD = 30;
+  const prices = entriesAsc.map(e => e.price);
+  const minP = Math.min(...prices);
+  const maxP = Math.max(...prices);
+  const range = (maxP - minP) || 1;
+
+  const stepX = entriesAsc.length > 1 ? (W - PAD * 2) / (entriesAsc.length - 1) : 0;
+
+  const points = entriesAsc.map((e, i) => {
+    const x = entriesAsc.length > 1 ? PAD + i * stepX : W / 2;
+    const y = H - PAD - ((e.price - minP) / range) * (H - PAD * 2);
+    return { x, y, e };
+  });
+
+  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  const areaD = `${pathD} L ${points[points.length - 1].x.toFixed(1)} ${H - PAD} L ${points[0].x.toFixed(1)} ${H - PAD} Z`;
+
+  const circles = points.map(p => {
+    const dateStr = new Date(p.e.timestamp).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
+    const priceStr = Math.round(p.e.price).toLocaleString('de-DE');
+    return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="var(--accent)" stroke="#0f1117" stroke-width="1.5"><title>${dateStr} — ${priceStr} 🪙</title></circle>`;
+  }).join('');
+
+  svg.innerHTML = `
+    <path d="${areaD}" fill="rgba(34,197,94,0.12)" stroke="none"></path>
+    <path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="2"></path>
+    ${circles}
+    <text x="4" y="14" fill="var(--muted)" font-size="11">${maxP.toLocaleString('de-DE')} 🪙</text>
+    <text x="4" y="${H - 6}" fill="var(--muted)" font-size="11">${minP.toLocaleString('de-DE')} 🪙</text>
+  `;
+}
+
 // Live-Tick jede Sekunde
 setInterval(() => {
   Object.values(beete).forEach(b => {
@@ -522,6 +656,15 @@ onSnapshot(settingsRef, (snap) => {
       renderAll();
     }
   }
+});
+
+// --- Firestore: Live-Sync des Preisverlaufs ---
+const historyQuery = query(historyColRef, orderBy('timestamp', 'desc'), limit(30));
+onSnapshot(historyQuery, (snap) => {
+  const entriesDesc = [];
+  snap.forEach(d => entriesDesc.push(d.data()));
+  renderHistoryList(entriesDesc);
+  renderPriceChart([...entriesDesc].reverse());
 });
 
 async function addBeet() {
@@ -645,7 +788,17 @@ marketPriceInput.addEventListener('input', () => {
 marketPriceInput.addEventListener('change', async () => {
   globalMarketPrice = parseInt(marketPriceInput.value) || 0;
   await setDoc(settingsRef, { marketPrice: globalMarketPrice }, { merge: true });
+  await addDoc(historyColRef, { price: globalMarketPrice, timestamp: now() });
 });
+
+async function clearPriceHistory() {
+  if (!confirm('Preisverlauf wirklich komplett löschen?')) return;
+  const snap = await getDocs(historyColRef);
+  const batch = writeBatch(db);
+  snap.forEach(d => batch.delete(d.ref));
+  await batch.commit();
+}
+document.getElementById('btnClearHistory').addEventListener('click', clearPriceHistory);
 
 renderAll();
 </script>
