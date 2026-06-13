@@ -645,7 +645,24 @@ onSnapshot(colRef, (snap) => {
 });
 
 // --- Firestore: Live-Sync des globalen Marktpreises ---
+let settingsLoaded = false;
+let settingsDocExists = false;
+let historyLoaded = false;
+let historyCount = 0;
+let historySeeded = false;
+
+function maybeSeedHistory() {
+  if (!settingsLoaded || !historyLoaded || historySeeded) return;
+  if (settingsDocExists && globalMarketPrice > 0 && historyCount === 0) {
+    historySeeded = true;
+    addDoc(historyColRef, { price: globalMarketPrice, timestamp: now() })
+      .catch(err => console.error('Konnte Preisverlauf nicht initial befüllen:', err));
+  }
+}
+
 onSnapshot(settingsRef, (snap) => {
+  settingsLoaded = true;
+  settingsDocExists = snap.exists();
   if (snap.exists()) {
     const data = snap.data();
     if (typeof data.marketPrice === 'number') {
@@ -656,15 +673,28 @@ onSnapshot(settingsRef, (snap) => {
       renderAll();
     }
   }
+  maybeSeedHistory();
+}, (err) => {
+  console.error('Marktpreis-Sync-Fehler:', err);
 });
 
 // --- Firestore: Live-Sync des Preisverlaufs ---
 const historyQuery = query(historyColRef, orderBy('timestamp', 'desc'), limit(30));
 onSnapshot(historyQuery, (snap) => {
+  historyLoaded = true;
   const entriesDesc = [];
   snap.forEach(d => entriesDesc.push(d.data()));
+  historyCount = entriesDesc.length;
   renderHistoryList(entriesDesc);
   renderPriceChart([...entriesDesc].reverse());
+  maybeSeedHistory();
+}, (err) => {
+  console.error('Preisverlauf-Sync-Fehler:', err);
+  const list = document.getElementById('historyList');
+  const chartEmpty = document.getElementById('chartEmpty');
+  list.innerHTML = '<li class="history-empty">Fehler beim Laden – Firestore-Regeln prüfen (Konsole)</li>';
+  chartEmpty.textContent = 'Fehler beim Laden – Firestore-Regeln prüfen';
+  chartEmpty.style.display = 'flex';
 });
 
 async function addBeet() {
