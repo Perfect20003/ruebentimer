@@ -99,6 +99,16 @@
   .btn-primary { background: var(--accent); color: #0f1117; }
   .btn-primary:hover { background: #16a34a; }
 
+  .total-value {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #f59e0b;
+    background: rgba(245,158,11,0.08);
+    padding: 7px 12px;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+
   .sync-status {
     margin-left: auto;
     font-size: 0.75rem;
@@ -186,14 +196,16 @@
   .progress-fill.water { background: var(--water); }
   .progress-fill.rot { background: var(--warning); }
 
-  .timer-btns { display: flex; gap: 6px; }
-  .timer-btn { flex: 1; padding: 8px 4px; font-size: 0.85rem; font-weight: 700; border-radius: 8px; color: #fff; text-align: center; cursor: pointer; }
+  .timer-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .timer-btn { flex: 1 1 calc(25% - 5px); min-width: 56px; padding: 8px 4px; font-size: 0.85rem; font-weight: 700; border-radius: 8px; color: #fff; text-align: center; cursor: pointer; }
   .tbtn-water { background: #16a34a; }
   .tbtn-water:hover { background: #15803d; }
   .tbtn-rot { background: #d97706; }
   .tbtn-rot:hover { background: #b45309; }
   .tbtn-neg { background: #7c3aed; }
   .tbtn-neg:hover { background: #6d28d9; }
+  .tbtn-dry { background: #475569; }
+  .tbtn-dry:hover { background: #334155; }
 
   .card-actions { display: flex; gap: 6px; }
   .action-btn { padding: 10px 4px; background: #1f2431; color: #fff; font-size: 0.85rem; font-weight: 600; border-radius: 8px; text-align: center; flex: 1; cursor: pointer; }
@@ -294,6 +306,7 @@
      style="width:140px;"
    />
    <button class="btn-primary" id="btnAddBeet">+ Beet hinzufügen</button>
+   <div class="total-value" id="totalValue">Gesamtwert: <span id="totalValueAmount">0 🪙</span></div>
   </div>
   <div class="sync-status" id="syncStatus">
     <div class="sync-dot"></div>
@@ -410,6 +423,30 @@ function fmtTime(ms) {
   return `${m}m`;
 }
 
+// Berechnet den Marktwert einer Rübe anhand des globalen Marktpreises und ihrer Mutationen
+function calcPrice(b) {
+  const mut = b.mutations || {};
+  let price = globalMarketPrice;
+
+  // 1. Form-Bonus addieren
+  if (mut.shapeKey && SHAPE_BONI[mut.shapeKey]) {
+    price += SHAPE_BONI[mut.shapeKey].bonus;
+  }
+
+  // 2. Gewichts-Multiplikator anwenden
+  const weightMult = parseFloat(mut.weightMult) || 1;
+  if (weightMult > 1) {
+    price *= weightMult;
+  }
+
+  // 3. Gold-Multiplikator anwenden (Mal 10)
+  if (mut.gold) {
+    price *= 10;
+  }
+
+  return price;
+}
+
 function renderCard(b) {
   let card = document.getElementById('card-' + b.id);
   const isNew = !card;
@@ -444,29 +481,16 @@ function renderCard(b) {
   let statusStr = isRipe ? 'reif' : 'wächst';
   statusStr += isRotten ? ' + verdorrt' : (isWatered ? ' + bewässert' : ' + trocken');
 
-  // --- PREISBERECHNUNG START ---
-  const basePrice = globalMarketPrice;
-  let calculatedPrice = basePrice;
+  // --- PREISBERECHNUNG ---
+  const calculatedPrice = calcPrice(b);
   const mut = b.mutations || {};
 
-  // 1. Form-Bonus addieren
+  // Form-Name für die Anzeige ermitteln
   let shapeName = '';
   if (mut.shapeKey && SHAPE_BONI[mut.shapeKey]) {
-    calculatedPrice += SHAPE_BONI[mut.shapeKey].bonus;
     shapeName = SHAPE_BONI[mut.shapeKey].name;
   }
-
-  // 2. Gewichts-Multiplikator anwenden
   const weightMult = parseFloat(mut.weightMult) || 1;
-  if (weightMult > 1) {
-    calculatedPrice *= weightMult;
-  }
-
-  // 3. Gold-Multiplikator anwenden (Mal 10)
-  if (mut.gold) {
-    calculatedPrice *= 10;
-  }
-  // --- PREISBERECHNUNG ENDE ---
 
   // Mutationstext für die UI zusammenbauen
   let mutStr = 'Keine';
@@ -531,6 +555,7 @@ function renderCard(b) {
     <div class="timer-btns" style="margin-top:4px;">
       <button class="timer-btn tbtn-water btn-add-w12">💧 12h</button>
       <button class="timer-btn tbtn-rot btn-add-w24">💧 24h</button>
+      <button class="timer-btn tbtn-dry btn-remove-water" title="Bewässerung manuell entfernen / als trocken markieren">🚱 0h</button>
       <button class="timer-btn tbtn-neg btn-add-p4">🌱 -4h</button>
     </div>
 
@@ -544,6 +569,7 @@ function renderCard(b) {
   card.querySelector('.btn-trigger-mut').addEventListener('click', () => openMutModal(b.id));
   card.querySelector('.btn-add-w12').addEventListener('click', () => addTime(b.id, 'water', 12));
   card.querySelector('.btn-add-w24').addEventListener('click', () => addTime(b.id, 'water', 24));
+  card.querySelector('.btn-remove-water').addEventListener('click', () => removeWater(b.id));
   card.querySelector('.btn-add-p4').addEventListener('click', () => addTime(b.id, 'plant', -4));
   card.querySelector('.btn-rename').addEventListener('click', () => triggerRename(b.id));
   card.querySelector('.btn-reset').addEventListener('click', () => resetBeet(b.id));
@@ -560,10 +586,19 @@ function renderAll() {
     if (!beete[id]) c.remove();
   });
 
-  ids.sort((a, b) => (beete[a].plantedAt || 0) - (beete[b].plantedAt || 0))
+  ids.sort((a, b) => (beete[a].name || '').localeCompare(beete[b].name || '', 'de', { numeric: true, sensitivity: 'base' }))
      .forEach(id => renderCard(beete[id]));
 
   document.getElementById('emptyState').style.display = ids.length ? 'none' : 'block';
+
+  renderTotalValue();
+}
+
+// Summiert die Marktwerte aller Beete und zeigt sie im Header an
+function renderTotalValue() {
+  const total = Object.values(beete).reduce((sum, b) => sum + calcPrice(b), 0);
+  const el = document.getElementById('totalValueAmount');
+  if (el) el.textContent = Math.round(total).toLocaleString('de-DE') + ' 🪙';
 }
 
 function renderHistoryList(entriesDesc) {
@@ -760,6 +795,13 @@ async function addTime(id, field, hours) {
   const key = field === 'water' ? 'wateredAt' : 'plantedAt';
   const cur = b[key] || now();
   await updateDoc(doc(db, 'beete', id), { [key]: cur + hours * 3600000 });
+}
+
+// Setzt die Bewässerung manuell auf "trocken" (Wasser-Timer auf 0, Verdorrungs-Timer startet frisch)
+async function removeWater(id) {
+  const b = beete[id];
+  if (!b) return;
+  await updateDoc(doc(db, 'beete', id), { wateredAt: now() - WATER_INTERVAL });
 }
 
 function openMutModal(id) {
