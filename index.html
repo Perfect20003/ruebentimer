@@ -354,13 +354,14 @@
   <div class="header-controls">
    <input type="text" id="newName" placeholder="Beetname eingeben..." />
    <input
-     type="number"
+     type="text"
      id="marketPrice"
      placeholder="Marktpreis"
-     value="100000"
-     min="0"
+     value="100.000"
+     inputmode="numeric"
      style="width:140px;"
    />
+   <button class="btn-primary" id="btnConfirmPrice" title="Marktpreis übernehmen">✓</button>
    <button class="btn-primary" id="btnAddBeet">+ Beet hinzufügen</button>
    <div class="total-value" id="totalValue">Gesamtwert: <span id="totalValueAmount">0</span></div>
   </div>
@@ -486,6 +487,16 @@ function fmtTime(ms) {
   const m = Math.floor((ms % 3600000) / 60000);
   if (h > 0) return `${h}h ${m}m`;
   return `${m}m`;
+}
+
+// Formatiert eine Zahl mit Tausenderpunkten (z.B. 100000 -> "100.000")
+function formatNumber(n) {
+  return Math.round(n).toLocaleString('de-DE');
+}
+
+// Liest den Marktpreis aus dem Eingabefeld (entfernt Tausenderpunkte)
+function parsePriceInput(value) {
+  return parseInt(String(value).replace(/\./g, ''), 10) || 0;
 }
 
 // Berechnet den Marktwert einer Rübe anhand des globalen Marktpreises und ihrer Mutationen
@@ -725,11 +736,15 @@ function renderPriceChart(entriesAsc) {
   const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
   const areaD = `${pathD} L ${points[points.length - 1].x.toFixed(1)} ${H - PAD_BOTTOM} L ${points[0].x.toFixed(1)} ${H - PAD_BOTTOM} Z`;
 
+  const labelStep = Math.max(1, Math.ceil(points.length / 12));
+
   const elements = points.map((p, i) => {
+    const showLabel = (i % labelStep === 0) || i === points.length - 1;
     const shortDateStr = `${p.e.timestamp ? new Date(p.e.timestamp).getDate() : ''}.${p.e.timestamp ? new Date(p.e.timestamp).getMonth() + 1 : ''}`;
+    const label = showLabel ? `<text x="${p.x.toFixed(1)}" y="${H - 8}" fill="var(--muted)" font-size="12" font-weight="600" text-anchor="middle">${shortDateStr}</text>` : '';
     return `
       <circle class="chart-point" data-index="${i}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="var(--accent)" stroke="#0f1117" stroke-width="1.5"></circle>
-      <text x="${p.x.toFixed(1)}" y="${H - 8}" fill="var(--muted)" font-size="12" font-weight="600" text-anchor="middle">${shortDateStr}</text>
+      ${label}
     `;
   }).join('');
 
@@ -821,7 +836,7 @@ onSnapshot(settingsRef, (snap) => {
     if (typeof data.marketPrice === 'number') {
       globalMarketPrice = data.marketPrice;
       if (document.activeElement !== marketPriceInput) {
-        marketPriceInput.value = globalMarketPrice;
+        marketPriceInput.value = formatNumber(globalMarketPrice);
       }
       renderAll();
     }
@@ -832,7 +847,7 @@ onSnapshot(settingsRef, (snap) => {
 });
 
 // --- Firestore: Live-Sync des Preisverlaufs ---
-const historyQuery = query(historyColRef, orderBy('timestamp', 'desc'), limit(30));
+const historyQuery = query(historyColRef, orderBy('timestamp', 'desc'), limit(60));
 onSnapshot(historyQuery, (snap) => {
   historyLoaded = true;
   const entriesDesc = [];
@@ -980,13 +995,27 @@ document.getElementById('mut-gold').addEventListener('change', saveMutation);
 document.getElementById('mut-shape-select').addEventListener('change', saveMutation);
 document.getElementById('mut-weight-mult').addEventListener('input', saveMutation);
 
-// Marktpreis: lokal sofort anwenden, bei Bestätigung (Enter/Blur) mit allen synchronisieren
+// Marktpreis: live formatieren (Tausenderpunkte) und lokal anwenden,
+// Sync mit allen + Verlaufseintrag nur über den Haken-Button.
 marketPriceInput.addEventListener('input', () => {
-  globalMarketPrice = parseInt(marketPriceInput.value) || 0;
+  const cursorPos = marketPriceInput.selectionStart;
+  const oldLength = marketPriceInput.value.length;
+
+  globalMarketPrice = parsePriceInput(marketPriceInput.value);
+  const formatted = formatNumber(globalMarketPrice);
+  marketPriceInput.value = formatted;
+
+  const diff = formatted.length - oldLength;
+  let newPos = Math.max(0, Math.min(formatted.length, cursorPos + diff));
+  marketPriceInput.setSelectionRange(newPos, newPos);
+
   renderAll();
 });
-marketPriceInput.addEventListener('change', async () => {
-  globalMarketPrice = parseInt(marketPriceInput.value) || 0;
+
+document.getElementById('btnConfirmPrice').addEventListener('click', async () => {
+  globalMarketPrice = parsePriceInput(marketPriceInput.value);
+  marketPriceInput.value = formatNumber(globalMarketPrice);
+  renderAll();
   await setDoc(settingsRef, { marketPrice: globalMarketPrice }, { merge: true });
   await addDoc(historyColRef, { price: globalMarketPrice, timestamp: now() });
 });
