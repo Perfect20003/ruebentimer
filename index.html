@@ -380,7 +380,7 @@
     </div>
     <div class="history-body">
       <div class="chart-wrap">
-        <svg id="priceChart" viewBox="0 0 600 160" preserveAspectRatio="none"></svg>
+        <svg id="priceChart" viewBox="0 0 600 160"></svg>
         <div class="chart-empty" id="chartEmpty">Noch keine Preise erfasst.</div>
         <div class="chart-tooltip" id="chartTooltip"></div>
       </div>
@@ -456,6 +456,7 @@ let globalMarketPrice = 100000;
 const GROW_INTERVAL  = 48 * 60 * 60 * 1000;
 const WATER_INTERVAL = 12 * 60 * 60 * 1000;
 const ROT_INTERVAL   = 4 * 24 * 60 * 60 * 1000;
+const DEFAULT_WATER_DURATION = 24 * 60 * 60 * 1000; // "Neu"/neues Beet startet mit 24h gegossen
 
 // Form-Boni Definitionen
 const SHAPE_BONI = {
@@ -685,7 +686,10 @@ function renderHistoryList(entriesDesc) {
   }).join('');
 }
 
+let lastPriceEntriesAsc = [];
+
 function renderPriceChart(entriesAsc) {
+  lastPriceEntriesAsc = entriesAsc;
   const svg = document.getElementById('priceChart');
   const chartEmpty = document.getElementById('chartEmpty');
   const tooltip = document.getElementById('chartTooltip');
@@ -698,7 +702,13 @@ function renderPriceChart(entriesAsc) {
   }
   chartEmpty.style.display = 'none';
 
-  const W = 600, H = 160, PAD = 20, PAD_BOTTOM = 24;
+  // viewBox an die tatsächliche Breite anpassen (1 Einheit = 1px), damit Kreise/Text
+  // nicht verzerrt ("gequetscht") werden.
+  const H = 160, PAD = 26, PAD_BOTTOM = 30;
+  const rectW = svg.getBoundingClientRect().width;
+  const W = rectW > 0 ? rectW : 600;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
   const prices = entriesAsc.map(e => e.price);
   const minP = Math.min(...prices);
   const maxP = Math.max(...prices);
@@ -718,8 +728,8 @@ function renderPriceChart(entriesAsc) {
   const elements = points.map((p, i) => {
     const shortDateStr = `${p.e.timestamp ? new Date(p.e.timestamp).getDate() : ''}.${p.e.timestamp ? new Date(p.e.timestamp).getMonth() + 1 : ''}`;
     return `
-      <circle class="chart-point" data-index="${i}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="var(--accent)" stroke="#0f1117" stroke-width="1.5"></circle>
-      <text x="${p.x.toFixed(1)}" y="${H - 6}" fill="var(--muted)" font-size="9" text-anchor="middle">${shortDateStr}</text>
+      <circle class="chart-point" data-index="${i}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="var(--accent)" stroke="#0f1117" stroke-width="1.5"></circle>
+      <text x="${p.x.toFixed(1)}" y="${H - 8}" fill="var(--muted)" font-size="12" font-weight="600" text-anchor="middle">${shortDateStr}</text>
     `;
   }).join('');
 
@@ -752,10 +762,17 @@ function renderPriceChart(entriesAsc) {
     circle.addEventListener('mousemove', positionTooltip);
     circle.addEventListener('mouseleave', () => {
       tooltip.style.display = 'none';
-      circle.setAttribute('r', '3.5');
+      circle.setAttribute('r', '4');
     });
   });
 }
+
+// Diagramm bei Fenstergrößenänderung neu zeichnen, damit die viewBox stimmt
+let chartResizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(chartResizeTimer);
+  chartResizeTimer = setTimeout(() => renderPriceChart(lastPriceEntriesAsc), 150);
+});
 
 // Live-Tick jede Sekunde
 setInterval(() => {
@@ -850,7 +867,7 @@ async function addBeet() {
 
   const id = 'beet_' + Date.now();
   await setDoc(doc(db, 'beete', id), {
-    name, plantedAt: now(), waterUntil: now() + WATER_INTERVAL, waterDuration: WATER_INTERVAL, mutations: { gold: false, shapeKey: "", weightMult: 1 }
+    name, plantedAt: now(), waterUntil: now() + DEFAULT_WATER_DURATION, waterDuration: DEFAULT_WATER_DURATION, mutations: { gold: false, shapeKey: "", weightMult: 1 }
   });
   inp.value = '';
 }
@@ -885,8 +902,8 @@ async function deleteBeet(id) {
 async function resetBeet(id) {
   await updateDoc(doc(db, 'beete', id), {
     plantedAt: now(),
-    waterUntil: now() + WATER_INTERVAL,
-    waterDuration: WATER_INTERVAL,
+    waterUntil: now() + DEFAULT_WATER_DURATION,
+    waterDuration: DEFAULT_WATER_DURATION,
     mutations: { gold: false, shapeKey: "", weightMult: 1 }
   });
 }
