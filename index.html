@@ -566,9 +566,9 @@ function renderCard(b) {
   // Mutationstext für die UI zusammenbauen
   let mutStr = 'Keine';
   const activeMuts = [];
-  if (mut.gold) activeMuts.push('⭐ Gold');
-  if (shapeName) activeMuts.push(`🔷 ${shapeName}`);
-  if (weightMult > 1) activeMuts.push(`⚖️ Gewicht (${weightMult}x)`);
+  if (mut.gold) activeMuts.push('Gold');
+  if (shapeName) activeMuts.push(`${shapeName}`);
+  if (weightMult > 1) activeMuts.push(`Gewicht (${weightMult}x)`);
   if (activeMuts.length) mutStr = activeMuts.join(', ');
 
   // Gesamt-Anzeige-Multiplikator links auf dem Icon
