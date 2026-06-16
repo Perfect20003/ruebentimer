@@ -219,6 +219,29 @@
   .stat-value { font-weight: 700; color: #fff; }
   .stat-value.active-timer { color: #38bdf8; }
   .stat-value.warning { color: var(--warning); }
+  .stat-value.editable {
+    cursor: pointer;
+    border-bottom: 1px dashed rgba(255,255,255,0.25);
+    transition: border-color 0.15s;
+  }
+  .stat-value.editable:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Zeit-Edit-Modal */
+  .time-modal { width: 300px; }
+  .time-modal h3 { font-size: 1rem; margin-bottom: 12px; color: #fff; }
+  .time-inputs {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+  }
+  .time-inputs input[type="number"] {
+    width: 72px; font-size: 1.1rem; font-weight: 700;
+    text-align: center; padding: 8px;
+  }
+  .time-inputs .sep { font-size: 1.3rem; font-weight: 700; color: var(--muted); }
+  .time-modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+  .btn-apply { background: var(--accent); color: #0f1117; font-weight: 700; padding: 7px 16px; border-radius: 8px; cursor: pointer; }
+  .btn-apply:hover { background: #16a34a; }
+  .btn-cancel-time { background: #2a2f45; color: #fff; padding: 7px 14px; border-radius: 8px; cursor: pointer; }
+  .btn-cancel-time:hover { background: #374151; }
 
   .progress-bar { width: 100%; height: 5px; background: #151922; border-radius: 4px; overflow: hidden; margin-bottom: 4px; }
   .progress-fill { height: 100%; border-radius: 4px; width: 0%; }
@@ -290,8 +313,8 @@
     .history-body { grid-template-columns: 1fr; }
   }
 
-  .chart-wrap { position: relative; min-height: 160px; }
-  .chart-wrap svg { width: 100%; height: 160px; display: block; }
+  .chart-wrap { position: relative; min-height: 220px; }
+  .chart-wrap svg { width: 100%; height: 220px; display: block; }
   .chart-empty {
     position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
@@ -377,7 +400,10 @@
   <section class="history-panel">
     <div class="history-header">
       <h2>Marktpreis-Verlauf</h2>
-      <button class="btn-clear-history" id="btnClearHistory">Verlauf leeren</button>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button class="btn-clear-history" id="btnToggleLog">Log-Skala: Aus</button>
+        <button class="btn-clear-history" id="btnClearHistory">Verlauf leeren</button>
+      </div>
     </div>
     <div class="history-body">
       <div class="chart-wrap">
@@ -395,6 +421,23 @@
     <p>Noch keine Beete. Füge dein erstes Beet hinzu!</p>
   </div>
 </main>
+
+<!-- Zeit manuell setzen -->
+<div class="modal-overlay" id="timeModal" style="display:none">
+  <div class="modal time-modal">
+    <h3 id="timeModalTitle">Zeit anpassen</h3>
+    <div class="time-inputs">
+      <input type="number" id="timeInputH" min="0" max="999" value="0" placeholder="h">
+      <span class="sep">h</span>
+      <input type="number" id="timeInputM" min="0" max="59" value="0" placeholder="min">
+      <span class="sep">min</span>
+    </div>
+    <div class="time-modal-btns">
+      <button class="btn-cancel-time" id="btnCancelTime">Abbrechen</button>
+      <button class="btn-apply" id="btnApplyTime">Übernehmen</button>
+    </div>
+  </div>
+</div>
 
 <div class="modal-overlay" id="mutModal" style="display:none">
   <div class="modal">
@@ -613,13 +656,13 @@ function renderCard(b) {
 
           <div class="stat-row">
             <span class="stat-label">Wasser</span>
-            <span class="stat-value ${isWatered ? 'active-timer' : 'warning'}">${isWatered ? fmtTime(waterLeft) : '0s'}</span>
+            <span class="stat-value editable btn-edit-water ${isWatered ? 'active-timer' : 'warning'}" title="Klicken zum Anpassen">${isWatered ? fmtTime(waterLeft) : '0s'}</span>
           </div>
           <div class="progress-bar"><div class="progress-fill water" style="width:${waterPct}%"></div></div>
 
           <div class="stat-row">
             <span class="stat-label">Verdorrung</span>
-            <span class="stat-value ${isRotten ? 'warning' : ''}">${isWatered ? 'pausiert' : (isRotten ? 'VERDORRT' : fmtTime(rotLeft))}</span>
+            <span class="stat-value ${isWatered ? '' : 'editable btn-edit-rot'} ${isRotten ? 'warning' : ''}" title="${isWatered ? '' : 'Klicken zum Anpassen'}">${isWatered ? 'pausiert' : (isRotten ? 'VERDORRT' : fmtTime(rotLeft))}</span>
           </div>
           <div class="progress-bar"><div class="progress-fill rot" style="width:${rotPct}%"></div></div>
         </div>
@@ -655,6 +698,9 @@ function renderCard(b) {
   card.querySelector('.btn-add-w24').addEventListener('click', () => setWater(b.id, 24));
   card.querySelector('.btn-remove-water').addEventListener('click', () => removeWater(b.id));
   card.querySelector('.btn-add-p4').addEventListener('click', () => addTime(b.id, 'plant', -4));
+
+  card.querySelector('.btn-edit-water')?.addEventListener('click', () => openTimeModal(b.id, 'water', waterLeft));
+  card.querySelector('.btn-edit-rot')?.addEventListener('click', () => openTimeModal(b.id, 'rot', rotLeft));
   card.querySelector('.btn-rename').addEventListener('click', () => triggerRename(b.id));
   card.querySelector('.btn-reset').addEventListener('click', () => resetBeet(b.id));
   card.querySelector('.btn-delete').addEventListener('click', () => deleteBeet(b.id));
@@ -698,6 +744,33 @@ function renderHistoryList(entriesDesc) {
 }
 
 let lastPriceEntriesAsc = [];
+let useLogScale = false;
+
+document.getElementById('btnToggleLog').addEventListener('click', () => {
+  useLogScale = !useLogScale;
+  document.getElementById('btnToggleLog').textContent = `Log-Skala: ${useLogScale ? 'Ein' : 'Aus'}`;
+  renderPriceChart(lastPriceEntriesAsc);
+});
+
+function fmtYLabel(n) {
+  if (n >= 1000000) return (n / 1000000).toLocaleString('de-DE', { maximumFractionDigits: 1 }) + ' Mio';
+  if (n >= 1000) return (n / 1000).toLocaleString('de-DE', { maximumFractionDigits: 0 }) + 'k';
+  return Math.round(n).toLocaleString('de-DE');
+}
+
+function niceYTicks(minV, maxV, count = 5) {
+  const range = maxV - minV || 1;
+  const step = Math.pow(10, Math.floor(Math.log10(range / count)));
+  const mag = range / count / step;
+  const nice = mag < 1.5 ? 1 : mag < 3 ? 2 : mag < 7 ? 5 : 10;
+  const niceStep = nice * step;
+  const ticks = [];
+  const start = Math.ceil(minV / niceStep) * niceStep;
+  for (let t = start; t <= maxV + niceStep * 0.01; t += niceStep) {
+    if (t >= minV - niceStep * 0.01) ticks.push(Math.round(t));
+  }
+  return ticks;
+}
 
 function renderPriceChart(entriesAsc) {
   lastPriceEntriesAsc = entriesAsc;
@@ -713,50 +786,98 @@ function renderPriceChart(entriesAsc) {
   }
   chartEmpty.style.display = 'none';
 
-  // viewBox an die tatsächliche Breite anpassen (1 Einheit = 1px), damit Kreise/Text
-  // nicht verzerrt ("gequetscht") werden.
-  const H = 160, PAD = 26, PAD_BOTTOM = 30;
+  const H = 220, PAD_TOP = 14, PAD_BOTTOM = 28, PAD_RIGHT = 12;
   const rectW = svg.getBoundingClientRect().width;
   const W = rectW > 0 ? rectW : 600;
-  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
 
+  // Y-Achsen-Beschriftungen zuerst messen um PAD_LEFT zu bestimmen
   const prices = entriesAsc.map(e => e.price);
   const minP = Math.min(...prices);
   const maxP = Math.max(...prices);
-  const range = (maxP - minP) || 1;
 
-  const stepX = entriesAsc.length > 1 ? (W - PAD * 2) / (entriesAsc.length - 1) : 0;
+  // Für Log-Skala: sicherstellen, dass minP > 0
+  const logMin = Math.max(1, minP);
+  const logMax = Math.max(logMin + 1, maxP);
+
+  // Y-Wert → SVG-y
+  const toY = (v) => {
+    if (useLogScale) {
+      const lv = Math.log10(Math.max(1, v));
+      const lMin = Math.log10(logMin);
+      const lMax = Math.log10(logMax);
+      return (H - PAD_BOTTOM) - ((lv - lMin) / (lMax - lMin || 1)) * (H - PAD_BOTTOM - PAD_TOP);
+    } else {
+      return (H - PAD_BOTTOM) - ((v - minP) / ((maxP - minP) || 1)) * (H - PAD_BOTTOM - PAD_TOP);
+    }
+  };
+
+  // Ticks berechnen
+  let ticks;
+  if (useLogScale) {
+    // Log-Skala: eine Linie pro Zehnerpotenz
+    const expMin = Math.floor(Math.log10(logMin));
+    const expMax = Math.ceil(Math.log10(logMax));
+    ticks = [];
+    for (let e = expMin; e <= expMax; e++) {
+      ticks.push(Math.pow(10, e));
+    }
+  } else {
+    ticks = niceYTicks(minP, maxP, 5);
+  }
+
+  // Längste Label-Breite schätzen (ca. 7px pro Zeichen)
+  const longestLabel = ticks.reduce((a, t) => { const s = fmtYLabel(t); return s.length > a.length ? s : a; }, '');
+  const PAD_LEFT = Math.max(44, longestLabel.length * 7 + 8);
+
+  const plotW = W - PAD_LEFT - PAD_RIGHT;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const stepX = entriesAsc.length > 1 ? plotW / (entriesAsc.length - 1) : 0;
 
   const points = entriesAsc.map((e, i) => {
-    const x = entriesAsc.length > 1 ? PAD + i * stepX : W / 2;
-    const y = (H - PAD_BOTTOM) - ((e.price - minP) / range) * (H - PAD_BOTTOM - PAD);
+    const x = entriesAsc.length > 1 ? PAD_LEFT + i * stepX : PAD_LEFT + plotW / 2;
+    const y = toY(e.price);
     return { x, y, e };
   });
 
   const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
-  const areaD = `${pathD} L ${points[points.length - 1].x.toFixed(1)} ${H - PAD_BOTTOM} L ${points[0].x.toFixed(1)} ${H - PAD_BOTTOM} Z`;
+  const areaD = `${pathD} L ${points[points.length-1].x.toFixed(1)} ${H - PAD_BOTTOM} L ${points[0].x.toFixed(1)} ${H - PAD_BOTTOM} Z`;
 
-  const labelStep = Math.max(1, Math.ceil(points.length / 12));
-
-  const elements = points.map((p, i) => {
-    const showLabel = (i % labelStep === 0) || i === points.length - 1;
-    const shortDateStr = `${p.e.timestamp ? new Date(p.e.timestamp).getDate() : ''}.${p.e.timestamp ? new Date(p.e.timestamp).getMonth() + 1 : ''}`;
-    const label = showLabel ? `<text x="${p.x.toFixed(1)}" y="${H - 8}" fill="var(--muted)" font-size="12" font-weight="600" text-anchor="middle">${shortDateStr}</text>` : '';
+  // Gridlines + Y-Achsen-Labels
+  const gridLines = ticks.map(t => {
+    const y = toY(t).toFixed(1);
     return `
-      <circle class="chart-point" data-index="${i}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="var(--accent)" stroke="#0f1117" stroke-width="1.5"></circle>
-      ${label}
+      <line x1="${PAD_LEFT}" y1="${y}" x2="${W - PAD_RIGHT}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-width="1"></line>
+      <text x="${PAD_LEFT - 6}" y="${y}" fill="var(--muted)" font-size="11" text-anchor="end" dominant-baseline="middle">${fmtYLabel(t)}</text>
     `;
   }).join('');
 
+  // Datumslabels (ausdünnen)
+  const labelStep = Math.max(1, Math.ceil(points.length / 12));
+  const datumLabels = points.map((p, i) => {
+    if ((i % labelStep !== 0) && i !== points.length - 1) return '';
+    const d = new Date(p.e.timestamp);
+    const s = `${d.getDate()}.${d.getMonth()+1}`;
+    return `<text x="${p.x.toFixed(1)}" y="${H - 8}" fill="var(--muted)" font-size="11" font-weight="600" text-anchor="middle">${s}</text>`;
+  }).join('');
+
+  const circles = points.map((p, i) =>
+    `<circle class="chart-point" data-index="${i}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="var(--accent)" stroke="#0f1117" stroke-width="1.5"></circle>`
+  ).join('');
+
+  // Y-Achsen-Linie
+  const yAxis = `<line x1="${PAD_LEFT}" y1="${PAD_TOP}" x2="${PAD_LEFT}" y2="${H - PAD_BOTTOM}" stroke="rgba(255,255,255,0.12)" stroke-width="1"></line>`;
+
   svg.innerHTML = `
-    <path d="${areaD}" fill="rgba(34,197,94,0.12)" stroke="none"></path>
+    ${gridLines}
+    ${yAxis}
+    <path d="${areaD}" fill="rgba(34,197,94,0.10)" stroke="none"></path>
     <path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="2"></path>
-    ${elements}
+    ${circles}
+    ${datumLabels}
   `;
 
-  // Eigenes Tooltip mit Datum, Preis und Münz-Icon beim Hovern über die Punkte
   const wrap = svg.closest('.chart-wrap');
-
   svg.querySelectorAll('.chart-point').forEach(circle => {
     const p = points[parseInt(circle.dataset.index, 10)];
     const fullDateStr = new Date(p.e.timestamp).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
@@ -771,18 +892,17 @@ function renderPriceChart(entriesAsc) {
     circle.addEventListener('mouseenter', (evt) => {
       tooltip.innerHTML = `<span>${fullDateStr}</span><span class="tooltip-price">${priceStr} <img src="${ICON_COIN}" class="coin-icon" alt=""></span>`;
       tooltip.style.display = 'flex';
-      circle.setAttribute('r', '5');
+      circle.setAttribute('r', '5.5');
       positionTooltip(evt);
     });
     circle.addEventListener('mousemove', positionTooltip);
     circle.addEventListener('mouseleave', () => {
       tooltip.style.display = 'none';
-      circle.setAttribute('r', '4');
+      circle.setAttribute('r', '3.5');
     });
   });
 }
 
-// Diagramm bei Fenstergrößenänderung neu zeichnen, damit die viewBox stimmt
 let chartResizeTimer = null;
 window.addEventListener('resize', () => {
   clearTimeout(chartResizeTimer);
@@ -847,7 +967,7 @@ onSnapshot(settingsRef, (snap) => {
 });
 
 // --- Firestore: Live-Sync des Preisverlaufs ---
-const historyQuery = query(historyColRef, orderBy('timestamp', 'desc'), limit(60));
+const historyQuery = query(historyColRef, orderBy('timestamp', 'desc'), limit(10000));
 onSnapshot(historyQuery, (snap) => {
   historyLoaded = true;
   const entriesDesc = [];
@@ -946,6 +1066,52 @@ async function removeWater(id) {
   if (!b) return;
   await updateDoc(doc(db, 'beete', id), { waterUntil: now(), waterDuration: WATER_INTERVAL });
 }
+
+// --- Zeit-Edit-Modal ---
+let activeTimeEdit = null; // { id, field }
+
+function openTimeModal(id, field, currentMs) {
+  activeTimeEdit = { id, field };
+  const h = Math.floor(currentMs / 3600000);
+  const m = Math.floor((currentMs % 3600000) / 60000);
+  document.getElementById('timeInputH').value = h;
+  document.getElementById('timeInputM').value = m;
+  const labels = { water: 'Wasserzeit anpassen', rot: 'Verdorrungszeit anpassen' };
+  document.getElementById('timeModalTitle').textContent = labels[field] || 'Zeit anpassen';
+  document.getElementById('timeModal').style.display = 'flex';
+  document.getElementById('timeInputH').focus();
+}
+
+function closeTimeModal() {
+  document.getElementById('timeModal').style.display = 'none';
+  activeTimeEdit = null;
+}
+
+async function applyTimeModal() {
+  if (!activeTimeEdit) return;
+  const { id, field } = activeTimeEdit;
+  const h = Math.max(0, parseInt(document.getElementById('timeInputH').value) || 0);
+  const m = Math.max(0, Math.min(59, parseInt(document.getElementById('timeInputM').value) || 0));
+  const ms = (h * 60 + m) * 60000;
+
+  if (field === 'water') {
+    await updateDoc(doc(db, 'beete', id), { waterUntil: now() + ms, waterDuration: Math.max(ms, WATER_INTERVAL) });
+  } else if (field === 'rot') {
+    // Verdorrung: rot läuft ab waterUntil; also waterUntil so setzen dass rotLeft = ms
+    const b = beete[id];
+    const waterUntilNew = (typeof b.waterUntil === 'number' ? b.waterUntil : now());
+    await updateDoc(doc(db, 'beete', id), { waterUntil: now() - ROT_INTERVAL + ms });
+  }
+  closeTimeModal();
+}
+
+document.getElementById('btnApplyTime').addEventListener('click', applyTimeModal);
+document.getElementById('btnCancelTime').addEventListener('click', closeTimeModal);
+document.getElementById('timeModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('timeModal')) closeTimeModal();
+});
+document.getElementById('timeInputH').addEventListener('keydown', (e) => { if (e.key === 'Enter') applyTimeModal(); });
+document.getElementById('timeInputM').addEventListener('keydown', (e) => { if (e.key === 'Enter') applyTimeModal(); });
 
 function openMutModal(id) {
   activeMutId = id;
