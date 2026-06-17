@@ -206,6 +206,18 @@
     backdrop-filter: blur(4px);
     border: 1px solid var(--border);
     border-radius: 14px;
+    cursor: grab;
+  }
+  .card:active { cursor: grabbing; }
+  .card.dragging {
+    opacity: 0.4;
+    border: 2px dashed var(--accent);
+  }
+  .card.drag-over {
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 12px rgba(34,197,94,0.3);
+  }
+  .card-inner {
     padding: 14px;
     display: flex;
     flex-direction: column;
@@ -604,10 +616,12 @@ const historyColRef = collection(db, "settings", "global", "priceHistory");
 const presenceColRef = collection(db, "presence");
 const metaRef = doc(db, "settings", "meta");
 const visitLogRef = collection(db, "visitLog");
+const orderRef = doc(db, "settings", "order");
 
 let beete = {};
 let activeMutId = null;
 let globalMarketPrice = 100000;
+let beetOrder = []; // Manuelle Reihenfolge der Beet-IDs
 
 const GROW_INTERVAL  = 48 * 60 * 60 * 1000;
 const WATER_INTERVAL = 12 * 60 * 60 * 1000;
@@ -751,7 +765,8 @@ function renderCard(b) {
   const isFertActive = fertLeft > 0;
   const fertPct = isFertActive ? Math.min(100, (fertLeft / FERT_INTERVAL) * 100) : 0;
 
-  card.innerHTML = `
+  card.draggable = true;
+  card.innerHTML = `<div class="card-inner">
     <div class="card-header">
       <span class="card-title" title="${b.name}">${b.name}</span>
       <span class="status-text">${statusStr}</span>
@@ -816,7 +831,7 @@ function renderCard(b) {
       <button class="action-btn btn-reset">Neu</button>
       <button class="action-btn btn-action-delete btn-delete">Löschen</button>
     </div>
-  `;
+  </div>`;
 
   card.querySelector('.btn-trigger-mut').addEventListener('click', () => openMutModal(b.id));
   card.querySelector('.btn-add-w12').addEventListener('click', () => setWater(b.id, 12));
@@ -832,7 +847,12 @@ function renderCard(b) {
   card.querySelector('.btn-reset').addEventListener('click', () => resetBeet(b.id));
   card.querySelector('.btn-delete').addEventListener('click', () => deleteBeet(b.id));
 
-  if (isNew) grid.appendChild(card);
+  if (isNew) {
+    grid.appendChild(card);
+    setupDragDrop(card);
+  } else {
+    setupDragDrop(card);
+  }
 }
 
 function renderAll() {
@@ -843,11 +863,17 @@ function renderAll() {
     if (!beete[id]) c.remove();
   });
 
-  ids.sort((a, b) => (beete[a].name || '').localeCompare(beete[b].name || '', 'de', { numeric: true, sensitivity: 'base' }))
-     .forEach(id => renderCard(beete[id]));
+  // Gespeicherte Reihenfolge nutzen, neue Beete ans Ende
+  const orderedIds = [
+    ...beetOrder.filter(id => beete[id]),
+    ...ids.filter(id => !beetOrder.includes(id)).sort((a, b) =>
+      (beete[a].name || '').localeCompare(beete[b].name || '', 'de', { numeric: true, sensitivity: 'base' })
+    )
+  ];
+
+  orderedIds.forEach(id => renderCard(beete[id]));
 
   document.getElementById('emptyState').style.display = ids.length ? 'none' : 'block';
-
   renderTotalValue();
 }
 
@@ -1065,6 +1091,63 @@ onSnapshot(colRef, (snap) => {
   syncLabel.textContent = 'Verbindungsfehler';
   console.error(err);
 });
+
+// --- Firestore: Reihenfolge sync ---
+onSnapshot(orderRef, (snap) => {
+  if (snap.exists() && Array.isArray(snap.data().order)) {
+    beetOrder = snap.data().order;
+  } else {
+    beetOrder = [];
+  }
+  renderAll();
+});
+
+async function saveOrder() {
+  const ids = [...grid.children].map(c => c.id.replace('card-', '')).filter(id => beete[id]);
+  beetOrder = ids;
+  await setDoc(orderRef, { order: ids }, { merge: true });
+}
+
+// --- Drag & Drop ---
+let dragSrcId = null;
+
+function setupDragDrop(card) {
+  card.addEventListener('dragstart', (e) => {
+    dragSrcId = card.id.replace('card-', '');
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  card.addEventListener('dragend', () => {
+    card.classList.remove('dragging');
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('drag-over'));
+    saveOrder();
+  });
+  card.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (card.id !== 'card-' + dragSrcId) {
+      card.classList.add('drag-over');
+    }
+  });
+  card.addEventListener('dragleave', () => {
+    card.classList.remove('drag-over');
+  });
+  card.addEventListener('drop', (e) => {
+    e.preventDefault();
+    card.classList.remove('drag-over');
+    if (!dragSrcId || card.id === 'card-' + dragSrcId) return;
+    const srcCard = document.getElementById('card-' + dragSrcId);
+    if (!srcCard) return;
+    const cards = [...grid.children];
+    const srcIdx = cards.indexOf(srcCard);
+    const tgtIdx = cards.indexOf(card);
+    if (srcIdx < tgtIdx) {
+      grid.insertBefore(srcCard, card.nextSibling);
+    } else {
+      grid.insertBefore(srcCard, card);
+    }
+  });
+}
 
 // --- Firestore: Live-Sync des globalen Marktpreises ---
 let settingsLoaded = false;
