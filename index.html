@@ -140,6 +140,15 @@
     box-shadow: 0 0 6px var(--warning);
   }
 
+  .presence-info {
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .presence-info span { white-space: nowrap; }
+
   main {
     padding: 16px 20px;
     max-width: 1600px;
@@ -392,10 +401,13 @@
     <div class="sync-dot"></div>
     <span id="syncLabel">Verbinde…</span>
   </div>
+  <div class="presence-info" id="presenceInfo" style="display:none">
+    <span id="onlineCount" title="Aktive Nutzer">👥 –</span>
+    <span id="lastVisit" title="Letzter Besuch"></span>
+  </div>
 </header>
 
 <main>
-  <p class="hint">Auf das Icon klicken = Mutationen öffnen und Marktwerte berechnen. Alle Änderungen werden live mit allen geteilt.</p>
 
   <section class="history-panel">
     <div class="history-header">
@@ -495,6 +507,8 @@ const db = getFirestore(app);
 const colRef = collection(db, "beete");
 const settingsRef = doc(db, "settings", "global");
 const historyColRef = collection(db, "settings", "global", "priceHistory");
+const presenceColRef = collection(db, "presence");
+const metaRef = doc(db, "settings", "meta");
 
 let beete = {};
 let activeMutId = null;
@@ -1202,6 +1216,59 @@ async function clearPriceHistory() {
 document.getElementById('btnClearHistory').addEventListener('click', clearPriceHistory);
 
 renderAll();
+
+// --- Presence: Online-Zähler und letzter Besuch ---
+const SESSION_ID = 'session_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+const PRESENCE_TIMEOUT = 30000;
+let presenceTimer = null;
+
+async function heartbeat() {
+  try {
+    await setDoc(doc(db, 'presence', SESSION_ID), { lastSeen: now(), alive: true });
+    await setDoc(metaRef, { lastVisit: now() }, { merge: true });
+  } catch(e) {}
+}
+
+async function removePresence() {
+  try { await deleteDoc(doc(db, 'presence', SESSION_ID)); } catch(e) {}
+}
+
+heartbeat();
+presenceTimer = setInterval(heartbeat, 20000);
+
+window.addEventListener('beforeunload', () => {
+  clearInterval(presenceTimer);
+  removePresence();
+});
+
+// Online-Zähler live
+onSnapshot(presenceColRef, (snap) => {
+  const cutoff = now() - PRESENCE_TIMEOUT;
+  let count = 0;
+  snap.forEach(d => { if (d.data().lastSeen > cutoff) count++; });
+  const el = document.getElementById('onlineCount');
+  if (el) el.textContent = `👥 ${count}`;
+  document.getElementById('presenceInfo').style.display = 'flex';
+});
+
+// Letzter Besuch live
+onSnapshot(metaRef, (snap) => {
+  if (!snap.exists()) return;
+  const data = snap.data();
+  if (!data.lastVisit) return;
+  const el = document.getElementById('lastVisit');
+  if (!el) return;
+  const diff = now() - data.lastVisit;
+  let label;
+  if (diff < 60000) label = 'gerade eben';
+  else if (diff < 3600000) label = `vor ${Math.floor(diff/60000)} Min.`;
+  else if (diff < 86400000) label = `vor ${Math.floor(diff/3600000)} Std.`;
+  else {
+    const d = new Date(data.lastVisit);
+    label = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+  }
+  el.textContent = `🕐 ${label}`;
+});
 </script>
 </body>
 </html>
