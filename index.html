@@ -492,7 +492,7 @@
   </div>
 </main>
 
-<footer style="text-align:center; padding: 20px; font-size: 0.72rem; color: var(--muted); opacity: 0.5;">
+<footer style="text-align:center; padding: 20px; font-size: 0.85rem; color: var(--muted); opacity: 0.6;">
   – Made by Perfect2003 –
 </footer>
 
@@ -612,7 +612,8 @@ let globalMarketPrice = 100000;
 const GROW_INTERVAL  = 48 * 60 * 60 * 1000;
 const WATER_INTERVAL = 12 * 60 * 60 * 1000;
 const ROT_INTERVAL   = 4 * 24 * 60 * 60 * 1000;
-const DEFAULT_WATER_DURATION = 24 * 60 * 60 * 1000; // "Neu"/neues Beet startet mit 24h gegossen
+const DEFAULT_WATER_DURATION = 24 * 60 * 60 * 1000;
+const FERT_INTERVAL  = 4 * 60 * 60 * 1000; // Dünger wirkt 4 Stunden
 
 // Form-Boni Definitionen
 const SHAPE_BONI = {
@@ -744,6 +745,12 @@ function renderCard(b) {
   if (weightMult > 1) displayMulti *= weightMult;
   let multiBadgeHtml = displayMulti > 1 ? `<div class="multiplier" style="width:auto; padding:0 4px; border-radius:9px;">${displayMulti.toFixed(1)}x</div>` : '';
 
+  // Dünger-Timer
+  const fertAt = b.fertAt || 0;
+  const fertLeft = Math.max(0, (fertAt + FERT_INTERVAL) - now());
+  const isFertActive = fertLeft > 0;
+  const fertPct = isFertActive ? Math.min(100, (fertLeft / FERT_INTERVAL) * 100) : 0;
+
   card.innerHTML = `
     <div class="card-header">
       <span class="card-title" title="${b.name}">${b.name}</span>
@@ -777,6 +784,12 @@ function renderCard(b) {
             <span class="stat-value ${isWatered ? '' : 'editable btn-edit-rot'} ${isRotten ? 'warning' : ''}" title="${isWatered ? '' : 'Klicken zum Anpassen'}">${isWatered ? 'pausiert' : (isRotten ? 'VERDORRT' : fmtTime(rotLeft))}</span>
           </div>
           <div class="progress-bar"><div class="progress-fill rot" style="width:${rotPct}%"></div></div>
+
+          <div class="stat-row">
+            <span class="stat-label">Dünger</span>
+            <span class="stat-value" style="color:${isFertActive ? '#a3e635' : 'var(--muted)'};">${isFertActive ? fmtTime(fertLeft) : 'inaktiv'}</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${fertPct}%;background:#a3e635;"></div></div>
         </div>
       </div>
     </div>
@@ -809,7 +822,7 @@ function renderCard(b) {
   card.querySelector('.btn-add-w12').addEventListener('click', () => setWater(b.id, 12));
   card.querySelector('.btn-add-w24').addEventListener('click', () => setWater(b.id, 24));
   card.querySelector('.btn-remove-water').addEventListener('click', () => removeWater(b.id));
-  card.querySelector('.btn-add-p4').addEventListener('click', () => addTime(b.id, 'plant', -4));
+  card.querySelector('.btn-add-p4').addEventListener('click', () => applyFertilizer(b.id));
 
   card.querySelector('.btn-edit-water')?.addEventListener('click', () => openTimeModal(b.id, 'water', waterLeft));
   card.querySelector('.btn-edit-rot')?.addEventListener('click', () => openTimeModal(b.id, 'rot', rotLeft));
@@ -1159,6 +1172,7 @@ async function resetBeet(id) {
     plantedAt: now(),
     waterUntil: now() + DEFAULT_WATER_DURATION,
     waterDuration: DEFAULT_WATER_DURATION,
+    fertAt: 0,
     mutations: { gold: false, shapeKey: "", weightMult: 1 }
   });
 }
@@ -1171,7 +1185,16 @@ async function addTime(id, field, hours) {
   await updateDoc(doc(db, 'beete', id), { [key]: cur + hours * 3600000 });
 }
 
-// Gießen: Wasser wird auf exakt 12h bzw. 24h gesetzt (egal in welchem Zustand das Beet vorher war)
+// Dünger: verschiebt Wachstum um -4h UND startet den 4h Dünger-Timer
+async function applyFertilizer(id) {
+  const b = beete[id];
+  if (!b) return;
+  const cur = b.plantedAt || now();
+  await updateDoc(doc(db, 'beete', id), {
+    plantedAt: cur - 4 * 3600000,
+    fertAt: now()
+  });
+} (egal in welchem Zustand das Beet vorher war)
 // und die Verdorrung pausiert dadurch sofort.
 async function setWater(id, hours) {
   const b = beete[id];
