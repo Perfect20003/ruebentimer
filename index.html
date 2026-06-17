@@ -769,7 +769,7 @@ function renderCard(b) {
         <div class="stats">
           <div class="stat-row">
             <span class="stat-label">Bis reif</span>
-            <span class="stat-value">${isRipe ? 'REIF' : fmtTime(ripeLeft)}</span>
+            <span class="stat-value editable btn-edit-ripe" title="Klicken zum Anpassen">${isRipe ? 'REIF' : fmtTime(ripeLeft)}</span>
           </div>
           <div class="progress-bar"><div class="progress-fill ripe" style="width:${ripePct}%"></div></div>
 
@@ -787,7 +787,7 @@ function renderCard(b) {
 
           <div class="stat-row">
             <span class="stat-label">Dünger</span>
-            <span class="stat-value" style="color:${isFertActive ? '#a3e635' : 'var(--muted)'};">${isFertActive ? fmtTime(fertLeft) : 'inaktiv'}</span>
+            <span class="stat-value editable btn-edit-fert" style="color:${isFertActive ? '#a3e635' : 'var(--muted)'};" title="Klicken zum Anpassen">${isFertActive ? fmtTime(fertLeft) : 'inaktiv'}</span>
           </div>
           <div class="progress-bar"><div class="progress-fill" style="width:${fertPct}%;background:#a3e635;"></div></div>
         </div>
@@ -826,6 +826,8 @@ function renderCard(b) {
 
   card.querySelector('.btn-edit-water')?.addEventListener('click', () => openTimeModal(b.id, 'water', waterLeft));
   card.querySelector('.btn-edit-rot')?.addEventListener('click', () => openTimeModal(b.id, 'rot', rotLeft));
+  card.querySelector('.btn-edit-ripe')?.addEventListener('click', () => openTimeModal(b.id, 'ripe', ripeLeft));
+  card.querySelector('.btn-edit-fert')?.addEventListener('click', () => openTimeModal(b.id, 'fert', fertLeft));
   card.querySelector('.btn-rename').addEventListener('click', () => triggerRename(b.id));
   card.querySelector('.btn-reset').addEventListener('click', () => resetBeet(b.id));
   card.querySelector('.btn-delete').addEventListener('click', () => deleteBeet(b.id));
@@ -1219,7 +1221,12 @@ function openTimeModal(id, field, currentMs) {
   const m = Math.floor((currentMs % 3600000) / 60000);
   document.getElementById('timeInputH').value = h;
   document.getElementById('timeInputM').value = m;
-  const labels = { water: 'Wasserzeit anpassen', rot: 'Verdorrungszeit anpassen' };
+  const labels = {
+    water: 'Wasserzeit anpassen',
+    rot: 'Verdorrungszeit anpassen',
+    ripe: 'Zeit bis reif anpassen',
+    fert: 'Düngerzeit anpassen'
+  };
   document.getElementById('timeModalTitle').textContent = labels[field] || 'Zeit anpassen';
   document.getElementById('timeModal').style.display = 'flex';
   document.getElementById('timeInputH').focus();
@@ -1240,10 +1247,13 @@ async function applyTimeModal() {
   if (field === 'water') {
     await updateDoc(doc(db, 'beete', id), { waterUntil: now() + ms, waterDuration: Math.max(ms, WATER_INTERVAL) });
   } else if (field === 'rot') {
-    // Verdorrung: rot läuft ab waterUntil; also waterUntil so setzen dass rotLeft = ms
-    const b = beete[id];
-    const waterUntilNew = (typeof b.waterUntil === 'number' ? b.waterUntil : now());
     await updateDoc(doc(db, 'beete', id), { waterUntil: now() - ROT_INTERVAL + ms });
+  } else if (field === 'ripe') {
+    // Zeit bis reif manuell setzen: plantedAt so verschieben dass ripeLeft = ms
+    await updateDoc(doc(db, 'beete', id), { plantedAt: now() + ms - GROW_INTERVAL });
+  } else if (field === 'fert') {
+    // Dünger-Restzeit manuell setzen
+    await updateDoc(doc(db, 'beete', id), { fertAt: now() + ms - FERT_INTERVAL });
   }
   closeTimeModal();
 }
@@ -1508,7 +1518,7 @@ onSnapshot(metaRef, (snap) => {
     const d = new Date(data.lastVisit);
     label = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
   }
-  el.textContent = `🕐 ${label}`;
+  el.textContent = label;
 });
 </script>
 </body>
