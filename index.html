@@ -337,9 +337,57 @@
   .modal h3 { font-size: 1rem; margin-bottom: 16px; color: #fff; }
   .log-modal { width: min(300px, 95vw) !important; max-width: 95vw !important; max-height: 90vh !important; transition: width 0.2s; }
   .log-modal.log-open { width: min(720px, 95vw) !important; }
-  .mutation-options { display: flex; flex-direction: column; gap: 12px; }
-  .mutation-option { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-radius: 8px; border: 1px solid var(--border); color: #fff; }
-  .mutation-option-col { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+
+  .mutation-options { display: flex; flex-direction: column; gap: 8px; }
+
+  .mut-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #0f1117;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+  .mut-row.mut-col {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .mut-label { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+  .mut-hint { font-size: 0.75rem; color: var(--muted); }
+  .mut-check {
+    width: 18px; height: 18px;
+    accent-color: var(--accent);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .mut-select {
+    width: 100%;
+    background: #1a1d27;
+    border: 1px solid #2a2f45;
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    outline: none;
+  }
+  .mut-select:focus { border-color: var(--accent); }
+  .mut-number {
+    width: 72px;
+    background: #1a1d27;
+    border: 1px solid #2a2f45;
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: center;
+    outline: none;
+  }
+  .mut-number:focus { border-color: var(--accent); }
+
   .modal-btns { margin-top: 16px; display: flex; justify-content: flex-end; }
   .btn-close-modal { background: #2a2f45; color: #fff; cursor: pointer; }
 
@@ -530,16 +578,21 @@
 
 <div class="modal-overlay" id="mutModal" style="display:none">
   <div class="modal">
-    <h3>Mutationen — <span id="mutModalTitle"></span></h3>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+      <h3 style="margin:0;">Mutationen</h3>
+      <span style="font-size:0.8rem; color:var(--muted);" id="mutModalTitle"></span>
+    </div>
     <div class="mutation-options">
-      <label class="mutation-option" style="cursor: pointer;">
-        <span style="display: flex; align-items: center; gap: 8px;">Goldene Rübe <small style="color:var(--muted)">(10x Gesamtpreis)</small></span>
-        <input type="checkbox" id="mut-gold" style="width:18px; height:18px; accent-color:var(--accent);">
-      </label>
 
-      <div class="mutation-option mutation-option-col">
-        <span>Form-Mutation:</span>
-        <select id="mut-shape-select" style="width: 100%; padding: 6px;">
+      <div class="mut-row">
+        <span class="mut-label">Goldene Rübe</span>
+        <span class="mut-hint">10x Gesamtpreis</span>
+        <input type="checkbox" id="mut-gold" class="mut-check">
+      </div>
+
+      <div class="mut-row mut-col">
+        <span class="mut-label">Form-Mutation</span>
+        <select id="mut-shape-select" class="mut-select">
           <option value="">Normalform (+0)</option>
           <option value="stachelig">Stachelig (+50.000)</option>
           <option value="quadratisch">Quadratisch (+100.000)</option>
@@ -548,13 +601,14 @@
         </select>
       </div>
 
-      <div class="mutation-option mutation-option-col">
-        <span>Gewichts-Multiplikator:</span>
-        <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
-          <input type="number" id="mut-weight-mult" min="1" max="5" step="0.1" value="1" style="width: 80px;">
-          <span style="font-size: 0.85rem; color: var(--muted);">x (Maximal 5-fach)</span>
+      <div class="mut-row mut-col">
+        <span class="mut-label">Gewichts-Multiplikator</span>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <input type="number" id="mut-weight-mult" min="1" max="5" step="0.1" value="1" class="mut-number">
+          <span class="mut-hint">× (max. 5)</span>
         </div>
       </div>
+
     </div>
     <div class="modal-btns">
       <button class="btn-close-modal" id="btnCloseModal">Schließen</button>
