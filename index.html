@@ -167,7 +167,8 @@
   }
   .visit-log-list {
     list-style: none;
-    max-height: 75vh;
+    height: 70vh;
+    max-height: 70vh;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -319,6 +320,7 @@
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: center; justify-content: center; }
   .modal { background: #1a1d27; border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 340px; max-width: 95vw; }
   .modal h3 { font-size: 1rem; margin-bottom: 16px; color: #fff; }
+  .log-modal { width: min(620px, 95vw) !important; max-width: 95vw !important; max-height: 90vh !important; }
   .mutation-options { display: flex; flex-direction: column; gap: 12px; }
   .mutation-option { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-radius: 8px; border: 1px solid var(--border); color: #fff; }
   .mutation-option-col { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
@@ -418,26 +420,7 @@
   .history-date { color: var(--muted); }
   .history-empty { color: var(--muted); justify-content: center; }
 
-  .visit-log-list {
-    list-style: none;
-    max-height: 140px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-  .visit-log-list li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.78rem;
-    padding: 4px 8px;
-    border-radius: 6px;
-    background: #151922;
-    color: var(--text);
-  }
-  .visit-log-list .log-num { color: var(--muted); min-width: 28px; }
-  .visit-log-list .log-date { font-weight: 600; }
+
   .visit-log-list .log-time { color: var(--muted); }
 </style>
 </head>
