@@ -1079,13 +1079,17 @@ setInterval(() => {
 }, 1000);
 
 // --- Firestore: Live-Sync der Beete ---
+let beeteLoaded = false;
+let orderLoaded = false;
+
 onSnapshot(colRef, (snap) => {
   syncStatus.classList.remove('error');
   syncStatus.classList.add('connected');
   syncLabel.textContent = 'Verbunden';
   beete = {};
   snap.forEach(d => { beete[d.id] = { id: d.id, ...d.data() }; });
-  renderAll();
+  beeteLoaded = true;
+  if (orderLoaded) renderAll();
 }, (err) => {
   syncStatus.classList.remove('connected');
   syncStatus.classList.add('error');
@@ -1100,7 +1104,8 @@ onSnapshot(orderRef, (snap) => {
   } else {
     beetOrder = [];
   }
-  renderAll();
+  orderLoaded = true;
+  if (beeteLoaded) renderAll();
 });
 
 async function saveOrder() {
