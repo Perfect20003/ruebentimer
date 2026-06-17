@@ -370,6 +370,7 @@
 
   .history-list {
     list-style: none;
+    max-height: 220px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -377,6 +378,7 @@
     padding-right: 4px;
     scrollbar-color: #fff #0b0e14;
     scrollbar-width: thin;
+    align-self: stretch;
   }
   .history-list::-webkit-scrollbar { width: 6px; }
   .history-list::-webkit-scrollbar-track { background: #0b0e14; border-radius: 3px; }
@@ -489,6 +491,10 @@
     <p>Noch keine Beete. Füge dein erstes Beet hinzu!</p>
   </div>
 </main>
+
+<footer style="text-align:center; padding: 20px; font-size: 0.72rem; color: var(--muted); opacity: 0.5;">
+  – Made by Perfect2003 –
+</footer>
 
 <!-- Zeit manuell setzen -->
 <div class="modal-overlay" id="timeModal" style="display:none">
@@ -780,9 +786,9 @@ function renderCard(b) {
       <span class="stat-value" style="font-weight:500; text-align:right; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${mutStr}</span>
     </div>
 
-    <div class="stat-row" style="margin-top: 2px; font-size: 0.9rem; color: #f59e0b; font-weight: bold; background: rgba(245,158,11,0.06); padding: 4px 6px; border-radius: 6px;">
+    <div class="stat-row" style="margin-top: 2px; font-size: 0.9rem; color: #f59e0b; font-weight: bold; background: rgba(245,158,11,0.06); padding: 4px 6px; border-radius: 6px; ${isRipe ? '' : 'opacity:0.3;'}">
       <span>Marktwert:</span>
-      <span>${Math.round(calculatedPrice).toLocaleString('de-DE')} <img src="${ICON_COIN}" class="coin-icon" alt="🪙"></span>
+      <span>${isRipe ? Math.round(calculatedPrice).toLocaleString('de-DE') + ' <img src="' + ICON_COIN + '" class="coin-icon" alt="🪙">' : 'Noch nicht reif'}</span>
     </div>
 
     <div class="timer-btns" style="margin-top:4px;">
@@ -832,7 +838,11 @@ function renderAll() {
 
 // Summiert die Marktwerte aller Beete und zeigt sie im Header an
 function renderTotalValue() {
-  const total = Object.values(beete).reduce((sum, b) => sum + calcPrice(b), 0);
+  const total = Object.values(beete).reduce((sum, b) => {
+    const planted = b.plantedAt || now();
+    const isRipe = (planted + GROW_INTERVAL) <= now();
+    return sum + (isRipe ? calcPrice(b) : 0);
+  }, 0);
   const el = document.getElementById('totalValueAmount');
   if (el) el.innerHTML = Math.round(total).toLocaleString('de-DE') + ' <img src="' + ICON_COIN + '" class="coin-icon" alt="🪙">';
 }
