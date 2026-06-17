@@ -548,20 +548,17 @@
   <div class="modal log-modal">
     <!-- Passwort-Screen -->
     <div id="logPasswordScreen">
-      <h3 style="margin-bottom:14px;">🔒 Besuchslog</h3>
+      <h3 style="margin-bottom:14px;">Besuchslog</h3>
       <div style="display:flex; gap:8px; align-items:center;">
-        <input type="password" id="logPasswordInput" placeholder="Passwort…" style="flex:1;" />
-        <button class="btn-apply" id="btnLogLogin">Öffnen</button>
+        <input type="password" id="logPasswordInput" placeholder="Passwort…" style="flex:1; background:#0f1117; border-color:#1e2230;" />
+        <button class="btn-primary" id="btnLogLogin" title="Bestätigen">✓</button>
       </div>
       <p id="logPasswordError" style="color:var(--warning);font-size:0.78rem;margin-top:8px;display:none;">Falsches Passwort.</p>
-      <div style="margin-top:12px;display:flex;justify-content:flex-end;">
-        <button class="btn-cancel-time" id="btnLogClose">Abbrechen</button>
-      </div>
     </div>
     <!-- Log-Inhalt (nach Login) -->
     <div id="logContentScreen" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <h3>📋 Besuchslog</h3>
+        <h3>Besuchslog</h3>
         <div style="display:flex;gap:8px;">
           <button class="btn-clear-history" id="btnClearVisitLog">Leeren</button>
           <button class="btn-cancel-time" id="btnLogCloseContent">Schließen</button>
@@ -1336,8 +1333,27 @@ async function removePresence() {
 heartbeat();
 presenceTimer = setInterval(heartbeat, 20000);
 
-// Besuch beim Öffnen der Seite loggen
-addDoc(visitLogRef, { timestamp: now() }).catch(() => {});
+// Besuch beim Öffnen der Seite loggen (mit Gerät + Browser)
+function detectBrowser(ua) {
+  if (/Edg\//.test(ua)) return 'Edge';
+  if (/OPR\/|Opera/.test(ua)) return 'Opera';
+  if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) return 'Chrome';
+  if (/Firefox\//.test(ua)) return 'Firefox';
+  if (/Safari\//.test(ua) && !/Chrome/.test(ua)) return 'Safari';
+  if (/MSIE|Trident/.test(ua)) return 'IE';
+  return 'Unbekannt';
+}
+function detectDevice(ua) {
+  if (/iPad/.test(ua)) return 'Tablet';
+  if (/Mobi|Android|iPhone/.test(ua)) return 'Mobil';
+  return 'Desktop';
+}
+const ua = navigator.userAgent;
+addDoc(visitLogRef, {
+  timestamp: now(),
+  browser: detectBrowser(ua),
+  device: detectDevice(ua)
+}).catch(() => {});
 
 window.addEventListener('beforeunload', () => {
   clearInterval(presenceTimer);
@@ -1376,11 +1392,11 @@ function openVisitLog() {
     }
     const total = snap.size;
     list.innerHTML = snap.docs.map((d, i) => {
-      const ts = d.data().timestamp;
+      const { timestamp: ts, browser = '?', device = '?' } = d.data();
       const dt = new Date(ts);
       const dateStr = dt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
       const timeStr = dt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-      return `<li><span class="log-num">#${total - i}</span><span class="log-date">${dateStr}</span><span class="log-time">${timeStr} Uhr</span></li>`;
+      return `<li><span class="log-num">#${total - i}</span><span class="log-date">${dateStr} ${timeStr} Uhr</span><span class="log-time">${device} · ${browser}</span></li>`;
     }).join('');
   });
 }
@@ -1399,7 +1415,6 @@ document.getElementById('btnOpenLog').addEventListener('click', () => {
   setTimeout(() => document.getElementById('logPasswordInput').focus(), 50);
 });
 
-document.getElementById('btnLogClose').addEventListener('click', closeLogOverlay);
 document.getElementById('btnLogCloseContent').addEventListener('click', closeLogOverlay);
 document.getElementById('logOverlay').addEventListener('click', (e) => {
   if (e.target === document.getElementById('logOverlay')) closeLogOverlay();
