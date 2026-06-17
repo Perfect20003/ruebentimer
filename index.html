@@ -149,6 +149,41 @@
   }
   .presence-info span { white-space: nowrap; }
 
+  .btn-log-open {
+    background: #1f2431; color: #fff; border: none;
+    padding: 7px 11px; border-radius: 8px; cursor: pointer;
+    font-size: 1rem; transition: background 0.15s;
+  }
+  .btn-log-open:hover { background: #2d3446; }
+
+  .log-modal {
+    width: 480px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .visit-log-list {
+    list-style: none;
+    max-height: 55vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .visit-log-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: #151922;
+    color: var(--text);
+  }
+  .visit-log-list .log-num { color: var(--muted); min-width: 28px; }
+  .visit-log-list .log-date { font-weight: 600; }
+  .visit-log-list .log-time { color: var(--muted); }
+
   main {
     padding: 16px 20px;
     max-width: 1600px;
@@ -377,6 +412,28 @@
   .history-price { font-weight: 700; color: #f59e0b; }
   .history-date { color: var(--muted); }
   .history-empty { color: var(--muted); justify-content: center; }
+
+  .visit-log-list {
+    list-style: none;
+    max-height: 140px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .visit-log-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: #151922;
+    color: var(--text);
+  }
+  .visit-log-list .log-num { color: var(--muted); min-width: 28px; }
+  .visit-log-list .log-date { font-weight: 600; }
+  .visit-log-list .log-time { color: var(--muted); }
 </style>
 </head>
 <body>
@@ -405,6 +462,7 @@
     <span id="onlineCount" title="Aktive Nutzer">👥 –</span>
     <span id="lastVisit" title="Letzter Besuch"></span>
   </div>
+  <button class="btn-log-open" id="btnOpenLog" title="Besuchslog">📋</button>
 </header>
 
 <main>
@@ -485,6 +543,37 @@
   </div>
 </div>
 
+<!-- Besuchslog Overlay -->
+<div class="modal-overlay" id="logOverlay" style="display:none">
+  <div class="modal log-modal">
+    <!-- Passwort-Screen -->
+    <div id="logPasswordScreen">
+      <h3 style="margin-bottom:14px;">🔒 Besuchslog</h3>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input type="password" id="logPasswordInput" placeholder="Passwort…" style="flex:1;" />
+        <button class="btn-apply" id="btnLogLogin">Öffnen</button>
+      </div>
+      <p id="logPasswordError" style="color:var(--warning);font-size:0.78rem;margin-top:8px;display:none;">Falsches Passwort.</p>
+      <div style="margin-top:12px;display:flex;justify-content:flex-end;">
+        <button class="btn-cancel-time" id="btnLogClose">Abbrechen</button>
+      </div>
+    </div>
+    <!-- Log-Inhalt (nach Login) -->
+    <div id="logContentScreen" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <h3>📋 Besuchslog</h3>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-clear-history" id="btnClearVisitLog">Leeren</button>
+          <button class="btn-cancel-time" id="btnLogCloseContent">Schließen</button>
+        </div>
+      </div>
+      <ul class="visit-log-list" id="visitLogList">
+        <li style="color:var(--muted);font-size:0.78rem;padding:5px 8px;">Lade…</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
@@ -509,6 +598,7 @@ const settingsRef = doc(db, "settings", "global");
 const historyColRef = collection(db, "settings", "global", "priceHistory");
 const presenceColRef = collection(db, "presence");
 const metaRef = doc(db, "settings", "meta");
+const visitLogRef = collection(db, "visitLog");
 
 let beete = {};
 let activeMutId = null;
@@ -1219,13 +1309,23 @@ renderAll();
 
 // --- Presence: Online-Zähler und letzter Besuch ---
 const SESSION_ID = 'session_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-const PRESENCE_TIMEOUT = 30000;
+const PRESENCE_TIMEOUT = 45000; // 45 Sekunden bis als offline gilt
 let presenceTimer = null;
 
 async function heartbeat() {
   try {
     await setDoc(doc(db, 'presence', SESSION_ID), { lastSeen: now(), alive: true });
     await setDoc(metaRef, { lastVisit: now() }, { merge: true });
+
+    // Veraltete Einträge aufräumen
+    const cutoff = now() - PRESENCE_TIMEOUT;
+    const snap = await getDocs(presenceColRef);
+    const batch = writeBatch(db);
+    let changed = false;
+    snap.forEach(d => {
+      if (d.data().lastSeen < cutoff) { batch.delete(d.ref); changed = true; }
+    });
+    if (changed) await batch.commit();
   } catch(e) {}
 }
 
@@ -1236,9 +1336,20 @@ async function removePresence() {
 heartbeat();
 presenceTimer = setInterval(heartbeat, 20000);
 
+// Besuch beim Öffnen der Seite loggen
+addDoc(visitLogRef, { timestamp: now() }).catch(() => {});
+
 window.addEventListener('beforeunload', () => {
   clearInterval(presenceTimer);
   removePresence();
+});
+// Fallback für Mobile (Seite wird in Hintergrund geschoben)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    removePresence();
+  } else {
+    heartbeat();
+  }
 });
 
 // Online-Zähler live
@@ -1251,8 +1362,75 @@ onSnapshot(presenceColRef, (snap) => {
   document.getElementById('presenceInfo').style.display = 'flex';
 });
 
-// Letzter Besuch live
-onSnapshot(metaRef, (snap) => {
+// Besuchslog live
+const visitLogQuery = query(visitLogRef, orderBy('timestamp', 'desc'), limit(200));
+let visitLogUnsubscribe = null;
+
+function openVisitLog() {
+  visitLogUnsubscribe = onSnapshot(visitLogQuery, (snap) => {
+    const list = document.getElementById('visitLogList');
+    if (!list) return;
+    if (snap.empty) {
+      list.innerHTML = '<li style="color:var(--muted);font-size:0.78rem;padding:5px 8px;">Noch keine Besuche erfasst.</li>';
+      return;
+    }
+    const total = snap.size;
+    list.innerHTML = snap.docs.map((d, i) => {
+      const ts = d.data().timestamp;
+      const dt = new Date(ts);
+      const dateStr = dt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const timeStr = dt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+      return `<li><span class="log-num">#${total - i}</span><span class="log-date">${dateStr}</span><span class="log-time">${timeStr} Uhr</span></li>`;
+    }).join('');
+  });
+}
+
+function closeLogOverlay() {
+  document.getElementById('logOverlay').style.display = 'none';
+  document.getElementById('logPasswordScreen').style.display = 'block';
+  document.getElementById('logContentScreen').style.display = 'none';
+  document.getElementById('logPasswordInput').value = '';
+  document.getElementById('logPasswordError').style.display = 'none';
+  if (visitLogUnsubscribe) { visitLogUnsubscribe(); visitLogUnsubscribe = null; }
+}
+
+document.getElementById('btnOpenLog').addEventListener('click', () => {
+  document.getElementById('logOverlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('logPasswordInput').focus(), 50);
+});
+
+document.getElementById('btnLogClose').addEventListener('click', closeLogOverlay);
+document.getElementById('btnLogCloseContent').addEventListener('click', closeLogOverlay);
+document.getElementById('logOverlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('logOverlay')) closeLogOverlay();
+});
+
+function tryLogin() {
+  const pw = document.getElementById('logPasswordInput').value;
+  if (pw === 'Ruebe') {
+    document.getElementById('logPasswordScreen').style.display = 'none';
+    document.getElementById('logContentScreen').style.display = 'block';
+    openVisitLog();
+  } else {
+    document.getElementById('logPasswordError').style.display = 'block';
+    document.getElementById('logPasswordInput').value = '';
+    document.getElementById('logPasswordInput').focus();
+  }
+}
+
+document.getElementById('btnLogLogin').addEventListener('click', tryLogin);
+document.getElementById('logPasswordInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') tryLogin();
+});
+
+async function clearVisitLog() {
+  if (!confirm('Besuchslog wirklich komplett löschen?')) return;
+  const snap = await getDocs(visitLogRef);
+  const batch = writeBatch(db);
+  snap.forEach(d => batch.delete(d.ref));
+  await batch.commit();
+}
+document.getElementById('btnClearVisitLog').addEventListener('click', clearVisitLog);
   if (!snap.exists()) return;
   const data = snap.data();
   if (!data.lastVisit) return;
