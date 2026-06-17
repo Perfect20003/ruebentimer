@@ -313,7 +313,7 @@
   .card-actions { display: flex; gap: 6px; }
   .action-btn { padding: 10px 4px; background: #1f2431; color: #fff; font-size: 0.85rem; font-weight: 600; border-radius: 8px; text-align: center; flex: 1; cursor: pointer; }
   .action-btn:hover { background: #2d3446; }
-  .btn-action-delete { flex: 1.3; background: #dc2626; color: white; }
+  .btn-action-delete { background: #dc2626; color: white; }
   .btn-action-delete:hover { background: #b91c1c; }
 
   /* Mutation Modal */
@@ -340,6 +340,8 @@
     border-radius: 14px;
     padding: 14px;
     margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
   }
   .history-header {
     display: flex;
@@ -359,14 +361,39 @@
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 14px;
-    align-items: stretch;
+    flex: 1;
+    min-height: 0;
   }
   @media (max-width: 700px) {
     .history-body { grid-template-columns: 1fr; }
   }
 
-  .chart-wrap { position: relative; min-height: 220px; }
-  .chart-wrap svg { width: 100%; height: 220px; display: block; }
+  .history-list {
+    list-style: none;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-right: 4px;
+    scrollbar-color: #fff #0b0e14;
+    scrollbar-width: thin;
+  }
+  .history-list::-webkit-scrollbar { width: 6px; }
+  .history-list::-webkit-scrollbar-track { background: #0b0e14; border-radius: 3px; }
+  .history-list::-webkit-scrollbar-thumb { background: #fff; border-radius: 3px; }
+  .history-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    padding: 5px 8px;
+    border-radius: 6px;
+    background: #151922;
+  }
+  .history-price { font-weight: 700; color: #f59e0b; }
+
+  .chart-wrap { position: relative; min-height: 220px; flex: 1; }
+  .chart-wrap svg { width: 100%; height: 100%; min-height: 220px; display: block; }
   .chart-empty {
     position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
@@ -399,24 +426,6 @@
     gap: 4px;
   }
 
-  .history-list {
-    list-style: none;
-    max-height: 160px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding-right: 4px;
-  }
-  .history-list li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.78rem;
-    padding: 5px 8px;
-    border-radius: 6px;
-    background: #151922;
-  }
   .history-price { font-weight: 700; color: #f59e0b; }
   .history-date { color: var(--muted); }
   .history-empty { color: var(--muted); justify-content: center; }
@@ -460,7 +469,7 @@
     <div class="history-header">
       <h2>Marktpreis-Verlauf</h2>
       <div style="display:flex; gap:8px; align-items:center;">
-        <button class="btn-clear-history" id="btnToggleLog">Log-Skala: Aus</button>
+        <button class="btn-clear-history" id="btnToggleLog">Log-Skala: Ein</button>
         <button class="btn-clear-history" id="btnClearHistory">Verlauf leeren</button>
       </div>
     </div>
@@ -786,7 +795,7 @@ function renderCard(b) {
     <div class="card-actions">
       <button class="action-btn btn-rename">Name</button>
       <button class="action-btn btn-reset">Neu</button>
-      <button class="action-btn btn-action-delete btn-delete">&#128465; Löschen</button>
+      <button class="action-btn btn-action-delete btn-delete">Löschen</button>
     </div>
   `;
 
@@ -841,7 +850,7 @@ function renderHistoryList(entriesDesc) {
 }
 
 let lastPriceEntriesAsc = [];
-let useLogScale = false;
+let useLogScale = true;
 
 document.getElementById('btnToggleLog').addEventListener('click', () => {
   useLogScale = !useLogScale;
@@ -1135,6 +1144,7 @@ async function deleteBeet(id) {
 }
 
 async function resetBeet(id) {
+  if (!confirm('Beet wirklich zurücksetzen?')) return;
   await updateDoc(doc(db, 'beete', id), {
     plantedAt: now(),
     waterUntil: now() + DEFAULT_WATER_DURATION,
