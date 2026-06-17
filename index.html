@@ -200,6 +200,7 @@
 
   .hint { font-size: 0.78rem; color: var(--muted); margin-bottom: 16px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .grid .card { transition: transform 0.15s ease; }
 
   .card {
     background: rgba(11, 14, 20, 0.88);
@@ -1108,44 +1109,58 @@ async function saveOrder() {
   await setDoc(orderRef, { order: ids }, { merge: true });
 }
 
-// --- Drag & Drop ---
+// --- Drag & Drop mit live Verschiebung ---
 let dragSrcId = null;
 
 function setupDragDrop(card) {
   card.addEventListener('dragstart', (e) => {
     dragSrcId = card.id.replace('card-', '');
-    card.classList.add('dragging');
+    setTimeout(() => card.classList.add('dragging'), 0);
     e.dataTransfer.effectAllowed = 'move';
   });
+
   card.addEventListener('dragend', () => {
     card.classList.remove('dragging');
     document.querySelectorAll('.card').forEach(c => c.classList.remove('drag-over'));
     saveOrder();
   });
+
   card.addEventListener('dragover', (e) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    if (card.id !== 'card-' + dragSrcId) {
-      card.classList.add('drag-over');
-    }
-  });
-  card.addEventListener('dragleave', () => {
-    card.classList.remove('drag-over');
-  });
-  card.addEventListener('drop', (e) => {
-    e.preventDefault();
-    card.classList.remove('drag-over');
     if (!dragSrcId || card.id === 'card-' + dragSrcId) return;
+    e.dataTransfer.dropEffect = 'move';
+
     const srcCard = document.getElementById('card-' + dragSrcId);
     if (!srcCard) return;
+
     const cards = [...grid.children];
     const srcIdx = cards.indexOf(srcCard);
     const tgtIdx = cards.indexOf(card);
-    if (srcIdx < tgtIdx) {
-      grid.insertBefore(srcCard, card.nextSibling);
+
+    if (srcIdx === -1 || tgtIdx === -1) return;
+
+    // Einfügeposition bestimmen anhand Mausposition relativ zur Zielkarte
+    const rect = card.getBoundingClientRect();
+    const midX = rect.left + rect.width / 2;
+    const insertBefore = e.clientX < midX;
+
+    if (insertBefore) {
+      if (card.previousSibling !== srcCard) {
+        grid.insertBefore(srcCard, card);
+      }
     } else {
-      grid.insertBefore(srcCard, card);
+      if (card.nextSibling !== srcCard) {
+        grid.insertBefore(srcCard, card.nextSibling);
+      }
     }
+  });
+
+  card.addEventListener('dragleave', () => {
+    card.classList.remove('drag-over');
+  });
+
+  card.addEventListener('drop', (e) => {
+    e.preventDefault();
   });
 }
 
