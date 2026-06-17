@@ -176,7 +176,7 @@
   }
   .visit-log-list li {
     display: grid;
-    grid-template-columns: 48px 1fr 1fr;
+    grid-template-columns: 48px 1fr 1fr auto;
     align-items: center;
     gap: 12px;
     font-size: 0.92rem;
@@ -320,7 +320,8 @@
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: center; justify-content: center; }
   .modal { background: #1a1d27; border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 340px; max-width: 95vw; }
   .modal h3 { font-size: 1rem; margin-bottom: 16px; color: #fff; }
-  .log-modal { width: min(620px, 95vw) !important; max-width: 95vw !important; max-height: 90vh !important; }
+  .log-modal { width: min(260px, 95vw) !important; max-width: 95vw !important; max-height: 90vh !important; transition: width 0.2s; }
+  .log-modal.log-open { width: min(620px, 95vw) !important; }
   .mutation-options { display: flex; flex-direction: column; gap: 12px; }
   .mutation-option { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-radius: 8px; border: 1px solid var(--border); color: #fff; }
   .mutation-option-col { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
@@ -533,21 +534,19 @@
 
 <!-- Besuchslog Overlay -->
 <div class="modal-overlay" id="logOverlay" style="display:none">
-  <div class="modal log-modal">
+  <div class="modal log-modal" id="logModalBox">
     <!-- Passwort-Screen -->
     <div id="logPasswordScreen">
-<div style="margin-bottom:16px;"></div>
-
-      <div style="display:flex; gap:8px; align-items:center;">
-        <input type="password" id="logPasswordInput" placeholder="Passwort eingeben…"
-          style="flex:1; background:#0b0e14; border:1px solid #2a2f45; color:var(--text);
-                 padding:9px 14px; border-radius:8px; font-size:0.9rem; outline:none;
-                 transition:border-color 0.2s;"
+      <div style="display:flex; gap:8px; align-items:center; justify-content:center;">
+        <input type="password" id="logPasswordInput" placeholder="Passwort…"
+          style="width:130px; background:#0b0e14; border:1px solid #2a2f45; color:var(--text);
+                 padding:9px 12px; border-radius:8px; font-size:0.9rem; outline:none;
+                 transition:border-color 0.2s; text-align:center;"
           onfocus="this.style.borderColor='var(--accent)'"
           onblur="this.style.borderColor='#2a2f45'" />
         <button class="btn-primary" id="btnLogLogin" title="Bestätigen" style="padding:9px 14px; font-size:1rem;">✓</button>
       </div>
-      <p id="logPasswordError" style="color:var(--warning);font-size:0.78rem;margin-top:10px;display:none;">Falsches Passwort.</p>
+      <p id="logPasswordError" style="color:var(--warning);font-size:0.78rem;margin-top:10px;text-align:center;display:none;">Falsches Passwort.</p>
     </div>
     <!-- Log-Inhalt (nach Login) -->
     <div id="logContentScreen" style="display:none">
@@ -919,7 +918,7 @@ function renderPriceChart(entriesAsc) {
   let ticks;
   if (useLogScale) {
     // Feste, gut lesbare Stufen
-    const FIXED_TICKS = [50000, 100000, 200000, 400000, 600000, 1000000, 2000000, 4000000];
+    const FIXED_TICKS = [50000, 100000, 200000, 400000, 1000000, 2000000, 4000000];
     ticks = FIXED_TICKS.filter(t => t >= logMin * 0.5 && t <= logMax * 1.5);
     if (!ticks.length) ticks = [logMin, logMax];
   } else {
@@ -1343,10 +1342,13 @@ function detectDevice(ua) {
   return 'Desktop';
 }
 const ua = navigator.userAgent;
+let isKnown = false;
+try { isKnown = localStorage.getItem('rueben_known') === '1'; } catch(e) {}
 addDoc(visitLogRef, {
   timestamp: now(),
   browser: detectBrowser(ua),
-  device: detectDevice(ua)
+  device: detectDevice(ua),
+  known: isKnown
 }).catch(() => {});
 
 window.addEventListener('beforeunload', () => {
@@ -1386,17 +1388,21 @@ function openVisitLog() {
     }
     const total = snap.size;
     list.innerHTML = snap.docs.map((d, i) => {
-      const { timestamp: ts, browser = '?', device = '?' } = d.data();
+      const { timestamp: ts, browser = '?', device = '?', known = false } = d.data();
       const dt = new Date(ts);
       const dateStr = dt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
       const timeStr = dt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-      return `<li><span class="log-num">#${total - i}</span><span class="log-date">${dateStr} ${timeStr} Uhr</span><span class="log-time">${device} · ${browser}</span></li>`;
+      const knownStr = known
+        ? `<span style="color:var(--accent);font-weight:700;">Ich</span>`
+        : `<span style="color:var(--muted);">Unbekannt</span>`;
+      return `<li><span class="log-num">#${total - i}</span><span class="log-date">${dateStr} ${timeStr} Uhr</span><span class="log-time">${device} · ${browser}</span>${knownStr}</li>`;
     }).join('');
   });
 }
 
 function closeLogOverlay() {
   document.getElementById('logOverlay').style.display = 'none';
+  document.getElementById('logModalBox').classList.remove('log-open');
   document.getElementById('logPasswordScreen').style.display = 'block';
   document.getElementById('logContentScreen').style.display = 'none';
   document.getElementById('logPasswordInput').value = '';
@@ -1417,8 +1423,10 @@ document.getElementById('logOverlay').addEventListener('click', (e) => {
 function tryLogin() {
   const pw = document.getElementById('logPasswordInput').value;
   if (pw === 'Ruebe') {
+    try { localStorage.setItem('rueben_known', '1'); } catch(e) {}
     document.getElementById('logPasswordScreen').style.display = 'none';
     document.getElementById('logContentScreen').style.display = 'block';
+    document.getElementById('logModalBox').classList.add('log-open');
     openVisitLog();
   } else {
     document.getElementById('logPasswordError').style.display = 'block';
@@ -1450,7 +1458,7 @@ onSnapshot(metaRef, (snap) => {
   if (!el) return;
   const diff = now() - data.lastVisit;
   let label;
-  if (diff < 60000) label = 'gerade eben';
+  if (diff < 60000) return; // gerade eben – nicht anzeigen
   else if (diff < 3600000) label = `vor ${Math.floor(diff/60000)} Min.`;
   else if (diff < 86400000) label = `vor ${Math.floor(diff/3600000)} Std.`;
   else {
