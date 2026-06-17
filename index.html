@@ -1431,6 +1431,9 @@ async function clearVisitLog() {
   await batch.commit();
 }
 document.getElementById('btnClearVisitLog').addEventListener('click', clearVisitLog);
+
+// Letzter Besuch live
+onSnapshot(metaRef, (snap) => {
   if (!snap.exists()) return;
   const data = snap.data();
   if (!data.lastVisit) return;
