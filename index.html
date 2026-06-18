@@ -818,7 +818,7 @@ function renderCard(b) {
 
   // Dünger-Timer
   const fertAt = b.fertAt || 0;
-  const fertLeft = Math.max(0, (fertAt + FERT_INTERVAL) - now());
+  const fertLeft = isRipe ? 0 : Math.max(0, (fertAt + FERT_INTERVAL) - now());
   const isFertActive = fertLeft > 0;
   const fertPct = isFertActive ? Math.min(100, (fertLeft / FERT_INTERVAL) * 100) : 0;
 
