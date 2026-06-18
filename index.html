@@ -494,6 +494,20 @@
   .history-price { font-weight: 700; color: #f59e0b; }
   .history-date { color: var(--muted); }
   .history-empty { color: var(--muted); justify-content: center; }
+  .history-delete-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 0 4px;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+    margin-left: auto;
+  }
+  .history-list li:hover .history-delete-btn { opacity: 1; }
+  .history-delete-btn:hover { color: var(--warning); }
 
 
   .visit-log-list .log-time { color: var(--muted); }
@@ -952,8 +966,21 @@ function renderHistoryList(entriesDesc) {
   }
   list.innerHTML = entriesDesc.map(e => {
     const dateStr = new Date(e.timestamp).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
-    return `<li><span class="history-price">${Math.round(e.price).toLocaleString('de-DE')} <img src="${ICON_COIN}" class="coin-icon" alt=""></span><span class="history-date">${dateStr}</span></li>`;
+    return `<li>
+      <span class="history-price">${Math.round(e.price).toLocaleString('de-DE')} <img src="${ICON_COIN}" class="coin-icon" alt=""></span>
+      <span class="history-date">${dateStr}</span>
+      <button class="history-delete-btn" data-id="${e._docId}" title="Eintrag löschen">✕</button>
+    </li>`;
   }).join('');
+
+  list.querySelectorAll('.history-delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const docId = btn.dataset.id;
+      if (!docId) return;
+      if (!confirm('Diesen Eintrag löschen?')) return;
+      await deleteDoc(doc(db, 'settings', 'global', 'priceHistory', docId));
+    });
+  });
 }
 
 let lastPriceEntriesAsc = [];
@@ -1263,7 +1290,7 @@ const historyQuery = query(historyColRef, orderBy('timestamp', 'desc'), limit(10
 onSnapshot(historyQuery, (snap) => {
   historyLoaded = true;
   const entriesDesc = [];
-  snap.forEach(d => entriesDesc.push(d.data()));
+  snap.forEach(d => entriesDesc.push({ ...d.data(), _docId: d.id }));
   historyCount = entriesDesc.length;
   renderHistoryList(entriesDesc);
   renderPriceChart([...entriesDesc].reverse());
