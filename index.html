@@ -724,7 +724,16 @@ async function registerFCM() {
     const reg = await navigator.serviceWorker.register('/ruebentimer/firebase-messaging-sw.js');
     const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
     if (token) {
-      await setDoc(doc(db, 'fcmTokens', SESSION_ID), { token, updatedAt: now() });
+      // Feste Geräte-ID damit nicht jede Session einen neuen Token anlegt
+      let deviceId;
+      try {
+        deviceId = localStorage.getItem('rueben_device_id');
+        if (!deviceId) {
+          deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+          localStorage.setItem('rueben_device_id', deviceId);
+        }
+      } catch(e) { deviceId = SESSION_ID; }
+      await setDoc(doc(db, 'fcmTokens', deviceId), { token, updatedAt: now() });
       console.log('[Rübe] FCM Token gespeichert.');
     }
   } catch (e) {
