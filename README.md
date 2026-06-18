@@ -45,7 +45,6 @@ Entwickelt von **Perfect2003**.
 |---|---|
 | HTML / CSS / JS | Frontend (Single-Page, keine Frameworks) |
 | Firebase Firestore | Echtzeit-Datenbank |
-| Firebase Analytics | Besucher-Statistiken |
 | GitHub Pages | Hosting |
 
 ---
