@@ -20,8 +20,8 @@ messaging.onBackgroundMessage((payload) => {
   const { title, body } = payload.notification;
   self.registration.showNotification(title, {
     body,
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: '/ruebentimer/icon-192.png',
+    badge: '/ruebentimer/icon-192.png',
     vibrate: [200, 100, 200]
   });
 });
