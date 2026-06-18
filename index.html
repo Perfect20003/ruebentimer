@@ -689,32 +689,46 @@ const messaging = getMessaging(app);
 
 // --- Push-Benachrichtigungen Setup ---
 // VAPID Key aus Firebase Console → Projekteinstellungen → Cloud Messaging → Web Push Zertifikate
-const VAPID_KEY = 'DEIN_VAPID_KEY_HIER'; // <-- diesen Wert musst du noch eintragen (siehe unten)
+const VAPID_KEY = 'BBjF6oos4jO7FX6iM3yFWjTD4wRJi0_G6mCOxouQmVecCVB0-CojpiiN5NnD6nn2lP5LRAm1DF7wggAnwwZEn84';
 
 async function setupNotifications() {
   try {
-    // Service Worker registrieren
-    const reg = await navigator.serviceWorker.register('/ruebentimer/firebase-messaging-sw.js');
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
 
-    // Benachrichtigungserlaubnis anfragen
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      console.log('[Rübe] Benachrichtigungen abgelehnt.');
+    const btn = document.getElementById('btnNotify');
+
+    // Wenn schon erlaubt, direkt Token holen
+    if (Notification.permission === 'granted') {
+      await registerFCM();
       return;
     }
 
-    // FCM Token holen und in Firestore speichern
-    const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
-    if (token) {
-      // Token mit Session-ID speichern damit jedes Gerät seinen eigenen Token hat
-      await setDoc(doc(db, 'fcmTokens', SESSION_ID), {
-        token,
-        updatedAt: now()
+    // Button anzeigen damit User selbst klickt (iOS-Pflicht)
+    if (Notification.permission !== 'denied') {
+      btn.style.display = 'flex';
+      btn.addEventListener('click', async () => {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          btn.style.display = 'none';
+          await registerFCM();
+        }
       });
-      console.log('[Rübe] FCM Token gespeichert.');
     }
   } catch (e) {
     console.warn('[Rübe] Notification Setup fehlgeschlagen:', e);
+  }
+}
+
+async function registerFCM() {
+  try {
+    const reg = await navigator.serviceWorker.register('/ruebentimer/firebase-messaging-sw.js');
+    const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+    if (token) {
+      await setDoc(doc(db, 'fcmTokens', SESSION_ID), { token, updatedAt: now() });
+      console.log('[Rübe] FCM Token gespeichert.');
+    }
+  } catch (e) {
+    console.warn('[Rübe] FCM Registrierung fehlgeschlagen:', e);
   }
 }
 
