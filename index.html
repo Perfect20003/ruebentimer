@@ -609,8 +609,8 @@
     <div class="history-header">
       <h2>Marktpreis-Verlauf</h2>
       <div style="display:flex; gap:8px; align-items:center;">
-        <button class="btn-clear-history btn-timerange active-range" data-days="7">7T</button>
-        <button class="btn-clear-history btn-timerange" data-days="30">1M</button>
+        <button class="btn-clear-history btn-timerange" data-days="7">7T</button>
+        <button class="btn-clear-history btn-timerange active-range" data-days="30">1M</button>
         <button class="btn-clear-history btn-timerange" data-days="90">3M</button>
         <button class="btn-clear-history btn-timerange" data-days="0">Alles</button>
         <button class="btn-clear-history" id="btnToggleLog">Log-Skala: Ein</button>
@@ -1202,7 +1202,7 @@ function renderHistoryList(entriesDesc) {
 }
 
 let lastPriceEntriesAsc = [];
-let activeRangeDays = 7; // Standard: 7 Tage
+let activeRangeDays = 30; // Standard: 1 Monat
 
 function getFilteredEntries() {
   if (activeRangeDays === 0) return lastPriceEntriesAsc;
