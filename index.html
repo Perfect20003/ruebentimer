@@ -380,12 +380,27 @@
   }
   .mut-label { font-size: 0.88rem; font-weight: 600; color: var(--text); }
   .mut-hint { font-size: 0.75rem; color: var(--muted); }
-  .mut-check {
-    width: 18px; height: 18px;
-    accent-color: var(--accent);
+  .mut-check { display: none; }
+  .mut-toggle {
+    width: 36px; height: 20px;
+    background: #2a2f45;
+    border-radius: 10px;
     cursor: pointer;
+    position: relative;
     flex-shrink: 0;
+    transition: background 0.2s;
   }
+  .mut-toggle::after {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    background: #6b7280;
+    border-radius: 50%;
+    top: 3px; left: 3px;
+    transition: left 0.2s, background 0.2s;
+  }
+  .mut-toggle.on { background: rgba(34,197,94,0.2); }
+  .mut-toggle.on::after { left: 19px; background: var(--accent); }
   .mut-select {
     width: 100%;
     background: #1a1d27;
@@ -660,8 +675,8 @@
 
       <div class="mut-row">
         <span class="mut-label">Goldene Rübe</span>
-        <span class="mut-hint">10x Gesamtpreis</span>
         <input type="checkbox" id="mut-gold" class="mut-check">
+        <div class="mut-toggle" id="mut-gold-toggle"></div>
       </div>
 
       <div class="mut-row mut-col">
@@ -1680,6 +1695,7 @@ function openMutModal(id) {
 
   const mut = b.mutations || {};
   document.getElementById('mut-gold').checked = !!mut.gold;
+  document.getElementById('mut-gold-toggle').classList.toggle('on', !!mut.gold);
   document.getElementById('mut-shape-select').value = mut.shapeKey || "";
   document.getElementById('mut-weight-mult').value = mut.weightMult || 1;
 
@@ -1848,6 +1864,14 @@ onSnapshot(presenceColRef, (snap) => {
   const el = document.getElementById('onlineCount');
   if (el) el.textContent = `👥 ${count}`;
   document.getElementById('presenceInfo').style.display = 'flex';
+});
+
+// Gold-Toggle
+document.getElementById('mut-gold-toggle').addEventListener('click', () => {
+  const cb = document.getElementById('mut-gold');
+  cb.checked = !cb.checked;
+  document.getElementById('mut-gold-toggle').classList.toggle('on', cb.checked);
+  saveMutation();
 });
 
 // Pixel-Rechner im Mutations-Modal
