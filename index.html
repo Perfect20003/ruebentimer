@@ -677,15 +677,12 @@
 
       <div class="mut-row mut-col">
         <span class="mut-label">Gewichts-Multiplikator</span>
-        <div style="display:flex; align-items:center; gap:10px;">
-          <input type="number" id="mut-weight-mult" min="1" max="5" step="0.1" value="1" class="mut-number">
-          <span class="mut-hint">× (max. 5)</span>
-        </div>
-        <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+        <div style="display:flex; align-items:center; gap:8px;">
           <span class="mut-hint">Abstand zum Rand:</span>
           <input type="text" inputmode="decimal" id="mut-px-input" placeholder="px" class="mut-number" style="width:52px;">
-          <span class="mut-hint" id="mut-px-result" style="color:var(--accent); font-weight:700;">–</span>
+          <span style="color:var(--accent); font-weight:700;" id="mut-px-result">–</span>
         </div>
+        <input type="hidden" id="mut-weight-mult" value="1">
       </div>
 
     </div>
