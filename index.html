@@ -1712,10 +1712,10 @@ async function removePresence() {
 heartbeat();
 presenceTimer = setInterval(heartbeat, 20000);
 
-// Push-Benachrichtigungen initialisieren
-if ('Notification' in window && 'serviceWorker' in navigator) {
-  setupNotifications();
-}
+// Notifications vorübergehend deaktiviert
+// if ('Notification' in window && 'serviceWorker' in navigator) {
+//   setupNotifications();
+// }
 
 // Besuch beim Öffnen der Seite loggen (mit Gerät + Browser)
 function detectBrowser(ua) {
