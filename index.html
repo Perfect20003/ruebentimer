@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0b0e14">
 <link rel="manifest" href="manifest.json">
-<title>🟫 Rübentimer</title>
+<title>Rübentimer</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -751,6 +751,7 @@ onMessage(messaging, (payload) => {
 const sentNotifications = new Set();
 
 function checkTimerNotifications() {
+  console.log('[Rübe] Check läuft, Beete:', Object.keys(beete).length, 'Notification:', Notification.permission);
   Object.values(beete).forEach(b => {
     const name = b.name || 'Unbekannt';
     const t = now();
