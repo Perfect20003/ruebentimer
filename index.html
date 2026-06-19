@@ -1056,9 +1056,9 @@ function renderCard(b) {
   card.innerHTML = `<div class="card-inner">
     <div class="card-header">
       <span class="card-title" title="${b.name}">${b.name}</span>
-      <span style="font-size:0.7rem; color:var(--muted); margin-left:auto; margin-right:6px; white-space:nowrap;">seit ${standzeitStr}</span>
       <span class="status-text">${statusStr}</span>
     </div>
+    <div style="font-size:0.7rem; color:var(--muted); margin-bottom:4px;">seit ${standzeitStr}</div>
 
     <div class="card-body-layout">
       <div class="card-left-cell">
