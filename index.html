@@ -678,8 +678,8 @@
       <div class="mut-row mut-col">
         <span class="mut-label">Gewichts-Multiplikator</span>
         <div style="display:flex; align-items:center; gap:8px;">
-          <span class="mut-hint">Abstand zum Rand:</span>
-          <input type="text" inputmode="decimal" id="mut-px-input" placeholder="px" class="mut-number" style="width:52px;">
+          <span class="mut-label">Abstand zum Rand:</span>
+          <input type="text" inputmode="decimal" id="mut-px-input" placeholder="px" class="mut-number" style="width:52px;" autocomplete="off">
           <span style="color:var(--accent); font-weight:700;" id="mut-px-result">–</span>
         </div>
         <input type="hidden" id="mut-weight-mult" value="1">
@@ -1857,8 +1857,8 @@ document.getElementById('mut-px-input').addEventListener('input', (e) => {
   if (isNaN(px) || px < 0 || px > 8) { result.textContent = '–'; return; }
   const mult = Math.round((1 + (8 - px) * (4 / 6)) * 10) / 10;
   result.textContent = '×' + mult.toFixed(1);
-  // Direkt in das Multiplikator-Feld übernehmen
   document.getElementById('mut-weight-mult').value = Math.min(5, mult).toFixed(1);
+  saveMutation();
 });
 
 // Multiplikator-Rechner im Header
