@@ -766,12 +766,12 @@ function checkTimerNotifications() {
 
     // 2. Wasser läuft in 15 Min aus
     const waterLeft = Math.max(0, (b.waterUntil || 0) - t);
-    if (waterLeft > 0 && waterLeft <= 15 * 60000 && waterLeft > 14 * 60000
+    if (waterLeft > 0 && waterLeft <= 15 * 60000
         && !sentNotifications.has(b.id + '_wasser15')) {
       sentNotifications.add(b.id + '_wasser15');
       sendLocalNotification('💧 Wasser fast leer', `${name}: Wasser läuft in ~15 Min aus!`);
     }
-    if (waterLeft > 15 * 60000) sentNotifications.delete(b.id + '_wasser15');
+    if (waterLeft > 16 * 60000) sentNotifications.delete(b.id + '_wasser15');
 
     // 3. Wasser ist ausgelaufen
     if (waterLeft === 0 && (b.waterUntil || 0) > 0 && !sentNotifications.has(b.id + '_wasserweg')) {
@@ -787,12 +787,11 @@ function checkTimerNotifications() {
       const rotLeft = Math.max(0, waterUntil + ROT_INTERVAL - t);
 
       [[60, '_rot60'], [30, '_rot30'], [10, '_rot10']].forEach(([mins, key]) => {
-        if (rotLeft <= mins * 60000 && rotLeft > (mins - 1) * 60000
-            && !sentNotifications.has(b.id + key)) {
+        if (rotLeft <= mins * 60000 && !sentNotifications.has(b.id + key)) {
           sentNotifications.add(b.id + key);
           sendLocalNotification('⚠️ Verdorrung droht!', `${name}: Verdirbt in ~${mins} Min!`);
         }
-        if (rotLeft > mins * 60000) sentNotifications.delete(b.id + key);
+        if (rotLeft > (mins + 1) * 60000) sentNotifications.delete(b.id + key);
       });
     }
 
@@ -800,12 +799,11 @@ function checkTimerNotifications() {
     const fertAt = b.fertAt || 0;
     const fertLeft = Math.max(0, fertAt + FERT_INTERVAL - t);
     [[30, '_fert30'], [15, '_fert15']].forEach(([mins, key]) => {
-      if (fertLeft > 0 && fertLeft <= mins * 60000 && fertLeft > (mins - 1) * 60000
-          && !sentNotifications.has(b.id + key)) {
+      if (fertLeft > 0 && fertLeft <= mins * 60000 && !sentNotifications.has(b.id + key)) {
         sentNotifications.add(b.id + key);
         sendLocalNotification('🌿 Dünger läuft ab', `${name}: Dünger endet in ~${mins} Min!`);
       }
-      if (fertLeft > mins * 60000) sentNotifications.delete(b.id + key);
+      if (fertLeft > (mins + 1) * 60000) sentNotifications.delete(b.id + key);
     });
   });
 }
