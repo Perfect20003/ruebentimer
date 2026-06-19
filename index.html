@@ -815,8 +815,6 @@ function sendLocalNotification(title, body) {
   }
 }
 
-// Notification-Check alle 30 Sekunden
-setInterval(checkTimerNotifications, 30000);
 const colRef = collection(db, "beete");
 const settingsRef = doc(db, "settings", "global");
 const historyColRef = collection(db, "settings", "global", "priceHistory");
@@ -1847,6 +1845,10 @@ onSnapshot(metaRef, (snap) => {
   }
   el.textContent = label;
 });
+
+// Notification-Check alle 30 Sekunden
+setInterval(checkTimerNotifications, 30000);
+checkTimerNotifications(); // Einmal sofort ausführen
 </script>
 </body>
 </html>
