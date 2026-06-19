@@ -441,6 +441,7 @@
     padding: 6px 10px; border-radius: 8px; cursor: pointer;
   }
   .btn-clear-history:hover { background: #2d3446; }
+  .active-range { background: var(--accent) !important; color: #000 !important; }
 
   .history-body {
     display: grid;
@@ -608,6 +609,10 @@
     <div class="history-header">
       <h2>Marktpreis-Verlauf</h2>
       <div style="display:flex; gap:8px; align-items:center;">
+        <button class="btn-clear-history btn-timerange active-range" data-days="7">7T</button>
+        <button class="btn-clear-history btn-timerange" data-days="30">1M</button>
+        <button class="btn-clear-history btn-timerange" data-days="90">3M</button>
+        <button class="btn-clear-history btn-timerange" data-days="0">Alles</button>
         <button class="btn-clear-history" id="btnToggleLog">Log-Skala: Ein</button>
         <button class="btn-clear-history" id="btnClearHistory">Verlauf leeren</button>
       </div>
@@ -1190,12 +1195,19 @@ function renderHistoryList(entriesDesc) {
 }
 
 let lastPriceEntriesAsc = [];
+let activeRangeDays = 7; // Standard: 7 Tage
+
+function getFilteredEntries() {
+  if (activeRangeDays === 0) return lastPriceEntriesAsc;
+  const cutoff = now() - activeRangeDays * 24 * 60 * 60 * 1000;
+  return lastPriceEntriesAsc.filter(e => e.timestamp >= cutoff);
+}
 let useLogScale = true;
 
 document.getElementById('btnToggleLog').addEventListener('click', () => {
   useLogScale = !useLogScale;
   document.getElementById('btnToggleLog').textContent = `Log-Skala: ${useLogScale ? 'Ein' : 'Aus'}`;
-  renderPriceChart(lastPriceEntriesAsc);
+  renderPriceChart(getFilteredEntries());
 });
 
 function fmtYLabel(n) {
@@ -1355,7 +1367,7 @@ function renderPriceChart(entriesAsc) {
 let chartResizeTimer = null;
 window.addEventListener('resize', () => {
   clearTimeout(chartResizeTimer);
-  chartResizeTimer = setTimeout(() => renderPriceChart(lastPriceEntriesAsc), 150);
+  chartResizeTimer = setTimeout(() => renderPriceChart(getFilteredEntries()), 150);
 });
 
 // Live-Tick jede Sekunde
@@ -1497,9 +1509,10 @@ onSnapshot(historyQuery, (snap) => {
   historyLoaded = true;
   const entriesDesc = [];
   snap.forEach(d => entriesDesc.push({ ...d.data(), _docId: d.id }));
+  lastPriceEntriesAsc = [...entriesDesc].reverse();
   historyCount = entriesDesc.length;
-  renderHistoryList(entriesDesc);
-  renderPriceChart([...entriesDesc].reverse());
+  renderHistoryList(getFilteredEntries().slice().reverse());
+  renderPriceChart(getFilteredEntries());
   maybeSeedHistory();
 }, (err) => {
   console.error('Preisverlauf-Sync-Fehler:', err);
@@ -1737,6 +1750,17 @@ async function clearPriceHistory() {
   snap.forEach(d => batch.delete(d.ref));
   await batch.commit();
 }
+// Zeitraum-Filter
+document.querySelectorAll('.btn-timerange').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.btn-timerange').forEach(b => b.classList.remove('active-range'));
+    btn.classList.add('active-range');
+    activeRangeDays = parseInt(btn.dataset.days);
+    renderPriceChart(getFilteredEntries());
+    renderHistoryList(getFilteredEntries().slice().reverse());
+  });
+});
+
 document.getElementById('btnClearHistory').addEventListener('click', clearPriceHistory);
 
 renderAll();
