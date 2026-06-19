@@ -1742,10 +1742,8 @@ async function removePresence() {
 heartbeat();
 presenceTimer = setInterval(heartbeat, 20000);
 
-// Push-Benachrichtigungen initialisieren
-if ('Notification' in window && 'serviceWorker' in navigator) {
-  setupNotifications();
-}
+// Notifications deaktiviert
+// setupNotifications();
 
 // Besuch beim Öffnen der Seite loggen (mit Gerät + Browser)
 function detectBrowser(ua) {
@@ -1890,8 +1888,8 @@ onSnapshot(metaRef, (snap) => {
 });
 
 // Notification-Check alle 30 Sekunden
-setInterval(checkTimerNotifications, 30000);
-checkTimerNotifications(); // Einmal sofort ausführen
+// setInterval(checkTimerNotifications, 30000);
+// checkTimerNotifications();
 </script>
 </body>
 </html>
