@@ -1015,6 +1015,12 @@ function renderCard(b) {
   let statusStr = isRipe ? 'reif' : 'wächst';
   statusStr += isRotten ? ' + verdorrt' : (isWatered ? ' + bewässert' : ' + trocken');
 
+  // Standzeit seit Anlage
+  const standzeit = now() - (b.plantedAt || now());
+  const standDays = Math.floor(standzeit / 86400000);
+  const standHours = Math.floor((standzeit % 86400000) / 3600000);
+  const standzeitStr = standDays > 0 ? `${standDays}T ${standHours}h` : `${standHours}h`;
+
   // --- PREISBERECHNUNG ---
   const calculatedPrice = calcPrice(b);
   const mut = b.mutations || {};
@@ -1050,6 +1056,7 @@ function renderCard(b) {
   card.innerHTML = `<div class="card-inner">
     <div class="card-header">
       <span class="card-title" title="${b.name}">${b.name}</span>
+      <span style="font-size:0.7rem; color:var(--muted); margin-left:auto; margin-right:6px; white-space:nowrap;">seit ${standzeitStr}</span>
       <span class="status-text">${statusStr}</span>
     </div>
 
