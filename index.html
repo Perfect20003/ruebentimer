@@ -751,8 +751,9 @@ onMessage(messaging, (payload) => {
 const sentNotifications = new Set();
 
 function checkTimerNotifications() {
-  console.log('[Rübe] Check läuft, Beete:', Object.keys(beete).length, 'Notification:', Notification.permission);
-  Object.values(beete).forEach(b => {
+  const beetValues = Object.values(beete);
+  console.log('[Rübe] Check läuft, Beete:', beetValues.length, 'Notification:', Notification.permission);
+  beetValues.forEach(b => {
     const name = b.name || 'Unbekannt';
     const t = now();
 
@@ -767,9 +768,11 @@ function checkTimerNotifications() {
 
     // 2. Wasser läuft in 15 Min aus
     const waterLeft = Math.max(0, (b.waterUntil || 0) - t);
+    console.log(`[Rübe] ${name}: waterLeft=${Math.round(waterLeft/60000)}min, sent=${sentNotifications.has(b.id + '_wasser15')}`);
     if (waterLeft > 0 && waterLeft <= 15 * 60000
         && !sentNotifications.has(b.id + '_wasser15')) {
       sentNotifications.add(b.id + '_wasser15');
+      console.log('[Rübe] Sende Wasser-Notification!');
       sendLocalNotification('💧 Wasser fast leer', `${name}: Wasser läuft in ~15 Min aus!`);
     }
     if (waterLeft > 16 * 60000) sentNotifications.delete(b.id + '_wasser15');
