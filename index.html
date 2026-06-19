@@ -151,7 +151,26 @@
     align-items: center;
     gap: 10px;
   }
-  .presence-info span { white-space: nowrap; }
+  .mult-calc {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .mult-calc input {
+    width: 44px;
+    background: #0b0e14;
+    border: 1px solid #2a2f45;
+    color: var(--text);
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    text-align: center;
+    outline: none;
+  }
+  .mult-calc input:focus { border-color: var(--accent); }
+  .mult-result { font-weight: 700; color: var(--accent); min-width: 28px; }
 
   .btn-log-open {
     background: transparent;
@@ -565,6 +584,13 @@
     <div class="sync-dot"></div>
     <span id="syncLabel">Verbinde…</span>
   </div>
+  <div class="mult-calc" title="Pixel Abstand zum Rand eingeben">
+    <span>Abstand:</span>
+    <input type="number" id="multPxInput" min="0" max="8" step="0.5" placeholder="px">
+    <span>→</span>
+    <span class="mult-result" id="multResult">–</span>
+  </div>
+
   <div class="presence-info" id="presenceInfo" style="display:none">
     <span id="onlineCount" title="Aktive Nutzer">👥 –</span>
   </div>
@@ -1793,7 +1819,15 @@ onSnapshot(presenceColRef, (snap) => {
   document.getElementById('presenceInfo').style.display = 'flex';
 });
 
-// Besuchslog live
+// Multiplikator-Rechner
+document.getElementById('multPxInput').addEventListener('input', (e) => {
+  const px = parseFloat(e.target.value);
+  const el = document.getElementById('multResult');
+  if (isNaN(px) || px < 0 || px > 8) { el.textContent = '–'; return; }
+  // 8px = ×1, 2px = ×5 → lineare Interpolation
+  const mult = 1 + (8 - px) * (4 / 6);
+  el.textContent = '×' + Math.round(mult * 10) / 10;
+});
 const visitLogQuery = query(visitLogRef, orderBy('timestamp', 'desc'), limit(200));
 let visitLogUnsubscribe = null;
 
