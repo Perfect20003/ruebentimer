@@ -494,7 +494,34 @@
     gap: 4px;
   }
 
-  .history-price { font-weight: 700; color: #f59e0b; }
+  .toast-container {
+    position: fixed;
+    top: 70px;
+    right: 16px;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .toast {
+    background: #1a1d27;
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    color: var(--text);
+    max-width: 280px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    animation: toastIn 0.3s ease;
+    pointer-events: all;
+  }
+  .toast-title { font-weight: 700; margin-bottom: 2px; }
+  .toast-body { color: var(--muted); font-size: 0.78rem; }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
   .history-date { color: var(--muted); }
   .history-empty { color: var(--muted); justify-content: center; }
   .history-delete-btn {
@@ -544,6 +571,8 @@
   <button class="btn-log-open" id="btnNotify" title="Benachrichtigungen aktivieren" style="display:none">🔔</button>
   <button class="btn-log-open" id="btnOpenLog" title=""><img src="data:image/png;base64,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" style="width:16px;height:auto;image-rendering:pixelated;vertical-align:middle;"></button>
 </header>
+
+<div class="toast-container" id="toastContainer"></div>
 
 <main>
 
@@ -752,8 +781,9 @@ const sentNotifications = new Set();
 
 function checkTimerNotifications() {
   const beetValues = Object.values(beete);
-  console.log('[Rübe] Check läuft, Beete:', beetValues.length, 'Notification:', Notification.permission);
+  console.log('[Rübe] Check läuft, Beete:', beetValues.length, 'Notification:', Notification.permission, 'Beispiel:', beetValues[0]?.name);
   beetValues.forEach(b => {
+    console.log('[Rübe] Prüfe Beet:', b?.name, b?.id);
     const name = b.name || 'Unbekannt';
     const t = now();
 
@@ -813,6 +843,16 @@ function checkTimerNotifications() {
 }
 
 function sendLocalNotification(title, body) {
+  // In-App Toast (immer sichtbar)
+  const container = document.getElementById('toastContainer');
+  if (container) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `<div class="toast-title">${title}</div><div class="toast-body">${body}</div>`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 6000);
+  }
+  // Browser-Notification (wenn Tab im Hintergrund)
   if (Notification.permission === 'granted') {
     new Notification(title, { body, icon: '/ruebentimer/icon-192.png' });
   }
