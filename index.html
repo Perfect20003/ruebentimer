@@ -1365,7 +1365,15 @@ function renderPriceChart(entriesAsc) {
   if (useLogScale) {
     // Feste, gut lesbare Stufen
     const FIXED_TICKS = [50000, 100000, 200000, 400000, 1000000, 2000000, 4000000];
-    ticks = FIXED_TICKS.filter(t => t >= logMin * 0.5 && t <= logMax * 1.5);
+    // Nächstkleineren Tick unter logMin und nächstgrößeren über logMax einschließen, alles dazwischen
+    let lo = -1, hi = -1;
+    for (let i = 0; i < FIXED_TICKS.length; i++) {
+      if (FIXED_TICKS[i] <= logMin) lo = i;
+      if (FIXED_TICKS[i] >= logMax && hi === -1) hi = i;
+    }
+    if (lo === -1) lo = 0;
+    if (hi === -1) hi = FIXED_TICKS.length - 1;
+    ticks = FIXED_TICKS.slice(lo, hi + 1);
     if (!ticks.length) ticks = [logMin, logMax];
   } else {
     ticks = niceYTicks(minP, maxP, 5);
