@@ -964,11 +964,20 @@
         </div>
       </div>
 
-      <div style="margin-top:16px; padding-top:16px; border-top:1px solid #2a2f45; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
-        <h3 style="margin:0; font-size:0.95rem;">Marktpreis-Verlauf exportieren</h3>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="btn-clear-history" id="btnExportCsv">Als CSV</button>
-          <button class="btn-clear-history" id="btnExportPdf">Als PDF</button>
+      <div style="margin-top:16px; padding-top:16px; border-top:1px solid #2a2f45;">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+          <h3 style="margin:0; font-size:0.95rem;">Marktpreis-Verlauf exportieren</h3>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn-clear-history" id="btnExportCsv">Als CSV</button>
+            <button class="btn-clear-history" id="btnExportPdf">Als PDF</button>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <span style="font-size:0.78rem; color:var(--muted);">Zeitraum:</span>
+          <button class="btn-clear-history export-range-btn" data-days="7">7T</button>
+          <button class="btn-clear-history export-range-btn" data-days="30">1M</button>
+          <button class="btn-clear-history export-range-btn" data-days="90">3M</button>
+          <button class="btn-clear-history export-range-btn active-range" data-days="0">Alles</button>
         </div>
       </div>
     </div>
@@ -1773,6 +1782,96 @@ function niceYTicks(minV, maxV, count = 5) {
   return ticks;
 }
 
+// Erzeugt das Chart-Markup für ein beliebiges SVG-Element (für den Export, ohne Tooltips/Events)
+function renderPriceChartInto(svg, entriesAsc) {
+  if (!entriesAsc.length) { svg.innerHTML = ''; return; }
+
+  const H = 220, PAD_TOP = 14, PAD_BOTTOM = 28, PAD_RIGHT = 12;
+  const W = 900;
+
+  const prices = entriesAsc.map(e => e.price);
+  const minP = Math.min(...prices);
+  const maxP = Math.max(...prices);
+  const logMin = Math.max(1, minP);
+  const logMax = Math.max(logMin + 1, maxP);
+
+  const toY = (v) => {
+    if (useLogScale) {
+      const lv = Math.log10(Math.max(1, v));
+      const lMin = Math.log10(logMin);
+      const lMax = Math.log10(logMax);
+      return (H - PAD_BOTTOM) - ((lv - lMin) / (lMax - lMin || 1)) * (H - PAD_BOTTOM - PAD_TOP);
+    } else {
+      return (H - PAD_BOTTOM) - ((v - minP) / ((maxP - minP) || 1)) * (H - PAD_BOTTOM - PAD_TOP);
+    }
+  };
+
+  let ticks;
+  if (useLogScale) {
+    const FIXED_TICKS = [50000, 100000, 200000, 400000, 1000000, 2000000, 4000000];
+    let lo = -1, hi = -1;
+    for (let i = 0; i < FIXED_TICKS.length; i++) {
+      if (FIXED_TICKS[i] <= logMin) lo = i;
+      if (FIXED_TICKS[i] >= logMax && hi === -1) hi = i;
+    }
+    if (lo === -1) lo = 0;
+    if (hi === -1) hi = FIXED_TICKS.length - 1;
+    ticks = FIXED_TICKS.slice(lo, hi + 1);
+    if (!ticks.length) ticks = [logMin, logMax];
+  } else {
+    ticks = niceYTicks(minP, maxP, 5);
+  }
+
+  const longestLabel = ticks.reduce((a, t) => { const s = fmtYLabel(t); return s.length > a.length ? s : a; }, '');
+  const PAD_LEFT = Math.max(44, longestLabel.length * 7 + 8);
+
+  const plotW = W - PAD_LEFT - PAD_RIGHT;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const stepX = entriesAsc.length > 1 ? plotW / (entriesAsc.length - 1) : 0;
+
+  const points = entriesAsc.map((e, i) => {
+    const x = entriesAsc.length > 1 ? PAD_LEFT + i * stepX : PAD_LEFT + plotW / 2;
+    const y = toY(e.price);
+    return { x, y, e };
+  });
+
+  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  const areaD = `${pathD} L ${points[points.length-1].x.toFixed(1)} ${H - PAD_BOTTOM} L ${points[0].x.toFixed(1)} ${H - PAD_BOTTOM} Z`;
+
+  const gridLines = ticks.map(t => {
+    const y = toY(t).toFixed(1);
+    return `
+      <line x1="${PAD_LEFT}" y1="${y}" x2="${W - PAD_RIGHT}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-width="1"></line>
+      <text x="${PAD_LEFT - 6}" y="${y}" fill="var(--muted)" font-size="11" text-anchor="end" dominant-baseline="middle">${fmtYLabel(t)}</text>
+    `;
+  }).join('');
+
+  // Bei vielen Einträgen werden weniger Datumslabels gezeigt, damit sie nicht überlappen
+  const labelStep = Math.max(1, Math.ceil(points.length / 12));
+  const datumLabels = points.map((p, i) => {
+    if ((i % labelStep !== 0) && i !== points.length - 1) return '';
+    const d = new Date(p.e.timestamp);
+    const s = `${d.getDate()}.${d.getMonth()+1}`;
+    return `<text x="${p.x.toFixed(1)}" y="${H - 8}" fill="var(--muted)" font-size="11" font-weight="600" text-anchor="middle">${s}</text>`;
+  }).join('');
+
+  const circles = points.map((p, i) =>
+    `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="var(--accent)" stroke="#0f1117" stroke-width="1.5"></circle>`
+  ).join('');
+
+  const yAxis = `<line x1="${PAD_LEFT}" y1="${PAD_TOP}" x2="${PAD_LEFT}" y2="${H - PAD_BOTTOM}" stroke="rgba(255,255,255,0.12)" stroke-width="1"></line>`;
+
+  svg.innerHTML = `
+    ${gridLines}
+    ${yAxis}
+    <path d="${areaD}" fill="rgba(34,197,94,0.10)" stroke="none"></path>
+    <path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="2"></path>
+    ${circles}
+    ${datumLabels}
+  `;
+}
+
 function renderPriceChart(entriesAsc) {
   const svg = document.getElementById('priceChart');
   const chartEmpty = document.getElementById('chartEmpty');
@@ -2524,9 +2623,25 @@ function closeLogOverlay() {
 }
 
 // --- Export / Backup ---
+
+// Zeitraum-Auswahl für den Export (separat vom Website-Filter)
+let exportRangeDays = 0; // 0 = Alles
+document.querySelectorAll('.export-range-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.export-range-btn').forEach(b => b.classList.remove('active-range'));
+    btn.classList.add('active-range');
+    exportRangeDays = parseInt(btn.dataset.days);
+  });
+});
+
+function getExportEntries() {
+  if (exportRangeDays === 0) return lastPriceEntriesAsc;
+  return lastPriceEntriesAsc.slice(-exportRangeDays);
+}
+
 // --- Preisverlauf CSV-Export ---
 document.getElementById('btnExportCsv').addEventListener('click', () => {
-  const entriesAsc = lastPriceEntriesAsc;
+  const entriesAsc = getExportEntries();
   if (!entriesAsc.length) { alert('Kein Preisverlauf vorhanden.'); return; }
 
   let csv = 'Datum;Uhrzeit;Preis\n';
@@ -2547,9 +2662,25 @@ document.getElementById('btnExportCsv').addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
+// Erzeugt ein eigenständiges Chart-SVG-Element für gegebene Einträge,
+// im exakt gleichen Stil wie das Website-Diagramm (gleiche Funktion, anderer Container)
+function buildExportChartSvg(entriesAsc) {
+  const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  tempSvg.setAttribute('id', 'exportChartTemp');
+  tempSvg.style.position = 'fixed';
+  tempSvg.style.left = '-9999px';
+  tempSvg.style.top = '0';
+  tempSvg.style.width = '900px';
+  document.body.appendChild(tempSvg);
+
+  // Tausche kurz die priceChart-ID damit renderPriceChart auf das temporäre SVG zielt
+  renderPriceChartInto(tempSvg, entriesAsc);
+  return tempSvg;
+}
+
 // --- Preisverlauf PDF-Export (mit Diagramm) ---
 document.getElementById('btnExportPdf').addEventListener('click', async () => {
-  const entriesAsc = lastPriceEntriesAsc;
+  const entriesAsc = getExportEntries();
   if (!entriesAsc.length) { alert('Kein Preisverlauf vorhanden.'); return; }
 
   // jsPDF dynamisch laden falls noch nicht vorhanden
@@ -2563,8 +2694,9 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
     });
   }
 
-  // Chart-SVG als PNG rendern
-  const svgEl = document.getElementById('priceChart');
+  // Eigenständiges Chart-SVG für den gewählten Zeitraum erzeugen
+  const tempSvg = buildExportChartSvg(entriesAsc);
+  const svgEl = tempSvg;
   const svgClone = svgEl.cloneNode(true);
 
   // Inter-Schriftart als @font-face im SVG einbetten (für eigenständiges Rendering nötig)
@@ -2621,15 +2753,20 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
     img.src = svgUrl;
   });
 
+  // Temporäres SVG wieder entfernen
+  tempSvg.remove();
+
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
   const pageWidth = pdf.internal.pageSize.getWidth();
+
+  const rangeLabel = { 7: '7 Tage', 30: '1 Monat', 90: '3 Monate', 0: 'Gesamter Verlauf' }[exportRangeDays];
 
   pdf.setFontSize(16);
   pdf.text('Rübentimer – Marktpreis-Verlauf', 14, 16);
   pdf.setFontSize(9);
   pdf.setTextColor(120);
-  pdf.text(`Exportiert am ${new Date().toLocaleString('de-DE')}`, 14, 22);
+  pdf.text(`Exportiert am ${new Date().toLocaleString('de-DE')} · Zeitraum: ${rangeLabel}`, 14, 22);
 
   // Diagramm einfügen
   const imgWidth = pageWidth - 28;
