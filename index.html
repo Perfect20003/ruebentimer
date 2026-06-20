@@ -407,7 +407,7 @@
     border: 1px solid #2a2f45;
     color: var(--text);
     padding: 10px 36px 10px 14px;
-    border-radius: 10px;
+    border-radius: 14px;
     font-size: 0.9rem;
     font-weight: 600;
     outline: none;
@@ -422,6 +422,51 @@
   }
   .mut-select:hover { border-color: #3a4060; }
   .mut-select:focus { border-color: var(--accent); }
+
+  .custom-select { position: relative; width: 100%; }
+  .custom-select-trigger {
+    width: 100%;
+    background: #0b0e14;
+    border: 1px solid #2a2f45;
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .custom-select-trigger:hover { border-color: #3a4060; }
+  .custom-select.open .custom-select-trigger { border-color: var(--accent); }
+  .custom-select.open .custom-select-trigger svg { transform: rotate(180deg); }
+  .custom-select-trigger svg { transition: transform 0.15s; flex-shrink: 0; }
+
+  .custom-select-options {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0; right: 0;
+    background: #14171f;
+    border: 1px solid #2a2f45;
+    border-radius: 14px;
+    overflow: hidden;
+    z-index: 50;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  .custom-select.open .custom-select-options { display: block; }
+  .custom-select-option {
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .custom-select-option:hover { background: #1f2431; }
+  .custom-select-option.selected { background: rgba(34,197,94,0.12); color: var(--accent); font-weight: 700; }
   .mut-number {
     width: 72px;
     background: #1a1d27;
@@ -690,13 +735,26 @@
 
       <div class="mut-row mut-col">
         <span class="mut-label">Form-Mutation</span>
-        <select id="mut-shape-select" class="mut-select">
+        <select id="mut-shape-select" style="display:none">
           <option value="">Normalform (+0)</option>
           <option value="stachelig">Stachelig (+50.000)</option>
           <option value="quadratisch">Quadratisch (+100.000)</option>
           <option value="explosiv">Explosiv (+500.000)</option>
           <option value="lebendig">Lebendig (+1.000.000)</option>
         </select>
+        <div class="custom-select" id="mut-shape-custom">
+          <button type="button" class="custom-select-trigger" id="mut-shape-trigger">
+            <span id="mut-shape-label">Normalform (+0)</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+          <div class="custom-select-options" id="mut-shape-options">
+            <div class="custom-select-option selected" data-value="">Normalform (+0)</div>
+            <div class="custom-select-option" data-value="stachelig">Stachelig (+50.000)</div>
+            <div class="custom-select-option" data-value="quadratisch">Quadratisch (+100.000)</div>
+            <div class="custom-select-option" data-value="explosiv">Explosiv (+500.000)</div>
+            <div class="custom-select-option" data-value="lebendig">Lebendig (+1.000.000)</div>
+          </div>
+        </div>
       </div>
 
       <div class="mut-row mut-col">
@@ -1706,6 +1764,7 @@ function openMutModal(id) {
   document.getElementById('mut-gold').checked = !!mut.gold;
   document.getElementById('mut-gold-toggle').classList.toggle('on', !!mut.gold);
   document.getElementById('mut-shape-select').value = mut.shapeKey || "";
+  syncShapeCustomFromSelect();
   document.getElementById('mut-weight-mult').value = mut.weightMult || 1;
 
   document.getElementById('mutModal').style.display = 'flex';
@@ -1746,6 +1805,40 @@ document.getElementById('mutModal').addEventListener('click', (e) => {
 
 document.getElementById('mut-gold').addEventListener('change', saveMutation);
 document.getElementById('mut-shape-select').addEventListener('change', saveMutation);
+
+// Custom Dropdown Logik
+const shapeSelect = document.getElementById('mut-shape-select');
+const shapeCustom = document.getElementById('mut-shape-custom');
+const shapeTrigger = document.getElementById('mut-shape-trigger');
+const shapeLabel = document.getElementById('mut-shape-label');
+const shapeOptions = document.getElementById('mut-shape-options');
+
+function syncShapeCustomFromSelect() {
+  const val = shapeSelect.value;
+  const opt = shapeOptions.querySelector(`[data-value="${val}"]`);
+  shapeLabel.textContent = opt ? opt.textContent : 'Normalform (+0)';
+  shapeOptions.querySelectorAll('.custom-select-option').forEach(o => {
+    o.classList.toggle('selected', o.dataset.value === val);
+  });
+}
+
+shapeTrigger.addEventListener('click', (e) => {
+  e.stopPropagation();
+  shapeCustom.classList.toggle('open');
+});
+
+shapeOptions.querySelectorAll('.custom-select-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    shapeSelect.value = opt.dataset.value;
+    syncShapeCustomFromSelect();
+    shapeCustom.classList.remove('open');
+    saveMutation();
+  });
+});
+
+document.addEventListener('click', (e) => {
+  if (!shapeCustom.contains(e.target)) shapeCustom.classList.remove('open');
+});
 document.getElementById('mut-weight-mult').addEventListener('input', saveMutation);
 
 // Marktpreis: live formatieren (Tausenderpunkte) und lokal anwenden,
