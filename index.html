@@ -773,7 +773,7 @@
   </section>
 
   <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-bottom:10px;">
-    <select id="listSortSelect" class="mut-select" style="display:none; width:auto; padding:7px 32px 7px 12px; font-size:0.8rem;">
+    <select id="listSortSelect" style="display:none">
       <option value="rot">Sortieren: Verdorrung</option>
       <option value="ripe">Sortieren: Bis reif</option>
       <option value="water">Sortieren: Wasser</option>
@@ -781,6 +781,20 @@
       <option value="price">Sortieren: Marktwert</option>
       <option value="name">Sortieren: Name</option>
     </select>
+    <div class="custom-select" id="listSortCustom" style="display:none; width:220px;">
+      <button type="button" class="custom-select-trigger" id="listSortTrigger" style="padding:8px 12px; font-size:0.82rem;">
+        <span id="listSortLabel">Sortieren: Verdorrung</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+      <div class="custom-select-options" id="listSortOptions">
+        <div class="custom-select-option selected" data-value="rot">Sortieren: Verdorrung</div>
+        <div class="custom-select-option" data-value="ripe">Sortieren: Bis reif</div>
+        <div class="custom-select-option" data-value="water">Sortieren: Wasser</div>
+        <div class="custom-select-option" data-value="fert">Sortieren: Dünger</div>
+        <div class="custom-select-option" data-value="price">Sortieren: Marktwert</div>
+        <div class="custom-select-option" data-value="name">Sortieren: Name</div>
+      </div>
+    </div>
     <div class="view-toggle" id="viewToggle">
       <button id="viewBtnCards" class="active">Karten</button>
       <button id="viewBtnList">Liste</button>
@@ -1464,19 +1478,19 @@ function applyView() {
   const listContainer = document.getElementById('listContainer');
   const btnCards = document.getElementById('viewBtnCards');
   const btnList = document.getElementById('viewBtnList');
-  const sortSelect = document.getElementById('listSortSelect');
+  const sortCustom = document.getElementById('listSortCustom');
   if (currentView === 'list') {
     grid.style.display = 'none';
     listContainer.style.display = 'flex';
     btnCards.classList.remove('active');
     btnList.classList.add('active');
-    sortSelect.style.display = '';
+    sortCustom.style.display = '';
   } else {
     grid.style.display = '';
     listContainer.style.display = 'none';
     btnCards.classList.add('active');
     btnList.classList.remove('active');
-    sortSelect.style.display = 'none';
+    sortCustom.style.display = 'none';
   }
 }
 
@@ -1491,12 +1505,45 @@ document.getElementById('viewBtnList').addEventListener('click', () => {
   applyView();
   renderAll();
 });
-document.getElementById('listSortSelect').value = currentSort;
-document.getElementById('listSortSelect').addEventListener('change', (e) => {
-  currentSort = e.target.value;
-  try { localStorage.setItem('rueben_sort', currentSort); } catch(e) {}
-  renderAll();
+
+// Sortier-Dropdown (custom, wie bei Mutationen)
+const sortSelectHidden = document.getElementById('listSortSelect');
+const sortCustomEl = document.getElementById('listSortCustom');
+const sortTrigger = document.getElementById('listSortTrigger');
+const sortLabel = document.getElementById('listSortLabel');
+const sortOptionsEl = document.getElementById('listSortOptions');
+
+sortSelectHidden.value = currentSort;
+function syncSortCustomFromSelect() {
+  const val = sortSelectHidden.value;
+  const opt = sortOptionsEl.querySelector(`[data-value="${val}"]`);
+  sortLabel.textContent = opt ? opt.textContent : 'Sortieren: Verdorrung';
+  sortOptionsEl.querySelectorAll('.custom-select-option').forEach(o => {
+    o.classList.toggle('selected', o.dataset.value === val);
+  });
+}
+syncSortCustomFromSelect();
+
+sortTrigger.addEventListener('click', (e) => {
+  e.stopPropagation();
+  sortCustomEl.classList.toggle('open');
 });
+
+sortOptionsEl.querySelectorAll('.custom-select-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    sortSelectHidden.value = opt.dataset.value;
+    syncSortCustomFromSelect();
+    sortCustomEl.classList.remove('open');
+    currentSort = opt.dataset.value;
+    try { localStorage.setItem('rueben_sort', currentSort); } catch(e) {}
+    renderAll();
+  });
+});
+
+document.addEventListener('click', (e) => {
+  if (!sortCustomEl.contains(e.target)) sortCustomEl.classList.remove('open');
+});
+
 applyView();
 
 function renderAll() {
