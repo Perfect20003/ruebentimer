@@ -853,7 +853,7 @@ function requireUnlock(actionFn) {
   return async (...args) => {
     if (isUnlocked) return actionFn(...args);
     const pw = prompt('Passwort zum Bearbeiten eingeben:');
-    if (pw === 'Ruebe') {
+    if (pw === 'Ruebe67') {
       isUnlocked = true;
       try { localStorage.setItem(EDIT_PASSWORD_KEY, '1'); } catch(e) {}
       updateLockUI();
@@ -2092,7 +2092,7 @@ document.getElementById('btnUnlockEdit').addEventListener('click', () => {
     return;
   }
   const pw = prompt('Passwort zum Bearbeiten eingeben:');
-  if (pw === 'Ruebe') {
+  if (pw === 'Ruebe67') {
     isUnlocked = true;
     try { localStorage.setItem(EDIT_PASSWORD_KEY, '1'); } catch(e) {}
     updateLockUI();
@@ -2114,7 +2114,7 @@ document.getElementById('logOverlay').addEventListener('click', (e) => {
 
 function tryLogin() {
   const pw = document.getElementById('logPasswordInput').value;
-  if (pw === 'Ruebe') {
+  if (pw === 'Sechseben') {
     try { localStorage.setItem('rueben_known', '1'); } catch(e) {}
     document.getElementById('logPasswordScreen').style.display = 'none';
     document.getElementById('logContentScreen').style.display = 'block';
