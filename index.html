@@ -332,6 +332,35 @@
   .stat-value.editable:hover { border-color: var(--accent); color: var(--accent); }
 
   /* Zeit-Edit-Modal */
+  .btn-note {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 0.68rem;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-note:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+
+  .note-modal { width: 360px; }
+  .note-modal textarea {
+    width: 100%;
+    min-height: 110px;
+    background: #0b0e14;
+    border: 1px solid #2a2f45;
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    margin-bottom: 14px;
+  }
+  .note-modal textarea:focus { border-color: var(--accent); }
+
   .time-modal { width: 360px; }
   .time-modal h3 { font-size: 1rem; margin-bottom: 12px; color: #fff; }
   .time-inputs {
@@ -832,6 +861,18 @@
   </div>
 </div>
 
+<!-- Notiz pro Beet -->
+<div class="modal-overlay" id="noteModal" style="display:none">
+  <div class="modal note-modal">
+    <h3 id="noteModalTitle" style="font-size:1rem; margin-bottom:12px; color:#fff;">Notiz</h3>
+    <textarea id="noteTextarea" maxlength="500" placeholder="Eigene Notiz zu diesem Beet…"></textarea>
+    <div class="time-modal-btns">
+      <button class="btn-cancel-time" id="btnCancelNote">Abbrechen</button>
+      <button class="btn-apply" id="btnSaveNote">Speichern</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="mutModal" style="display:none">
   <div class="modal">
     <div style="margin-bottom:16px;">
@@ -1308,7 +1349,10 @@ function renderCard(b) {
       <span class="card-title" title="${b.name}">${b.name}</span>
       <span class="status-text">${statusStr}</span>
     </div>
-    <div style="font-size:0.7rem; color:var(--muted); margin-bottom:4px;">seit ${standzeitStr}</div>
+    <div style="font-size:0.7rem; color:var(--muted); margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
+      <span>seit ${standzeitStr}</span>
+      <button class="btn-note" title="${b.note ? 'Notiz bearbeiten' : 'Notiz hinzufügen'}">${b.note ? '📝 Notiz' : '+ Notiz'}</button>
+    </div>
 
     <div class="card-body-layout">
       <div class="card-left-cell">
@@ -1384,6 +1428,7 @@ function renderCard(b) {
   card.querySelector('.btn-rename').addEventListener('click', requireUnlock(() => triggerRename(b.id)));
   card.querySelector('.btn-reset').addEventListener('click', requireUnlock(() => resetBeet(b.id)));
   card.querySelector('.btn-delete').addEventListener('click', requireUnlock(() => deleteBeet(b.id)));
+  card.querySelector('.btn-note').addEventListener('click', requireUnlock(() => openNoteModal(b.id, b.note || '')));
 
   if (isNew) {
     grid.appendChild(card);
@@ -2181,6 +2226,34 @@ document.getElementById('timeModal').addEventListener('click', (e) => {
 document.getElementById('timeInputH').addEventListener('keydown', (e) => { if (e.key === 'Enter') applyTimeModal(); });
 document.getElementById('timeInputM').addEventListener('keydown', (e) => { if (e.key === 'Enter') applyTimeModal(); });
 document.getElementById('timeInputS').addEventListener('keydown', (e) => { if (e.key === 'Enter') applyTimeModal(); });
+
+// --- Notiz pro Beet ---
+let activeNoteEdit = null;
+
+function openNoteModal(id, currentNote) {
+  activeNoteEdit = id;
+  document.getElementById('noteTextarea').value = currentNote;
+  document.getElementById('noteModal').style.display = 'flex';
+  document.getElementById('noteTextarea').focus();
+}
+
+function closeNoteModal() {
+  document.getElementById('noteModal').style.display = 'none';
+  activeNoteEdit = null;
+}
+
+async function saveNote() {
+  if (!activeNoteEdit) return;
+  const text = document.getElementById('noteTextarea').value.trim();
+  await updateDoc(doc(db, 'beete', activeNoteEdit), { note: text });
+  closeNoteModal();
+}
+
+document.getElementById('btnSaveNote').addEventListener('click', saveNote);
+document.getElementById('btnCancelNote').addEventListener('click', closeNoteModal);
+document.getElementById('noteModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('noteModal')) closeNoteModal();
+});
 
 function openMutModal(id) {
   activeMutId = id;
