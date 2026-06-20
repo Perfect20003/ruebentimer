@@ -1903,15 +1903,17 @@ function renderPriceChartInto(svg, entriesAsc) {
   const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
   const areaD = `${pathD} L ${points[points.length-1].x.toFixed(1)} ${H - PAD_BOTTOM} L ${points[0].x.toFixed(1)} ${H - PAD_BOTTOM} Z`;
 
-  // Ticks, deren Label zu nah an der Datumsbeschriftung am unteren Rand läge, werden ausgeblendet
-  const MIN_TICK_DIST_FROM_BOTTOM = 14;
+  // Tick-Labels, die zu nah an der Datumsbeschriftung läge, werden leicht nach oben verschoben statt ausgeblendet
+  const MIN_TICK_DIST_FROM_BOTTOM = 12;
   const gridLines = ticks.map(t => {
     const yNum = toY(t);
-    if ((H - PAD_BOTTOM) - yNum < MIN_TICK_DIST_FROM_BOTTOM) return '';
+    const labelY = ((H - PAD_BOTTOM) - yNum < MIN_TICK_DIST_FROM_BOTTOM)
+      ? ((H - PAD_BOTTOM) - MIN_TICK_DIST_FROM_BOTTOM)
+      : yNum;
     const y = yNum.toFixed(1);
     return `
       <line x1="${PAD_LEFT}" y1="${y}" x2="${W - PAD_RIGHT}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-width="1"></line>
-      <text x="${PAD_LEFT - 6}" y="${y}" fill="var(--muted)" font-size="11" text-anchor="end" dominant-baseline="middle">${fmtYLabel(t)}</text>
+      <text x="${PAD_LEFT - 6}" y="${labelY.toFixed(1)}" fill="var(--muted)" font-size="11" text-anchor="end" dominant-baseline="middle">${fmtYLabel(t)}</text>
     `;
   }).join('');
 
@@ -2004,15 +2006,17 @@ function renderPriceChart(entriesAsc) {
   const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
   const areaD = `${pathD} L ${points[points.length-1].x.toFixed(1)} ${H - PAD_BOTTOM} L ${points[0].x.toFixed(1)} ${H - PAD_BOTTOM} Z`;
 
-  // Gridlines + Y-Achsen-Labels (Ticks zu nah an der Datumsbeschriftung werden ausgeblendet)
-  const MIN_TICK_DIST_FROM_BOTTOM2 = 14;
+  // Gridlines + Y-Achsen-Labels (Labels nah am unteren Rand werden leicht nach oben verschoben)
+  const MIN_TICK_DIST_FROM_BOTTOM2 = 12;
   const gridLines = ticks.map(t => {
     const yNum = toY(t);
-    if ((H - PAD_BOTTOM) - yNum < MIN_TICK_DIST_FROM_BOTTOM2) return '';
+    const labelY = ((H - PAD_BOTTOM) - yNum < MIN_TICK_DIST_FROM_BOTTOM2)
+      ? ((H - PAD_BOTTOM) - MIN_TICK_DIST_FROM_BOTTOM2)
+      : yNum;
     const y = yNum.toFixed(1);
     return `
       <line x1="${PAD_LEFT}" y1="${y}" x2="${W - PAD_RIGHT}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-width="1"></line>
-      <text x="${PAD_LEFT - 6}" y="${y}" fill="var(--muted)" font-size="11" text-anchor="end" dominant-baseline="middle">${fmtYLabel(t)}</text>
+      <text x="${PAD_LEFT - 6}" y="${labelY.toFixed(1)}" fill="var(--muted)" font-size="11" text-anchor="end" dominant-baseline="middle">${fmtYLabel(t)}</text>
     `;
   }).join('');
 
