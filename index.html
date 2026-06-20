@@ -663,6 +663,7 @@
     <span id="onlineCount" title="Aktive Nutzer">👥 –</span>
   </div>
   <button class="btn-log-open" id="btnNotify" title="Benachrichtigungen aktivieren" style="display:none">🔔</button>
+  <button class="btn-log-open" id="btnUnlockEdit" title="Zum Bearbeiten entsperren">🔒</button>
   <button class="btn-log-open" id="btnOpenLog" title=""><img src="data:image/png;base64,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" style="width:16px;height:auto;image-rendering:pixelated;vertical-align:middle;"></button>
 </header>
 
@@ -811,6 +812,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
 import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, addDoc, query, orderBy, limit, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB6dxEUrQsk3FAIHDGA0rObqwXSYE3jt1w",
@@ -827,6 +829,46 @@ const analytics = getAnalytics(app);
 logEvent(analytics, 'page_view');
 const db = getFirestore(app);
 const messaging = getMessaging(app);
+const auth = getAuth(app);
+
+// --- Editier-Schutz: Passwort = "Ruebe" (gleich wie Besuchslog) ---
+const EDIT_PASSWORD_KEY = 'rueben_edit_unlocked';
+let isUnlocked = false;
+
+try { isUnlocked = sessionStorage.getItem(EDIT_PASSWORD_KEY) === '1'; } catch(e) {}
+
+async function ensureAuth() {
+  // Immer anonym einloggen damit Lesen funktioniert (falls Regeln das verlangen)
+  try {
+    await signInAnonymously(auth);
+  } catch(e) {
+    console.warn('[Rübe] Anonyme Anmeldung fehlgeschlagen:', e.message);
+  }
+}
+ensureAuth();
+updateLockUI();
+
+function requireUnlock(actionFn) {
+  return async (...args) => {
+    if (isUnlocked) return actionFn(...args);
+    const pw = prompt('Passwort zum Bearbeiten eingeben:');
+    if (pw === 'Ruebe') {
+      isUnlocked = true;
+      try { sessionStorage.setItem(EDIT_PASSWORD_KEY, '1'); } catch(e) {}
+      updateLockUI();
+      return actionFn(...args);
+    } else if (pw !== null) {
+      alert('Falsches Passwort.');
+    }
+  };
+}
+
+function updateLockUI() {
+  const btn = document.getElementById('btnUnlockEdit');
+  if (!btn) return;
+  btn.textContent = isUnlocked ? '🔓' : '🔒';
+  btn.title = isUnlocked ? 'Bearbeiten freigeschaltet' : 'Zum Bearbeiten entsperren';
+}
 
 // --- Push-Benachrichtigungen Setup ---
 // VAPID Key aus Firebase Console → Projekteinstellungen → Cloud Messaging → Web Push Zertifikate
@@ -1200,19 +1242,19 @@ function renderCard(b) {
     </div>
   </div>`;
 
-  card.querySelector('.btn-trigger-mut').addEventListener('click', () => openMutModal(b.id));
-  card.querySelector('.btn-add-w12').addEventListener('click', () => setWater(b.id, 12));
-  card.querySelector('.btn-add-w24').addEventListener('click', () => setWater(b.id, 24));
-  card.querySelector('.btn-remove-water').addEventListener('click', () => removeWater(b.id));
-  card.querySelector('.btn-add-p4').addEventListener('click', () => applyFertilizer(b.id));
+  card.querySelector('.btn-trigger-mut').addEventListener('click', requireUnlock(() => openMutModal(b.id)));
+  card.querySelector('.btn-add-w12').addEventListener('click', requireUnlock(() => setWater(b.id, 12)));
+  card.querySelector('.btn-add-w24').addEventListener('click', requireUnlock(() => setWater(b.id, 24)));
+  card.querySelector('.btn-remove-water').addEventListener('click', requireUnlock(() => removeWater(b.id)));
+  card.querySelector('.btn-add-p4').addEventListener('click', requireUnlock(() => applyFertilizer(b.id)));
 
-  card.querySelector('.btn-edit-water')?.addEventListener('click', () => openTimeModal(b.id, 'water', waterLeft));
-  card.querySelector('.btn-edit-rot')?.addEventListener('click', () => openTimeModal(b.id, 'rot', rotLeft));
-  card.querySelector('.btn-edit-ripe')?.addEventListener('click', () => openTimeModal(b.id, 'ripe', ripeLeft));
-  card.querySelector('.btn-edit-fert')?.addEventListener('click', () => openTimeModal(b.id, 'fert', fertLeft));
-  card.querySelector('.btn-rename').addEventListener('click', () => triggerRename(b.id));
-  card.querySelector('.btn-reset').addEventListener('click', () => resetBeet(b.id));
-  card.querySelector('.btn-delete').addEventListener('click', () => deleteBeet(b.id));
+  card.querySelector('.btn-edit-water')?.addEventListener('click', requireUnlock(() => openTimeModal(b.id, 'water', waterLeft)));
+  card.querySelector('.btn-edit-rot')?.addEventListener('click', requireUnlock(() => openTimeModal(b.id, 'rot', rotLeft)));
+  card.querySelector('.btn-edit-ripe')?.addEventListener('click', requireUnlock(() => openTimeModal(b.id, 'ripe', ripeLeft)));
+  card.querySelector('.btn-edit-fert')?.addEventListener('click', requireUnlock(() => openTimeModal(b.id, 'fert', fertLeft)));
+  card.querySelector('.btn-rename').addEventListener('click', requireUnlock(() => triggerRename(b.id)));
+  card.querySelector('.btn-reset').addEventListener('click', requireUnlock(() => resetBeet(b.id)));
+  card.querySelector('.btn-delete').addEventListener('click', requireUnlock(() => deleteBeet(b.id)));
 
   if (isNew) {
     grid.appendChild(card);
@@ -1271,7 +1313,7 @@ function renderHistoryList(entriesDesc) {
   }).join('');
 
   list.querySelectorAll('.history-delete-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', requireUnlock(async () => {
       const docId = btn.dataset.id;
       if (!docId) return;
       if (!confirm('Diesen Eintrag löschen?')) return;
@@ -1286,7 +1328,7 @@ function renderHistoryList(entriesDesc) {
         await setDoc(settingsRef, { marketPrice: globalMarketPrice }, { merge: true });
         renderAll();
       }
-    });
+    }));
   });
 }
 
@@ -1522,6 +1564,7 @@ let dragSrcId = null;
 
 function setupDragDrop(card) {
   card.addEventListener('dragstart', (e) => {
+    if (!isUnlocked) { e.preventDefault(); requireUnlock(() => {})(); return; }
     dragSrcId = card.id.replace('card-', '');
     setTimeout(() => card.classList.add('dragging'), 0);
     e.dataTransfer.effectAllowed = 'move';
@@ -1813,7 +1856,7 @@ async function saveMutation() {
 }
 
 // --- Event Listener ---
-document.getElementById('btnAddBeet').addEventListener('click', addBeet);
+document.getElementById('btnAddBeet').addEventListener('click', requireUnlock(addBeet));
 document.getElementById('newName').addEventListener('keydown', e => {
   if (e.key === 'Enter') addBeet();
 });
@@ -1877,13 +1920,13 @@ marketPriceInput.addEventListener('input', () => {
   renderAll();
 });
 
-document.getElementById('btnConfirmPrice').addEventListener('click', async () => {
+document.getElementById('btnConfirmPrice').addEventListener('click', requireUnlock(async () => {
   globalMarketPrice = parsePriceInput(marketPriceInput.value);
   marketPriceInput.value = formatNumber(globalMarketPrice);
   renderAll();
   await setDoc(settingsRef, { marketPrice: globalMarketPrice }, { merge: true });
   await addDoc(historyColRef, { price: globalMarketPrice, timestamp: now() });
-});
+}));
 
 async function clearPriceHistory() {
   if (!confirm('Preisverlauf wirklich komplett löschen?')) return;
@@ -1903,7 +1946,7 @@ document.querySelectorAll('.btn-timerange').forEach(btn => {
   });
 });
 
-document.getElementById('btnClearHistory').addEventListener('click', clearPriceHistory);
+document.getElementById('btnClearHistory').addEventListener('click', requireUnlock(clearPriceHistory));
 
 renderAll();
 
@@ -2042,6 +2085,22 @@ function closeLogOverlay() {
   if (visitLogUnsubscribe) { visitLogUnsubscribe(); visitLogUnsubscribe = null; }
 }
 
+document.getElementById('btnUnlockEdit').addEventListener('click', () => {
+  if (isUnlocked) {
+    alert('Bearbeiten ist bereits freigeschaltet.');
+    return;
+  }
+  const pw = prompt('Passwort zum Bearbeiten eingeben:');
+  if (pw === 'Ruebe') {
+    isUnlocked = true;
+    try { sessionStorage.setItem(EDIT_PASSWORD_KEY, '1'); } catch(e) {}
+    updateLockUI();
+    alert('Bearbeiten freigeschaltet!');
+  } else if (pw !== null) {
+    alert('Falsches Passwort.');
+  }
+});
+
 document.getElementById('btnOpenLog').addEventListener('click', () => {
   document.getElementById('logOverlay').style.display = 'flex';
   setTimeout(() => document.getElementById('logPasswordInput').focus(), 50);
@@ -2079,7 +2138,7 @@ async function clearVisitLog() {
   snap.forEach(d => batch.delete(d.ref));
   await batch.commit();
 }
-document.getElementById('btnClearVisitLog').addEventListener('click', clearVisitLog);
+document.getElementById('btnClearVisitLog').addEventListener('click', requireUnlock(clearVisitLog));
 
 // Letzter Besuch live
 onSnapshot(metaRef, (snap) => {
