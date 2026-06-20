@@ -446,7 +446,46 @@
   }
   .mut-label { font-size: 0.88rem; font-weight: 600; color: var(--text); }
   .mut-hint { font-size: 0.75rem; color: var(--muted); }
-  .view-toggle {
+  .select-checkbox {
+    width: 17px; height: 17px;
+    accent-color: var(--accent);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .bulk-action-bar {
+    position: sticky;
+    top: 8px;
+    z-index: 50;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: #14171f;
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 10px 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    flex-wrap: wrap;
+  }
+  .bulk-action-bar.visible { display: flex; }
+  .bulk-action-bar .bulk-count { font-weight: 700; color: var(--accent); white-space: nowrap; }
+  .bulk-action-bar button {
+    background: #1f2431;
+    border: none;
+    color: var(--text);
+    padding: 7px 13px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .bulk-action-bar button:hover { background: #2a3142; }
+  .bulk-action-bar .bulk-delete { background: #7f1d1d; }
+  .bulk-action-bar .bulk-delete:hover { background: #991b1b; }
+  .bulk-action-bar .bulk-clear { margin-left: auto; background: none; color: var(--muted); }
+  .bulk-action-bar .bulk-clear:hover { color: var(--text); background: rgba(255,255,255,0.06); }
     display: flex;
     gap: 4px;
     background: #14171f;
@@ -857,6 +896,15 @@
       <button id="viewBtnCards" class="active">Karten</button>
       <button id="viewBtnList">Liste</button>
     </div>
+  </div>
+
+  <div class="bulk-action-bar" id="bulkActionBar">
+    <span class="bulk-count" id="bulkCount">0 ausgewählt</span>
+    <button id="bulkWater12">Wasser (12h)</button>
+    <button id="bulkWater24">Wasser (24h)</button>
+    <button id="bulkFert">Dünger</button>
+    <button class="bulk-delete" id="bulkDelete">Löschen</button>
+    <button class="bulk-clear" id="bulkClear">Auswahl aufheben</button>
   </div>
 
   <div class="grid" id="grid"></div>
@@ -1431,7 +1479,10 @@ function renderCard(b) {
   card.draggable = true;
   card.innerHTML = `<div class="card-inner">
     <div class="card-header">
-      <span class="card-title" title="${b.name}">${b.name}</span>
+      <span style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+        <input type="checkbox" class="select-checkbox card-select-cb" data-id="${b.id}" title="Auswählen">
+        <span class="card-title" title="${b.name}">${b.name}</span>
+      </span>
       <span class="status-text">${statusStr}</span>
     </div>
     <div style="font-size:0.7rem; color:var(--muted); margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
@@ -1515,6 +1566,11 @@ function renderCard(b) {
   card.querySelector('.btn-delete').addEventListener('click', requireUnlock(() => deleteBeet(b.id)));
   card.querySelector('.btn-note').addEventListener('click', requireUnlock(() => openNoteModal(b.id, b.note || '')));
 
+  const cardCb = card.querySelector('.card-select-cb');
+  cardCb.checked = selectedIds.has(b.id);
+  cardCb.addEventListener('change', () => toggleSelect(b.id, cardCb.checked));
+  cardCb.addEventListener('click', (e) => e.stopPropagation());
+
   if (isNew) {
     grid.appendChild(card);
     setupDragDrop(card);
@@ -1572,7 +1628,10 @@ function renderListRow(b) {
   const weightLabel = weightMult > 1 ? `${weightMult}x` : '–';
 
   row.innerHTML = `
-    <span class="lr-name ${mut.gold ? 'lr-name-gold' : ''}" title="${b.name}">${b.name}</span>
+    <span style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+      <input type="checkbox" class="select-checkbox row-select-cb" data-id="${b.id}" title="Auswählen">
+      <span class="lr-name ${mut.gold ? 'lr-name-gold' : ''}" title="${b.name}">${b.name}</span>
+    </span>
     <div class="lr-stat">
       <span class="lr-stat-label">Bis reif</span>
       <span class="lr-stat-value editable btn-edit-ripe">${isRipe ? 'REIF' : fmtTime(ripeLeft)}</span>
@@ -1618,8 +1677,80 @@ function renderListRow(b) {
   row.querySelector('.lr-mut').addEventListener('click', requireUnlock(() => openMutModal(b.id)));
   row.querySelector('.lr-delete').addEventListener('click', requireUnlock(() => deleteBeet(b.id)));
 
+  const rowCb = row.querySelector('.row-select-cb');
+  rowCb.checked = selectedIds.has(b.id);
+  rowCb.addEventListener('change', () => toggleSelect(b.id, rowCb.checked));
+  rowCb.addEventListener('click', (e) => e.stopPropagation());
+
   if (isNew) listContainer.appendChild(row);
 }
+
+function toggleSelect(id, checked) {
+  if (checked) selectedIds.add(id);
+  else selectedIds.delete(id);
+  updateBulkBar();
+  // Checkbox-Status in der jeweils anderen Ansicht (Karte/Liste) synchron halten
+  const cardCb = document.querySelector(`#card-${id} .card-select-cb`);
+  const rowCb = document.querySelector(`#row-${id} .row-select-cb`);
+  if (cardCb) cardCb.checked = checked;
+  if (rowCb) rowCb.checked = checked;
+}
+
+function updateBulkBar() {
+  const bar = document.getElementById('bulkActionBar');
+  const count = selectedIds.size;
+  document.getElementById('bulkCount').textContent = `${count} ausgewählt`;
+  bar.classList.toggle('visible', count > 0);
+}
+
+function clearSelection() {
+  selectedIds.clear();
+  document.querySelectorAll('.select-checkbox').forEach(cb => cb.checked = false);
+  updateBulkBar();
+}
+
+async function bulkSetWater(hours) {
+  if (!selectedIds.size) return;
+  const duration = hours * 3600000;
+  const ids = [...selectedIds];
+  for (const id of ids) {
+    const b = beete[id];
+    if (!b) continue;
+    await updateDoc(doc(db, 'beete', id), { waterUntil: now() + duration, waterDuration: duration });
+    logActivity(id, b.name, `Bewässert (${hours}h) [Mehrfachauswahl]`);
+  }
+}
+
+async function bulkFertilize() {
+  if (!selectedIds.size) return;
+  const ids = [...selectedIds];
+  for (const id of ids) {
+    const b = beete[id];
+    if (!b) continue;
+    const cur = b.plantedAt || now();
+    await updateDoc(doc(db, 'beete', id), { plantedAt: cur - 4 * 3600000, fertAt: now() });
+    logActivity(id, b.name, 'Dünger angewendet [Mehrfachauswahl]');
+  }
+}
+
+async function bulkDelete() {
+  if (!selectedIds.size) return;
+  const count = selectedIds.size;
+  if (!confirm(`${count} Beet${count > 1 ? 'e' : ''} wirklich löschen?`)) return;
+  const ids = [...selectedIds];
+  for (const id of ids) {
+    const b = beete[id];
+    await deleteDoc(doc(db, 'beete', id));
+    logActivity(id, b ? b.name : id, 'Beet gelöscht [Mehrfachauswahl]');
+  }
+  clearSelection();
+}
+
+document.getElementById('bulkWater12').addEventListener('click', requireUnlock(() => bulkSetWater(12)));
+document.getElementById('bulkWater24').addEventListener('click', requireUnlock(() => bulkSetWater(24)));
+document.getElementById('bulkFert').addEventListener('click', requireUnlock(bulkFertilize));
+document.getElementById('bulkDelete').addEventListener('click', requireUnlock(bulkDelete));
+document.getElementById('bulkClear').addEventListener('click', clearSelection);
 
 function applyView() {
   const grid = document.getElementById('grid');
@@ -1694,19 +1825,23 @@ document.addEventListener('click', (e) => {
 
 applyView();
 
+// --- Mehrfachauswahl ---
+let selectedIds = new Set();
+
 function renderAll() {
   const ids = Object.keys(beete);
 
   [...grid.children].forEach(c => {
     const id = c.id.replace('card-', '');
-    if (!beete[id]) c.remove();
+    if (!beete[id]) { c.remove(); selectedIds.delete(id); }
   });
 
   const listContainer = document.getElementById('listContainer');
   [...listContainer.children].forEach(c => {
     const id = c.id.replace('row-', '');
-    if (!beete[id]) c.remove();
+    if (!beete[id]) { c.remove(); selectedIds.delete(id); }
   });
+  updateBulkBar();
 
   // Gespeicherte Reihenfolge nutzen, neue Beete ans Ende
   const orderedIds = [
