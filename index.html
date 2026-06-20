@@ -1276,6 +1276,16 @@ function renderHistoryList(entriesDesc) {
       if (!docId) return;
       if (!confirm('Diesen Eintrag löschen?')) return;
       await deleteDoc(doc(db, 'settings', 'global', 'priceHistory', docId));
+
+      // Nach dem Löschen: neuesten verbleibenden Eintrag als Marktpreis setzen
+      const snap = await getDocs(query(historyColRef, orderBy('timestamp', 'desc'), limit(1)));
+      if (!snap.empty) {
+        const latest = snap.docs[0].data();
+        globalMarketPrice = latest.price;
+        marketPriceInput.value = formatNumber(globalMarketPrice);
+        await setDoc(settingsRef, { marketPrice: globalMarketPrice }, { merge: true });
+        renderAll();
+      }
     });
   });
 }
