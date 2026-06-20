@@ -448,15 +448,37 @@
   .mut-hint { font-size: 0.75rem; color: var(--muted); }
   .select-checkbox {
     width: 17px; height: 17px;
-    accent-color: var(--accent);
+    appearance: none;
+    -webkit-appearance: none;
+    background: #1a1d27;
+    border: 1.5px solid #3a4060;
+    border-radius: 5px;
     cursor: pointer;
     flex-shrink: 0;
+    position: relative;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .select-checkbox:hover { border-color: #5a6280; background: #20242f; }
+  .select-checkbox:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .select-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    left: 5px; top: 1px;
+    width: 4px; height: 9px;
+    border: solid #0b0e14;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
   }
 
   .bulk-action-bar {
-    position: sticky;
-    top: 8px;
-    z-index: 50;
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 150;
     display: none;
     align-items: center;
     gap: 10px;
@@ -464,9 +486,9 @@
     border: 1px solid var(--accent);
     border-radius: 12px;
     padding: 10px 16px;
-    margin-bottom: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
     flex-wrap: wrap;
+    max-width: 95vw;
   }
   .bulk-action-bar.visible { display: flex; }
   .bulk-action-bar .bulk-count { font-weight: 700; color: var(--accent); white-space: nowrap; }
