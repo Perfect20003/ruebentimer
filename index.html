@@ -450,7 +450,7 @@
 
   .list-row {
     display: grid;
-    grid-template-columns: minmax(150px,2fr) 95px 95px 110px 90px 75px 140px 110px auto;
+    grid-template-columns: minmax(120px,1.3fr) 95px 95px 110px 90px 75px 175px 110px auto;
     align-items: center;
     gap: 10px;
     background: #14171f;
@@ -462,8 +462,8 @@
   .list-row:hover { border-color: #2a2f45; }
   .list-row .lr-name { font-weight: 700; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: grab; }
   .list-row .lr-name-gold {
-    color: #ffd23f;
-    text-shadow: 0 0 10px rgba(255,210,63,0.5);
+    color: #f59e0b;
+    text-shadow: 0 0 14px rgba(245,158,11,0.8), 0 0 4px rgba(245,158,11,0.9);
   }
   .list-row .lr-stat { display: flex; flex-direction: column; gap: 2px; }
   .list-row .lr-stat-label { font-size: 0.72rem; color: var(--muted); }
@@ -1527,7 +1527,7 @@ function renderListRow(b) {
     </div>
     <div class="lr-stat">
       <span class="lr-stat-label">Mutation</span>
-      <span class="lr-stat-value" title="${shapeLabel}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:130px;">${shapeLabel}</span>
+      <span class="lr-stat-value" title="${shapeLabel}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:165px;">${shapeLabel}</span>
     </div>
     <span class="lr-price">${isRipe ? Math.round(calculatedPrice).toLocaleString('de-DE') + ' <img src="' + ICON_COIN + '" class="coin-icon" alt="">' : '–'}</span>
     <div class="lr-actions">
