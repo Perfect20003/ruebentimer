@@ -421,41 +421,41 @@
 
   .list-row {
     display: grid;
-    grid-template-columns: minmax(90px,1fr) 90px 90px 90px 90px 110px auto;
+    grid-template-columns: minmax(110px,1.3fr) 110px 110px 110px 110px 130px auto;
     align-items: center;
-    gap: 10px;
+    gap: 14px;
     background: #14171f;
     border: 1px solid #1e2433;
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 0.82rem;
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 0.92rem;
   }
   .list-row:hover { border-color: #2a2f45; }
-  .list-row .lr-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: grab; }
-  .list-row .lr-stat { display: flex; flex-direction: column; gap: 1px; }
-  .list-row .lr-stat-label { font-size: 0.65rem; color: var(--muted); }
-  .list-row .lr-stat-value { font-weight: 600; cursor: pointer; }
+  .list-row .lr-name { font-weight: 700; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: grab; }
+  .list-row .lr-stat { display: flex; flex-direction: column; gap: 2px; }
+  .list-row .lr-stat-label { font-size: 0.72rem; color: var(--muted); }
+  .list-row .lr-stat-value { font-weight: 600; font-size: 0.92rem; cursor: pointer; }
   .list-row .lr-stat-value.warning { color: var(--warning); }
   .list-row .lr-stat-value.active-timer { color: #38bdf8; }
-  .list-row .lr-price { font-weight: 700; color: #f59e0b; text-align: right; white-space: nowrap; }
-  .list-row .lr-actions { display: flex; gap: 4px; }
+  .list-row .lr-price { font-weight: 700; font-size: 1rem; color: #f59e0b; text-align: right; white-space: nowrap; }
+  .list-row .lr-actions { display: flex; gap: 6px; }
   .list-row .lr-actions button {
     background: #1f2431;
     border: none;
     color: var(--muted);
-    padding: 5px 8px;
-    border-radius: 6px;
-    font-size: 0.72rem;
+    padding: 8px 11px;
+    border-radius: 8px;
+    font-size: 0.8rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  .list-row .lr-actions button .btn-icon { margin-right: 0; width: 16px; }
+  .list-row .lr-actions button .btn-icon { margin-right: 0; width: 19px; }
   .list-row .lr-actions button:hover { background: #2a3142; color: var(--text); }
-  #listContainer { display: flex; flex-direction: column; gap: 6px; }
+  #listContainer { display: flex; flex-direction: column; gap: 9px; }
   @media (max-width: 900px) {
-    .list-row { grid-template-columns: 1fr 1fr 1fr; row-gap: 6px; }
+    .list-row { grid-template-columns: 1fr 1fr 1fr; row-gap: 10px; }
     .list-row .lr-actions { grid-column: 1 / -1; justify-content: flex-end; }
   }
   .mut-check { display: none !important; }
@@ -772,7 +772,15 @@
     </div>
   </section>
 
-  <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+  <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-bottom:10px;">
+    <select id="listSortSelect" class="mut-select" style="display:none; width:auto; padding:7px 32px 7px 12px; font-size:0.8rem;">
+      <option value="rot">Sortieren: Verdorrung</option>
+      <option value="ripe">Sortieren: Bis reif</option>
+      <option value="water">Sortieren: Wasser</option>
+      <option value="fert">Sortieren: Dünger</option>
+      <option value="price">Sortieren: Marktwert</option>
+      <option value="name">Sortieren: Name</option>
+    </select>
     <div class="view-toggle" id="viewToggle">
       <button id="viewBtnCards" class="active">Karten</button>
       <button id="viewBtnList">Liste</button>
@@ -1372,6 +1380,8 @@ function renderCard(b) {
 // --- Listen-Modus ---
 let currentView = 'cards';
 try { currentView = localStorage.getItem('rueben_view') || 'cards'; } catch(e) {}
+let currentSort = 'rot';
+try { currentSort = localStorage.getItem('rueben_sort') || 'rot'; } catch(e) {}
 
 function renderListRow(b) {
   const listContainer = document.getElementById('listContainer');
@@ -1454,16 +1464,19 @@ function applyView() {
   const listContainer = document.getElementById('listContainer');
   const btnCards = document.getElementById('viewBtnCards');
   const btnList = document.getElementById('viewBtnList');
+  const sortSelect = document.getElementById('listSortSelect');
   if (currentView === 'list') {
     grid.style.display = 'none';
     listContainer.style.display = 'flex';
     btnCards.classList.remove('active');
     btnList.classList.add('active');
+    sortSelect.style.display = '';
   } else {
     grid.style.display = '';
     listContainer.style.display = 'none';
     btnCards.classList.add('active');
     btnList.classList.remove('active');
+    sortSelect.style.display = 'none';
   }
 }
 
@@ -1476,6 +1489,12 @@ document.getElementById('viewBtnList').addEventListener('click', () => {
   currentView = 'list';
   try { localStorage.setItem('rueben_view', 'list'); } catch(e) {}
   applyView();
+  renderAll();
+});
+document.getElementById('listSortSelect').value = currentSort;
+document.getElementById('listSortSelect').addEventListener('change', (e) => {
+  currentSort = e.target.value;
+  try { localStorage.setItem('rueben_sort', currentSort); } catch(e) {}
   renderAll();
 });
 applyView();
@@ -1504,8 +1523,8 @@ function renderAll() {
 
   orderedIds.forEach(id => renderCard(beete[id]));
 
-  // Listen-Ansicht: nach Verdorrungs-Dringlichkeit sortiert (am dringendsten zuerst)
-  const listSortedIds = [...ids].sort((a, b) => getRotUrgency(beete[a]) - getRotUrgency(beete[b]));
+  // Listen-Ansicht: nach gewähltem Kriterium sortiert
+  const listSortedIds = [...ids].sort((a, b) => getSortValue(beete[a], currentSort) - getSortValue(beete[b], currentSort));
   listSortedIds.forEach(id => renderListRow(beete[id]));
   reorderListDom(listSortedIds);
 
@@ -1513,26 +1532,60 @@ function renderAll() {
   renderTotalValue();
 }
 
-// Gibt eine Dringlichkeits-Zahl zurück: je kleiner, desto dringender (verdorrt/kurz vor Verdorrung zuerst)
-function getRotUrgency(b) {
+// Gibt einen Sortier-Wert zurück: je kleiner, desto weiter oben in der Liste
+function getSortValue(b, sortKey) {
   const planted = b.plantedAt || now();
   const waterUntil = (typeof b.waterUntil === 'number')
     ? b.waterUntil
     : (b.wateredAt || planted) + WATER_INTERVAL;
   const waterLeft = Math.max(0, waterUntil - now());
   const isWatered = waterLeft > 0;
-  if (!isWatered) {
-    const rotLeft = Math.max(0, (waterUntil + ROT_INTERVAL) - now());
-    return rotLeft; // 0 = bereits verdorrt, kleine Werte = bald verdorrt
+  const ripeLeft = Math.max(0, (planted + GROW_INTERVAL) - now());
+  const isRipe = ripeLeft <= 0;
+  const fertAt = b.fertAt || 0;
+  const fertLeft = isRipe ? 0 : Math.max(0, (fertAt + FERT_INTERVAL) - now());
+  const isFertActive = fertLeft > 0;
+
+  switch (sortKey) {
+    case 'ripe':
+      // Reife Beete zuerst (0), dann nach Restzeit aufsteigend
+      return isRipe ? -1 : ripeLeft;
+
+    case 'water':
+      // Unbewässerte zuerst (dringend), dann bewässerte nach Restwasser aufsteigend
+      return isWatered ? (1000 * 3600000) + waterLeft : -1 * (1000000 - waterLeft);
+
+    case 'fert':
+      // Aktive Dünger-Timer zuerst nach Restzeit, inaktive ans Ende
+      return isFertActive ? fertLeft : Number.MAX_SAFE_INTEGER;
+
+    case 'price':
+      // Höchster Marktwert zuerst (nur reife Beete haben einen Wert)
+      return isRipe ? -calcPrice(b) : Number.MAX_SAFE_INTEGER;
+
+    case 'name':
+      return 0; // Name wird separat sortiert, siehe unten
+
+    case 'rot':
+    default:
+      if (!isWatered) {
+        const rotLeft = Math.max(0, (waterUntil + ROT_INTERVAL) - now());
+        return rotLeft; // 0 = bereits verdorrt, kleine Werte = bald verdorrt
+      }
+      return Number.MAX_SAFE_INTEGER - waterLeft;
   }
-  // Bewässerte Beete sind nicht dringend -> ganz hinten, sortiert nach Restwasser absteigend
-  return Number.MAX_SAFE_INTEGER - waterLeft;
 }
 
 // Bringt die DOM-Reihenfolge der Listenzeilen in die gewünschte Sortierung
 function reorderListDom(sortedIds) {
   const listContainer = document.getElementById('listContainer');
-  sortedIds.forEach(id => {
+  let ids = sortedIds;
+  if (currentSort === 'name') {
+    ids = [...sortedIds].sort((a, b) =>
+      (beete[a].name || '').localeCompare(beete[b].name || '', 'de', { numeric: true, sensitivity: 'base' })
+    );
+  }
+  ids.forEach(id => {
     const row = document.getElementById('row-' + id);
     if (row) listContainer.appendChild(row);
   });
@@ -1777,7 +1830,7 @@ setInterval(() => {
   });
   if (currentView === 'list') {
     const ids = Object.keys(beete);
-    const listSortedIds = [...ids].sort((a, b) => getRotUrgency(beete[a]) - getRotUrgency(beete[b]));
+    const listSortedIds = [...ids].sort((a, b) => getSortValue(beete[a], currentSort) - getSortValue(beete[b], currentSort));
     reorderListDom(listSortedIds);
   }
 }, 1000);
