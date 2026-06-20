@@ -229,6 +229,24 @@
   .visit-log-list .log-date { font-weight: 600; }
   .visit-log-list .log-time { color: var(--muted); }
 
+  #activityLogList li {
+    grid-template-columns: 40px 150px 130px 1fr;
+    white-space: nowrap;
+  }
+  #activityLogList .log-beetname {
+    font-weight: 700;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  #activityLogList .log-action {
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   main {
     padding: 16px 20px;
     max-width: 1600px;
@@ -939,16 +957,32 @@
 <!-- Aktivitäts-Log Overlay (alle Aktionen auf Beeten) -->
 <div class="modal-overlay" id="activityLogOverlay" style="display:none">
   <div class="modal log-modal" id="activityLogModalBox">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-      <h3>Aktivitäts-Log</h3>
-      <div style="display:flex;gap:8px;">
-        <button class="btn-clear-history" id="btnClearActivityLog">Leeren</button>
-        <button class="btn-cancel-time" id="btnCloseActivityLog">Schließen</button>
+    <!-- Passwort-Screen -->
+    <div id="activityLogPasswordScreen">
+      <div style="display:flex; gap:8px; align-items:center; justify-content:center;">
+        <input type="password" id="activityLogPasswordInput" placeholder="Passwort..."
+          style="width:130px; background:#0b0e14; border:1px solid #2a2f45; color:var(--text);
+                 padding:9px 12px; border-radius:8px; font-size:0.9rem; outline:none;
+                 transition:border-color 0.2s; text-align:center;"
+          onfocus="this.style.borderColor='var(--accent)'"
+          onblur="this.style.borderColor='#2a2f45'" />
+        <button class="btn-primary" id="btnActivityLogLogin" title="Bestätigen" style="padding:9px 14px; font-size:1rem;">✓</button>
       </div>
+      <p id="activityLogPasswordError" style="color:var(--warning);font-size:0.78rem;margin-top:10px;text-align:center;display:none;">Falsches Passwort.</p>
     </div>
-    <ul class="visit-log-list" id="activityLogList">
-      <li style="color:var(--muted);font-size:0.78rem;padding:5px 8px;">Lade…</li>
-    </ul>
+    <!-- Log-Inhalt (nach Login) -->
+    <div id="activityLogContentScreen" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <h3>Aktivitäts-Log</h3>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-clear-history" id="btnClearActivityLog">Leeren</button>
+          <button class="btn-cancel-time" id="btnCloseActivityLog">Schließen</button>
+        </div>
+      </div>
+      <ul class="visit-log-list" id="activityLogList">
+        <li style="color:var(--muted);font-size:0.78rem;padding:5px 8px;">Lade…</li>
+      </ul>
+    </div>
   </div>
 </div>
 
@@ -2727,13 +2761,18 @@ function openActivityLog() {
       const dt = new Date(ts);
       const dateStr = dt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
       const timeStr = dt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-      return `<li><span class="log-num">#${total - i}</span><span class="log-date">${dateStr} ${timeStr} Uhr</span><span class="log-time"><strong style="color:var(--text);">${beetName}</strong> – ${action}</span></li>`;
+      return `<li><span class="log-num">#${total - i}</span><span class="log-date">${dateStr} ${timeStr} Uhr</span><span class="log-beetname" title="${beetName}">${beetName}</span><span class="log-action" title="${action}">${action}</span></li>`;
     }).join('');
   });
 }
 
-function closeActivityLog() {
+function closeActivityLogOverlay() {
   document.getElementById('activityLogOverlay').style.display = 'none';
+  document.getElementById('activityLogModalBox').classList.remove('log-open');
+  document.getElementById('activityLogPasswordScreen').style.display = 'block';
+  document.getElementById('activityLogContentScreen').style.display = 'none';
+  document.getElementById('activityLogPasswordInput').value = '';
+  document.getElementById('activityLogPasswordError').style.display = 'none';
   if (activityLogUnsubscribe) { activityLogUnsubscribe(); activityLogUnsubscribe = null; }
 }
 
@@ -2744,12 +2783,30 @@ async function clearActivityLog() {
   await Promise.all(deletions);
 }
 
-document.getElementById('btnOpenActivityLog').addEventListener('click', openActivityLog);
-document.getElementById('btnCloseActivityLog').addEventListener('click', closeActivityLog);
-document.getElementById('btnClearActivityLog').addEventListener('click', requireUnlock(clearActivityLog));
-document.getElementById('activityLogOverlay').addEventListener('click', (e) => {
-  if (e.target === document.getElementById('activityLogOverlay')) closeActivityLog();
+function tryActivityLogLogin() {
+  const pw = document.getElementById('activityLogPasswordInput').value;
+  if (pw === 'Ruebe') {
+    document.getElementById('activityLogPasswordScreen').style.display = 'none';
+    document.getElementById('activityLogContentScreen').style.display = 'block';
+    document.getElementById('activityLogModalBox').classList.add('log-open');
+    openActivityLog();
+  } else {
+    document.getElementById('activityLogPasswordError').style.display = 'block';
+  }
+}
+
+document.getElementById('btnOpenActivityLog').addEventListener('click', () => {
+  document.getElementById('activityLogOverlay').style.display = 'flex';
 });
+document.getElementById('btnActivityLogLogin').addEventListener('click', tryActivityLogLogin);
+document.getElementById('activityLogPasswordInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') tryActivityLogLogin();
+});
+document.getElementById('btnCloseActivityLog').addEventListener('click', closeActivityLogOverlay);
+document.getElementById('activityLogOverlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('activityLogOverlay')) closeActivityLogOverlay();
+});
+document.getElementById('btnClearActivityLog').addEventListener('click', requireUnlock(clearActivityLog));
 
 function openVisitLog() {
   visitLogUnsubscribe = onSnapshot(visitLogQuery, (snap) => {
