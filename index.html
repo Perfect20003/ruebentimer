@@ -1820,6 +1820,41 @@ function niceYTicks(minV, maxV, count = 5) {
   return ticks;
 }
 
+// Dynamische, "schöne" Ticks für die logarithmische Skala, passend zu den aktuellen Min/Max-Werten
+function niceLogYTicks(minV, maxV, count = 5) {
+  const lo = Math.max(1, minV);
+  const hi = Math.max(lo + 1, maxV);
+  const lLo = Math.log10(lo);
+  const lHi = Math.log10(hi);
+  const step = (lHi - lLo) / (count - 1 || 1);
+
+  // "Schöne" Rundungsraster: 1, 2, 5, 10, 20, 50, 100 ... (Multiplikatoren von Zehnerpotenzen)
+  const niceMultiples = [1, 2, 5];
+  const roundToNice = (val) => {
+    if (val <= 0) return val;
+    const exp = Math.floor(Math.log10(val));
+    const base = Math.pow(10, exp);
+    const frac = val / base;
+    let best = niceMultiples[0];
+    let bestDiff = Math.abs(frac - best);
+    for (const m of niceMultiples) {
+      const diff = Math.abs(frac - m);
+      if (diff < bestDiff) { best = m; bestDiff = diff; }
+    }
+    return best * base;
+  };
+
+  const rawTicks = [];
+  for (let i = 0; i < count; i++) {
+    const logVal = lLo + i * step;
+    rawTicks.push(Math.pow(10, logVal));
+  }
+
+  // Jeden Rohwert auf die nächste "schöne" Zahl runden, Duplikate entfernen
+  const ticks = [...new Set(rawTicks.map(roundToNice))].sort((a, b) => a - b);
+  return ticks;
+}
+
 // Erzeugt das Chart-Markup für ein beliebiges SVG-Element (für den Export, ohne Tooltips/Events)
 function renderPriceChartInto(svg, entriesAsc) {
   if (!entriesAsc.length) { svg.innerHTML = ''; return; }
@@ -1846,16 +1881,7 @@ function renderPriceChartInto(svg, entriesAsc) {
 
   let ticks;
   if (useLogScale) {
-    const FIXED_TICKS = [50000, 100000, 200000, 400000, 1000000, 2000000, 4000000];
-    let lo = -1, hi = -1;
-    for (let i = 0; i < FIXED_TICKS.length; i++) {
-      if (FIXED_TICKS[i] <= logMin) lo = i;
-      if (FIXED_TICKS[i] >= logMax && hi === -1) hi = i;
-    }
-    if (lo === -1) lo = 0;
-    if (hi === -1) hi = FIXED_TICKS.length - 1;
-    ticks = FIXED_TICKS.slice(lo, hi + 1);
-    if (!ticks.length) ticks = [logMin, logMax];
+    ticks = niceLogYTicks(logMin, logMax, 5);
   } else {
     ticks = niceYTicks(minP, maxP, 5);
   }
@@ -1951,18 +1977,7 @@ function renderPriceChart(entriesAsc) {
   // Ticks berechnen
   let ticks;
   if (useLogScale) {
-    // Feste, gut lesbare Stufen
-    const FIXED_TICKS = [50000, 100000, 200000, 400000, 1000000, 2000000, 4000000];
-    // Nächstkleineren Tick unter logMin und nächstgrößeren über logMax einschließen, alles dazwischen
-    let lo = -1, hi = -1;
-    for (let i = 0; i < FIXED_TICKS.length; i++) {
-      if (FIXED_TICKS[i] <= logMin) lo = i;
-      if (FIXED_TICKS[i] >= logMax && hi === -1) hi = i;
-    }
-    if (lo === -1) lo = 0;
-    if (hi === -1) hi = FIXED_TICKS.length - 1;
-    ticks = FIXED_TICKS.slice(lo, hi + 1);
-    if (!ticks.length) ticks = [logMin, logMax];
+    ticks = niceLogYTicks(logMin, logMax, 5);
   } else {
     ticks = niceYTicks(minP, maxP, 5);
   }
