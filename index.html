@@ -776,6 +776,7 @@
   <button class="btn-log-open" id="btnNotify" title="Benachrichtigungen aktivieren" style="display:none">🔔</button>
   <input type="file" id="importFileInput" accept=".json" style="display:none">
   <button class="btn-log-open" id="btnUnlockEdit" title="Zum Bearbeiten entsperren">🔒</button>
+  <button class="btn-log-open" id="btnOpenActivityLog" title="Aktivitäts-Log">📋</button>
   <button class="btn-log-open" id="btnOpenLog" title=""><img src="data:image/png;base64,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" style="width:16px;height:auto;image-rendering:pixelated;vertical-align:middle;"></button>
 </header>
 
@@ -932,6 +933,22 @@
     <div class="modal-btns">
       <button class="btn-close-modal" id="btnCloseModal">Schließen</button>
     </div>
+  </div>
+</div>
+
+<!-- Aktivitäts-Log Overlay (alle Aktionen auf Beeten) -->
+<div class="modal-overlay" id="activityLogOverlay" style="display:none">
+  <div class="modal log-modal" id="activityLogModalBox">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <h3>Aktivitäts-Log</h3>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-clear-history" id="btnClearActivityLog">Leeren</button>
+        <button class="btn-cancel-time" id="btnCloseActivityLog">Schließen</button>
+      </div>
+    </div>
+    <ul class="visit-log-list" id="activityLogList">
+      <li style="color:var(--muted);font-size:0.78rem;padding:5px 8px;">Lade…</li>
+    </ul>
   </div>
 </div>
 
@@ -1204,11 +1221,26 @@ const presenceColRef = collection(db, "presence");
 const metaRef = doc(db, "settings", "meta");
 const visitLogRef = collection(db, "visitLog");
 const orderRef = doc(db, "settings", "order");
+const activityLogRef = collection(db, "activityLog");
 
 let beete = {};
 let activeMutId = null;
 let globalMarketPrice = 100000;
 let beetOrder = []; // Manuelle Reihenfolge der Beet-IDs
+
+// Protokolliert eine Aktion im Aktivitäts-Log (z.B. "Dünger angewendet", "Wasser hinzugefügt")
+async function logActivity(beetId, beetName, action) {
+  try {
+    await addDoc(activityLogRef, {
+      beetId,
+      beetName,
+      action,
+      timestamp: now()
+    });
+  } catch (e) {
+    console.warn('[Rübe] Aktivitäts-Log fehlgeschlagen:', e.message);
+  }
+}
 
 const GROW_INTERVAL  = 48 * 60 * 60 * 1000;
 const WATER_INTERVAL = 12 * 60 * 60 * 1000;
@@ -2262,6 +2294,7 @@ async function addBeet() {
     name, plantedAt: now(), firstPlantedAt: now(), waterUntil: now() + DEFAULT_WATER_DURATION, waterDuration: DEFAULT_WATER_DURATION, mutations: { gold: false, shapeKey: "", weightMult: 1 }
   });
   inp.value = '';
+  logActivity(id, name, 'Beet angelegt');
 }
 
 async function triggerRename(id) {
@@ -2284,15 +2317,19 @@ async function triggerRename(id) {
   }
 
   await updateDoc(doc(db, 'beete', id), { name: trimmedName });
+  logActivity(id, trimmedName, `Umbenannt von "${b.name}" zu "${trimmedName}"`);
 }
 
 async function deleteBeet(id) {
   if (!confirm('Beet löschen?')) return;
+  const b = beete[id];
   await deleteDoc(doc(db, 'beete', id));
+  logActivity(id, b ? b.name : id, 'Beet gelöscht');
 }
 
 async function resetBeet(id) {
   if (!confirm('Beet wirklich zurücksetzen?')) return;
+  const b = beete[id];
   await updateDoc(doc(db, 'beete', id), {
     plantedAt: now(),
     firstPlantedAt: now(),
@@ -2301,6 +2338,7 @@ async function resetBeet(id) {
     fertAt: 0,
     mutations: { gold: false, shapeKey: "", weightMult: 1 }
   });
+  logActivity(id, b ? b.name : id, 'Beet zurückgesetzt (Neu)');
 }
 
 async function addTime(id, field, hours) {
@@ -2320,6 +2358,7 @@ async function applyFertilizer(id) {
     plantedAt: cur - 4 * 3600000,
     fertAt: now()
   });
+  logActivity(id, b.name, 'Dünger angewendet');
 } // (egal in welchem Zustand das Beet vorher war)
 // und die Verdorrung pausiert dadurch sofort.
 async function setWater(id, hours) {
@@ -2327,6 +2366,7 @@ async function setWater(id, hours) {
   if (!b) return;
   const duration = hours * 3600000;
   await updateDoc(doc(db, 'beete', id), { waterUntil: now() + duration, waterDuration: duration });
+  logActivity(id, b.name, `Bewässert (${hours}h)`);
 }
 
 // Setzt die Bewässerung manuell auf "trocken" (Wasser-Timer auf 0, Verdorrungs-Timer startet frisch)
@@ -2334,6 +2374,7 @@ async function removeWater(id) {
   const b = beete[id];
   if (!b) return;
   await updateDoc(doc(db, 'beete', id), { waterUntil: now(), waterDuration: WATER_INTERVAL });
+  logActivity(id, b.name, 'Als trocken markiert');
 }
 
 // --- Zeit-Edit-Modal ---
@@ -2366,10 +2407,13 @@ function closeTimeModal() {
 async function applyTimeModal() {
   if (!activeTimeEdit) return;
   const { id, field } = activeTimeEdit;
+  const b = beete[id];
   const h = Math.max(0, parseInt(document.getElementById('timeInputH').value) || 0);
   const m = Math.max(0, Math.min(59, parseInt(document.getElementById('timeInputM').value) || 0));
   const s = Math.max(0, Math.min(59, parseInt(document.getElementById('timeInputS').value) || 0));
   const ms = (h * 3600 + m * 60 + s) * 1000;
+
+  const fieldLabels = { water: 'Wasserzeit', rot: 'Verdorrungszeit', ripe: 'Zeit bis reif', fert: 'Düngerzeit' };
 
   if (field === 'water') {
     await updateDoc(doc(db, 'beete', id), { waterUntil: now() + ms, waterDuration: Math.max(ms, WATER_INTERVAL) });
@@ -2382,6 +2426,7 @@ async function applyTimeModal() {
     // Dünger-Restzeit manuell setzen
     await updateDoc(doc(db, 'beete', id), { fertAt: now() + ms - FERT_INTERVAL });
   }
+  if (b) logActivity(id, b.name, `${fieldLabels[field] || 'Zeit'} manuell gesetzt (${h}h ${m}m ${s}s)`);
   closeTimeModal();
 }
 
@@ -2446,18 +2491,23 @@ function closeMutModal() {
 
 async function saveMutation() {
   if (!activeMutId) return;
+  const b = beete[activeMutId];
 
   let wMult = parseFloat(document.getElementById('mut-weight-mult').value) || 1;
   if (wMult < 1) wMult = 1;
   if (wMult > 5) wMult = 5; // Begrenzung auf das 5-Fache
 
+  const gold = document.getElementById('mut-gold').checked;
+  const shapeKey = document.getElementById('mut-shape-select').value;
+
   await updateDoc(doc(db, 'beete', activeMutId), {
-    mutations: {
-      gold: document.getElementById('mut-gold').checked,
-      shapeKey: document.getElementById('mut-shape-select').value,
-      weightMult: wMult
-    }
+    mutations: { gold, shapeKey, weightMult: wMult }
   });
+
+  if (b) {
+    const shapeName = (shapeKey && SHAPE_BONI[shapeKey]) ? SHAPE_BONI[shapeKey].name : 'Normalform';
+    logActivity(activeMutId, b.name, `Mutation geändert: ${gold ? 'Gold' : 'kein Gold'}, ${shapeName}, Gewicht ${wMult}x`);
+  }
 }
 
 // --- Event Listener ---
@@ -2657,6 +2707,49 @@ document.getElementById('mut-px-input').addEventListener('input', (e) => {
 // Multiplikator-Rechner im Header
 const visitLogQuery = query(visitLogRef, orderBy('timestamp', 'desc'), limit(200));
 let visitLogUnsubscribe = null;
+
+// --- Aktivitäts-Log (alle Aktionen auf Beeten) ---
+const activityLogQuery = query(activityLogRef, orderBy('timestamp', 'desc'), limit(200));
+let activityLogUnsubscribe = null;
+
+function openActivityLog() {
+  document.getElementById('activityLogOverlay').style.display = 'flex';
+  activityLogUnsubscribe = onSnapshot(activityLogQuery, (snap) => {
+    const list = document.getElementById('activityLogList');
+    if (!list) return;
+    if (snap.empty) {
+      list.innerHTML = '<li style="color:var(--muted);font-size:0.78rem;padding:5px 8px;">Noch keine Aktivität erfasst.</li>';
+      return;
+    }
+    const total = snap.size;
+    list.innerHTML = snap.docs.map((d, i) => {
+      const { timestamp: ts, beetName = '?', action = '?' } = d.data();
+      const dt = new Date(ts);
+      const dateStr = dt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const timeStr = dt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+      return `<li><span class="log-num">#${total - i}</span><span class="log-date">${dateStr} ${timeStr} Uhr</span><span class="log-time"><strong style="color:var(--text);">${beetName}</strong> – ${action}</span></li>`;
+    }).join('');
+  });
+}
+
+function closeActivityLog() {
+  document.getElementById('activityLogOverlay').style.display = 'none';
+  if (activityLogUnsubscribe) { activityLogUnsubscribe(); activityLogUnsubscribe = null; }
+}
+
+async function clearActivityLog() {
+  if (!confirm('Aktivitäts-Log wirklich komplett leeren?')) return;
+  const snap = await getDocs(activityLogRef);
+  const deletions = snap.docs.map(d => deleteDoc(doc(db, 'activityLog', d.id)));
+  await Promise.all(deletions);
+}
+
+document.getElementById('btnOpenActivityLog').addEventListener('click', openActivityLog);
+document.getElementById('btnCloseActivityLog').addEventListener('click', closeActivityLog);
+document.getElementById('btnClearActivityLog').addEventListener('click', requireUnlock(clearActivityLog));
+document.getElementById('activityLogOverlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('activityLogOverlay')) closeActivityLog();
+});
 
 function openVisitLog() {
   visitLogUnsubscribe = onSnapshot(visitLogQuery, (snap) => {
