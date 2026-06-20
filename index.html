@@ -664,6 +664,7 @@
     <span id="onlineCount" title="Aktive Nutzer">👥 –</span>
   </div>
   <button class="btn-log-open" id="btnNotify" title="Benachrichtigungen aktivieren" style="display:none">🔔</button>
+  <input type="file" id="importFileInput" accept=".json" style="display:none">
   <button class="btn-log-open" id="btnUnlockEdit" title="Zum Bearbeiten entsperren">🔒</button>
   <button class="btn-log-open" id="btnOpenLog" title=""><img src="data:image/png;base64,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" style="width:16px;height:auto;image-rendering:pixelated;vertical-align:middle;"></button>
 </header>
@@ -804,6 +805,14 @@
       <ul class="visit-log-list" id="visitLogList">
         <li style="color:var(--muted);font-size:0.78rem;padding:5px 8px;">Lade…</li>
       </ul>
+
+      <div style="margin-top:16px; padding-top:16px; border-top:1px solid #2a2f45;">
+        <h3 style="margin:0 0 10px 0; font-size:0.95rem;">Backup</h3>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-clear-history" id="btnExport">⬇️ Backup herunterladen</button>
+          <button class="btn-clear-history" id="btnImport">⬆️ Backup wiederherstellen</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -2085,6 +2094,86 @@ function closeLogOverlay() {
   document.getElementById('logPasswordError').style.display = 'none';
   if (visitLogUnsubscribe) { visitLogUnsubscribe(); visitLogUnsubscribe = null; }
 }
+
+// --- Export / Backup ---
+document.getElementById('btnExport').addEventListener('click', async () => {
+  try {
+    const beeteSnap = await getDocs(colRef);
+    const beeteData = {};
+    beeteSnap.forEach(d => { beeteData[d.id] = d.data(); });
+
+    const historySnap = await getDocs(historyColRef);
+    const historyData = [];
+    historySnap.forEach(d => historyData.push(d.data()));
+
+    const backup = {
+      exportedAt: new Date().toISOString(),
+      marketPrice: globalMarketPrice,
+      beete: beeteData,
+      priceHistory: historyData
+    };
+
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `ruebentimer-backup-${dateStr}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert('Fehler beim Export: ' + e.message);
+  }
+});
+
+// --- Import / Wiederherstellen ---
+document.getElementById('btnImport').addEventListener('click', requireUnlock(() => {
+  document.getElementById('importFileInput').click();
+}));
+
+document.getElementById('importFileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  try {
+    const text = await file.text();
+    const backup = JSON.parse(text);
+
+    if (!backup.beete) {
+      alert('Ungültige Backup-Datei.');
+      return;
+    }
+
+    const beetCount = Object.keys(backup.beete).length;
+    const historyCount2 = backup.priceHistory ? backup.priceHistory.length : 0;
+    const confirmMsg = `Backup vom ${new Date(backup.exportedAt).toLocaleString('de-DE')} wiederherstellen?\n\n` +
+      `${beetCount} Beete und ${historyCount2} Preisverlauf-Einträge werden hinzugefügt/überschrieben.\n` +
+      `Bestehende Beete mit gleicher ID werden überschrieben, andere bleiben erhalten.`;
+    if (!confirm(confirmMsg)) return;
+
+    // Beete wiederherstellen
+    for (const [id, data] of Object.entries(backup.beete)) {
+      await setDoc(doc(db, 'beete', id), data);
+    }
+
+    // Marktpreis wiederherstellen
+    if (backup.marketPrice) {
+      await setDoc(settingsRef, { marketPrice: backup.marketPrice }, { merge: true });
+    }
+
+    // Preisverlauf wiederherstellen (als neue Einträge, keine Duplikat-Prüfung)
+    if (backup.priceHistory && backup.priceHistory.length) {
+      for (const entry of backup.priceHistory) {
+        await addDoc(historyColRef, entry);
+      }
+    }
+
+    alert('Backup erfolgreich wiederhergestellt!');
+  } catch (err) {
+    alert('Fehler beim Import: ' + err.message);
+  }
+  e.target.value = '';
+});
 
 document.getElementById('btnUnlockEdit').addEventListener('click', () => {
   if (isUnlocked) {
