@@ -215,7 +215,7 @@
   .visit-log-list::-webkit-scrollbar-thumb:hover { background: #4a5170; }
   .visit-log-list li {
     display: grid;
-    grid-template-columns: 48px 1fr 1fr auto;
+    grid-template-columns: 48px 190px 1fr auto;
     align-items: center;
     gap: 12px;
     font-size: 0.92rem;
@@ -2792,11 +2792,14 @@ function tryActivityLogLogin() {
     openActivityLog();
   } else {
     document.getElementById('activityLogPasswordError').style.display = 'block';
+    document.getElementById('activityLogPasswordInput').value = '';
+    document.getElementById('activityLogPasswordInput').focus();
   }
 }
 
 document.getElementById('btnOpenActivityLog').addEventListener('click', () => {
   document.getElementById('activityLogOverlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('activityLogPasswordInput').focus(), 50);
 });
 document.getElementById('btnActivityLogLogin').addEventListener('click', tryActivityLogLogin);
 document.getElementById('activityLogPasswordInput').addEventListener('keydown', (e) => {
