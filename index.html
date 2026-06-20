@@ -332,16 +332,16 @@
   .stat-value.editable:hover { border-color: var(--accent); color: var(--accent); }
 
   /* Zeit-Edit-Modal */
-  .time-modal { width: 300px; }
+  .time-modal { width: 360px; }
   .time-modal h3 { font-size: 1rem; margin-bottom: 12px; color: #fff; }
   .time-inputs {
-    display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+    display: flex; align-items: center; gap: 6px; margin-bottom: 16px; flex-wrap: nowrap;
   }
   .time-inputs input[type="number"] {
-    width: 62px; font-size: 1.05rem; font-weight: 700;
+    width: 56px; font-size: 1.05rem; font-weight: 700;
     text-align: center; padding: 8px 4px;
   }
-  .time-inputs .sep { font-size: 1.1rem; font-weight: 700; color: var(--muted); }
+  .time-inputs .sep { font-size: 1.05rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
   .time-modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
   .btn-apply { background: var(--accent); color: #0f1117; font-weight: 700; padding: 7px 16px; border-radius: 8px; cursor: pointer; }
   .btn-apply:hover { background: #16a34a; }
