@@ -450,7 +450,7 @@
 
   .list-row {
     display: grid;
-    grid-template-columns: minmax(160px,2.2fr) 80px 80px 90px 80px 80px 130px 100px auto;
+    grid-template-columns: minmax(150px,2fr) 95px 95px 110px 90px 75px 140px 110px auto;
     align-items: center;
     gap: 10px;
     background: #14171f;
@@ -462,15 +462,12 @@
   .list-row:hover { border-color: #2a2f45; }
   .list-row .lr-name { font-weight: 700; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: grab; }
   .list-row .lr-name-gold {
-    background: linear-gradient(90deg, #fff7cc, #f5c518 50%, #b8860b);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    text-shadow: 0 0 12px rgba(245,197,24,0.35);
+    color: #ffd23f;
+    text-shadow: 0 0 10px rgba(255,210,63,0.5);
   }
   .list-row .lr-stat { display: flex; flex-direction: column; gap: 2px; }
   .list-row .lr-stat-label { font-size: 0.72rem; color: var(--muted); }
-  .list-row .lr-stat-value { font-weight: 600; font-size: 0.92rem; cursor: pointer; }
+  .list-row .lr-stat-value { font-weight: 600; font-size: 0.92rem; cursor: pointer; white-space: nowrap; }
   .list-row .lr-stat-value.warning { color: var(--warning); }
   .list-row .lr-stat-value.active-timer { color: #38bdf8; }
   .list-row .lr-price { font-weight: 700; font-size: 1rem; color: #f59e0b; text-align: right; white-space: nowrap; }
@@ -815,6 +812,7 @@
       <option value="water">Sortieren: Wasser</option>
       <option value="fert">Sortieren: Dünger</option>
       <option value="mult">Sortieren: Gewicht</option>
+      <option value="shape">Sortieren: Mutation</option>
       <option value="price">Sortieren: Marktwert</option>
       <option value="name">Sortieren: Name</option>
     </select>
@@ -829,6 +827,7 @@
         <div class="custom-select-option" data-value="water">Sortieren: Wasser</div>
         <div class="custom-select-option" data-value="fert">Sortieren: Dünger</div>
         <div class="custom-select-option" data-value="mult">Sortieren: Gewicht</div>
+        <div class="custom-select-option" data-value="shape">Sortieren: Mutation</div>
         <div class="custom-select-option" data-value="price">Sortieren: Marktwert</div>
         <div class="custom-select-option" data-value="name">Sortieren: Name</div>
       </div>
@@ -1692,13 +1691,17 @@ function getSortValue(b, sortKey) {
       return isRipe ? -calcPrice(b) : Number.MAX_SAFE_INTEGER;
 
     case 'mult': {
-      // Höchster Gesamt-Multiplikator zuerst (Gold ×10, Gewicht bis ×5)
+      // Höchster Gewichts-Multiplikator zuerst
       const mut = b.mutations || {};
-      let displayMulti = 1;
-      if (mut.gold) displayMulti *= 10;
       const weightMult = parseFloat(mut.weightMult) || 1;
-      if (weightMult > 1) displayMulti *= weightMult;
-      return -displayMulti;
+      return -weightMult;
+    }
+
+    case 'shape': {
+      // Höchster Form-Mutations-Bonus zuerst (Lebendig > Explosiv > Quadratisch > Stachelig > Normal)
+      const mut = b.mutations || {};
+      const bonus = (mut.shapeKey && SHAPE_BONI[mut.shapeKey]) ? SHAPE_BONI[mut.shapeKey].bonus : 0;
+      return -bonus;
     }
 
     case 'name':
