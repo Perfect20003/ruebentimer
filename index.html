@@ -335,13 +335,13 @@
   .time-modal { width: 300px; }
   .time-modal h3 { font-size: 1rem; margin-bottom: 12px; color: #fff; }
   .time-inputs {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
   }
   .time-inputs input[type="number"] {
-    width: 72px; font-size: 1.1rem; font-weight: 700;
-    text-align: center; padding: 8px;
+    width: 62px; font-size: 1.05rem; font-weight: 700;
+    text-align: center; padding: 8px 4px;
   }
-  .time-inputs .sep { font-size: 1.3rem; font-weight: 700; color: var(--muted); }
+  .time-inputs .sep { font-size: 1.1rem; font-weight: 700; color: var(--muted); }
   .time-modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
   .btn-apply { background: var(--accent); color: #0f1117; font-weight: 700; padding: 7px 16px; border-radius: 8px; cursor: pointer; }
   .btn-apply:hover { background: #16a34a; }
@@ -822,6 +822,8 @@
       <span class="sep">h</span>
       <input type="number" id="timeInputM" min="0" max="59" value="0" placeholder="min">
       <span class="sep">min</span>
+      <input type="number" id="timeInputS" min="0" max="59" value="0" placeholder="sek">
+      <span class="sep">sek</span>
     </div>
     <div class="time-modal-btns">
       <button class="btn-cancel-time" id="btnCancelTime">Abbrechen</button>
@@ -2129,8 +2131,10 @@ function openTimeModal(id, field, currentMs) {
   activeTimeEdit = { id, field };
   const h = Math.floor(currentMs / 3600000);
   const m = Math.floor((currentMs % 3600000) / 60000);
+  const s = Math.floor((currentMs % 60000) / 1000);
   document.getElementById('timeInputH').value = h;
   document.getElementById('timeInputM').value = m;
+  document.getElementById('timeInputS').value = s;
   const labels = {
     water: 'Wasserzeit anpassen',
     rot: 'Verdorrungszeit anpassen',
@@ -2152,7 +2156,8 @@ async function applyTimeModal() {
   const { id, field } = activeTimeEdit;
   const h = Math.max(0, parseInt(document.getElementById('timeInputH').value) || 0);
   const m = Math.max(0, Math.min(59, parseInt(document.getElementById('timeInputM').value) || 0));
-  const ms = (h * 60 + m) * 60000;
+  const s = Math.max(0, Math.min(59, parseInt(document.getElementById('timeInputS').value) || 0));
+  const ms = (h * 3600 + m * 60 + s) * 1000;
 
   if (field === 'water') {
     await updateDoc(doc(db, 'beete', id), { waterUntil: now() + ms, waterDuration: Math.max(ms, WATER_INTERVAL) });
@@ -2175,6 +2180,7 @@ document.getElementById('timeModal').addEventListener('click', (e) => {
 });
 document.getElementById('timeInputH').addEventListener('keydown', (e) => { if (e.key === 'Enter') applyTimeModal(); });
 document.getElementById('timeInputM').addEventListener('keydown', (e) => { if (e.key === 'Enter') applyTimeModal(); });
+document.getElementById('timeInputS').addEventListener('keydown', (e) => { if (e.key === 'Enter') applyTimeModal(); });
 
 function openMutModal(id) {
   activeMutId = id;
