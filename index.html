@@ -2667,13 +2667,13 @@ document.getElementById('btnExportCsv').addEventListener('click', () => {
 function buildExportChartSvg(entriesAsc) {
   const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   tempSvg.setAttribute('id', 'exportChartTemp');
+  tempSvg.setAttribute('width', '900');
+  tempSvg.setAttribute('height', '220');
   tempSvg.style.position = 'fixed';
   tempSvg.style.left = '-9999px';
   tempSvg.style.top = '0';
-  tempSvg.style.width = '900px';
   document.body.appendChild(tempSvg);
 
-  // Tausche kurz die priceChart-ID damit renderPriceChart auf das temporäre SVG zielt
   renderPriceChartInto(tempSvg, entriesAsc);
   return tempSvg;
 }
@@ -2740,8 +2740,8 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
     img.onload = () => {
       const canvas = document.createElement('canvas');
       const scale = 2;
-      canvas.width = svgEl.viewBox.baseVal.width * scale || svgEl.clientWidth * scale;
-      canvas.height = svgEl.viewBox.baseVal.height * scale || svgEl.clientHeight * scale;
+      canvas.width = 900 * scale;
+      canvas.height = 220 * scale;
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = '#0b0e14';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -2750,8 +2750,19 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
       URL.revokeObjectURL(svgUrl);
       resolve(canvas.toDataURL('image/png'));
     };
+    img.onerror = (e) => {
+      console.error('[Export] SVG konnte nicht als Bild geladen werden:', e);
+      URL.revokeObjectURL(svgUrl);
+      resolve(null);
+    };
     img.src = svgUrl;
   });
+
+  if (!chartPng) {
+    tempSvg.remove();
+    alert('Fehler beim Erstellen des Diagramms für den PDF-Export.');
+    return;
+  }
 
   // Temporäres SVG wieder entfernen
   tempSvg.remove();
