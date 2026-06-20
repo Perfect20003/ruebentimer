@@ -1824,35 +1824,39 @@ function niceYTicks(minV, maxV, count = 5) {
 function niceLogYTicks(minV, maxV, count = 5) {
   const lo = Math.max(1, minV);
   const hi = Math.max(lo + 1, maxV);
-  const lLo = Math.log10(lo);
-  const lHi = Math.log10(hi);
-  const step = (lHi - lLo) / (count - 1 || 1);
 
-  // "Schöne" Rundungsraster: 1, 2, 5, 10, 20, 50, 100 ... (Multiplikatoren von Zehnerpotenzen)
+  // Komplette Liste aller "schönen" Werte (1, 2, 5 × Zehnerpotenz) zwischen 1 und weit über hi
   const niceMultiples = [1, 2, 5];
-  const roundToNice = (val) => {
-    if (val <= 0) return val;
-    const exp = Math.floor(Math.log10(val));
+  const allNiceValues = [];
+  for (let exp = 0; exp <= 8; exp++) {
     const base = Math.pow(10, exp);
-    const frac = val / base;
-    let best = niceMultiples[0];
-    let bestDiff = Math.abs(frac - best);
     for (const m of niceMultiples) {
-      const diff = Math.abs(frac - m);
-      if (diff < bestDiff) { best = m; bestDiff = diff; }
+      allNiceValues.push(m * base);
     }
-    return best * base;
-  };
-
-  const rawTicks = [];
-  for (let i = 0; i < count; i++) {
-    const logVal = lLo + i * step;
-    rawTicks.push(Math.pow(10, logVal));
   }
+  allNiceValues.sort((a, b) => a - b);
 
-  // Jeden Rohwert auf die nächste "schöne" Zahl runden, Duplikate entfernen
-  const ticks = [...new Set(rawTicks.map(roundToNice))].sort((a, b) => a - b);
-  return ticks;
+  // Alle schönen Werte behalten, die im sichtbaren Bereich liegen (mit etwas Rand für die Achsenenden)
+  const candidates = allNiceValues.filter(v => v >= lo * 0.85 && v <= hi * 1.15);
+
+  if (candidates.length <= count + 1) return candidates;
+
+  // Zu viele Kandidaten: gleichmäßig im Log-Raum ausdünnen auf ca. `count` Stück
+  const lLo = Math.log10(candidates[0]);
+  const lHi = Math.log10(candidates[candidates.length - 1]);
+  const step = (lHi - lLo) / (count - 1 || 1);
+  const picked = [];
+  for (let i = 0; i < count; i++) {
+    const target = lLo + i * step;
+    let best = candidates[0];
+    let bestDiff = Math.abs(Math.log10(best) - target);
+    for (const c of candidates) {
+      const diff = Math.abs(Math.log10(c) - target);
+      if (diff < bestDiff) { best = c; bestDiff = diff; }
+    }
+    picked.push(best);
+  }
+  return [...new Set(picked)].sort((a, b) => a - b);
 }
 
 // Erzeugt das Chart-Markup für ein beliebiges SVG-Element (für den Export, ohne Tooltips/Events)
