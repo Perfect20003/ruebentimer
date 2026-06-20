@@ -2160,16 +2160,31 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
   const svgEl = document.getElementById('priceChart');
   const svgClone = svgEl.cloneNode(true);
 
-  // CSS-Variablen (var(--muted) etc.) durch echte Farbwerte ersetzen,
+  // Inter-Schriftart als @font-face im SVG einbetten (für eigenständiges Rendering nötig)
+  const styleTag = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+  styleTag.textContent = `
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    text, tspan { font-family: 'Inter', Arial, sans-serif; }
+  `;
+  svgClone.insertBefore(styleTag, svgClone.firstChild);
+
+  // CSS-Variablen (var(--muted), var(--accent) etc.) durch echte Farbwerte ersetzen,
   // da ein eigenständiges SVG keinen Zugriff auf das Dokument-Stylesheet hat
-  const mutedColor = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() || '#8a93a8';
+  const rootStyle = getComputedStyle(document.documentElement);
+  const resolveVar = (val) => {
+    if (!val) return val;
+    const m = val.match(/var\((--[a-zA-Z0-9-]+)\)/);
+    if (!m) return val;
+    const resolved = rootStyle.getPropertyValue(m[1]).trim();
+    return resolved || val;
+  };
   svgClone.querySelectorAll('*').forEach(el => {
     ['fill', 'stroke'].forEach(attr => {
       const val = el.getAttribute(attr);
-      if (val && val.includes('var(--muted)')) el.setAttribute(attr, mutedColor);
+      if (val && val.includes('var(')) el.setAttribute(attr, resolveVar(val));
     });
     if (el.tagName === 'text') {
-      el.setAttribute('font-family', 'Arial, Helvetica, sans-serif');
+      el.setAttribute('font-family', "'Inter', Arial, sans-serif");
     }
   });
   svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -2177,6 +2192,9 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
   const svgData = new XMLSerializer().serializeToString(svgClone);
   const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
   const svgUrl = URL.createObjectURL(svgBlob);
+
+  // Kurze Pause damit der Browser die importierte Schriftart laden kann
+  await new Promise(r => setTimeout(r, 300));
 
   const img = new Image();
   const chartPng = await new Promise((resolve) => {
