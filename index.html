@@ -403,14 +403,24 @@
   .mut-toggle.on::after { left: 19px; background: var(--accent); }
   .mut-select {
     width: 100%;
-    background: #1a1d27;
+    background: #0b0e14;
     border: 1px solid #2a2f45;
     color: var(--text);
-    padding: 8px 10px;
-    border-radius: 8px;
-    font-size: 0.85rem;
+    padding: 10px 36px 10px 14px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
     outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    cursor: pointer;
+    transition: border-color 0.15s;
   }
+  .mut-select:hover { border-color: #3a4060; }
   .mut-select:focus { border-color: var(--accent); }
   .mut-number {
     width: 72px;
@@ -667,9 +677,8 @@
 
 <div class="modal-overlay" id="mutModal" style="display:none">
   <div class="modal">
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+    <div style="margin-bottom:16px;">
       <h3 style="margin:0;">Mutationen</h3>
-      <span style="font-size:0.8rem; color:var(--muted);" id="mutModalTitle"></span>
     </div>
     <div class="mutation-options">
 
@@ -1691,7 +1700,7 @@ document.getElementById('timeInputM').addEventListener('keydown', (e) => { if (e
 function openMutModal(id) {
   activeMutId = id;
   const b = beete[id];
-  document.getElementById('mutModalTitle').textContent = b.name;
+  // Beetname wird nicht mehr im Titel angezeigt
 
   const mut = b.mutations || {};
   document.getElementById('mut-gold').checked = !!mut.gold;
