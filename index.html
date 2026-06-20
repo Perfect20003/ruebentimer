@@ -1095,7 +1095,7 @@ function renderCard(b) {
   statusStr += isRotten ? ' + verdorrt' : (isWatered ? ' + bewässert' : ' + trocken');
 
   // Standzeit seit Anlage
-  const standzeit = now() - (b.plantedAt || now());
+  const standzeit = now() - (b.firstPlantedAt || b.plantedAt || now());
   const standDays = Math.floor(standzeit / 86400000);
   const standHours = Math.floor((standzeit % 86400000) / 3600000);
   const standzeitStr = standDays > 0 ? `${standDays}T ${standHours}h` : `${standHours}h`;
@@ -1625,7 +1625,7 @@ async function addBeet() {
 
   const id = 'beet_' + Date.now();
   await setDoc(doc(db, 'beete', id), {
-    name, plantedAt: now(), waterUntil: now() + DEFAULT_WATER_DURATION, waterDuration: DEFAULT_WATER_DURATION, mutations: { gold: false, shapeKey: "", weightMult: 1 }
+    name, plantedAt: now(), firstPlantedAt: now(), waterUntil: now() + DEFAULT_WATER_DURATION, waterDuration: DEFAULT_WATER_DURATION, mutations: { gold: false, shapeKey: "", weightMult: 1 }
   });
   inp.value = '';
 }
@@ -1661,6 +1661,7 @@ async function resetBeet(id) {
   if (!confirm('Beet wirklich zurücksetzen?')) return;
   await updateDoc(doc(db, 'beete', id), {
     plantedAt: now(),
+    firstPlantedAt: now(),
     waterUntil: now() + DEFAULT_WATER_DURATION,
     waterDuration: DEFAULT_WATER_DURATION,
     fertAt: 0,
