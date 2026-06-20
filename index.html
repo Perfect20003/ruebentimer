@@ -1218,8 +1218,8 @@ let activeRangeDays = 30; // Standard: 1 Monat
 
 function getFilteredEntries() {
   if (activeRangeDays === 0) return lastPriceEntriesAsc;
-  const cutoff = now() - activeRangeDays * 24 * 60 * 60 * 1000;
-  return lastPriceEntriesAsc.filter(e => e.timestamp >= cutoff);
+  // Letzte N Einträge zeigen (1 pro Tag = N Tage)
+  return lastPriceEntriesAsc.slice(-activeRangeDays);
 }
 let useLogScale = true;
 
