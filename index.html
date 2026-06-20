@@ -450,7 +450,7 @@
 
   .list-row {
     display: grid;
-    grid-template-columns: minmax(110px,1.3fr) 110px 110px 110px 110px 130px auto;
+    grid-template-columns: minmax(110px,1.2fr) 100px 100px 100px 100px 120px 120px auto;
     align-items: center;
     gap: 14px;
     background: #14171f;
@@ -461,6 +461,13 @@
   }
   .list-row:hover { border-color: #2a2f45; }
   .list-row .lr-name { font-weight: 700; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: grab; }
+  .list-row .lr-name-gold {
+    background: linear-gradient(90deg, #fff7cc, #f5c518 50%, #b8860b);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 12px rgba(245,197,24,0.35);
+  }
   .list-row .lr-stat { display: flex; flex-direction: column; gap: 2px; }
   .list-row .lr-stat-label { font-size: 0.72rem; color: var(--muted); }
   .list-row .lr-stat-value { font-weight: 600; font-size: 0.92rem; cursor: pointer; }
@@ -807,6 +814,7 @@
       <option value="ripe">Sortieren: Bis reif</option>
       <option value="water">Sortieren: Wasser</option>
       <option value="fert">Sortieren: Dünger</option>
+      <option value="mult">Sortieren: Gewicht</option>
       <option value="price">Sortieren: Marktwert</option>
       <option value="name">Sortieren: Name</option>
     </select>
@@ -820,6 +828,7 @@
         <div class="custom-select-option" data-value="ripe">Sortieren: Bis reif</div>
         <div class="custom-select-option" data-value="water">Sortieren: Wasser</div>
         <div class="custom-select-option" data-value="fert">Sortieren: Dünger</div>
+        <div class="custom-select-option" data-value="mult">Sortieren: Gewicht</div>
         <div class="custom-select-option" data-value="price">Sortieren: Marktwert</div>
         <div class="custom-select-option" data-value="name">Sortieren: Name</div>
       </div>
@@ -1486,9 +1495,17 @@ function renderListRow(b) {
   const isFertActive = fertLeft > 0;
 
   const calculatedPrice = calcPrice(b);
+  const mut = b.mutations || {};
+  let shapeLabel = 'Normalform (+0)';
+  if (mut.shapeKey && SHAPE_BONI[mut.shapeKey]) {
+    const sb = SHAPE_BONI[mut.shapeKey];
+    shapeLabel = `${sb.name} (+${sb.bonus.toLocaleString('de-DE')})`;
+  }
+  const weightMult = parseFloat(mut.weightMult) || 1;
+  const weightLabel = weightMult > 1 ? `${weightMult}x` : '–';
 
   row.innerHTML = `
-    <span class="lr-name" title="${b.name}">${b.name}</span>
+    <span class="lr-name ${mut.gold ? 'lr-name-gold' : ''}" title="${b.name}">${b.name}</span>
     <div class="lr-stat">
       <span class="lr-stat-label">Bis reif</span>
       <span class="lr-stat-value editable btn-edit-ripe">${isRipe ? 'REIF' : fmtTime(ripeLeft)}</span>
@@ -1504,6 +1521,14 @@ function renderListRow(b) {
     <div class="lr-stat">
       <span class="lr-stat-label">Dünger</span>
       <span class="lr-stat-value editable btn-edit-fert" style="color:${isFertActive ? '#a3e635' : 'var(--muted)'};">${isFertActive ? fmtTime(fertLeft) : 'inaktiv'}</span>
+    </div>
+    <div class="lr-stat">
+      <span class="lr-stat-label">Gewicht</span>
+      <span class="lr-stat-value">${weightLabel}</span>
+    </div>
+    <div class="lr-stat">
+      <span class="lr-stat-label">Mutation</span>
+      <span class="lr-stat-value" title="${shapeLabel}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:130px;">${shapeLabel}</span>
     </div>
     <span class="lr-price">${isRipe ? Math.round(calculatedPrice).toLocaleString('de-DE') + ' <img src="' + ICON_COIN + '" class="coin-icon" alt="">' : '–'}</span>
     <div class="lr-actions">
@@ -1665,6 +1690,16 @@ function getSortValue(b, sortKey) {
     case 'price':
       // Höchster Marktwert zuerst (nur reife Beete haben einen Wert)
       return isRipe ? -calcPrice(b) : Number.MAX_SAFE_INTEGER;
+
+    case 'mult': {
+      // Höchster Gesamt-Multiplikator zuerst (Gold ×10, Gewicht bis ×5)
+      const mut = b.mutations || {};
+      let displayMulti = 1;
+      if (mut.gold) displayMulti *= 10;
+      const weightMult = parseFloat(mut.weightMult) || 1;
+      if (weightMult > 1) displayMulti *= weightMult;
+      return -displayMulti;
+    }
 
     case 'name':
       return 0; // Name wird separat sortiert, siehe unten
