@@ -1249,8 +1249,10 @@ function checkTimerNotifications() {
     const name = b.name || 'Unbekannt';
     const t = now();
 
-    // 1. Rübe ist reif
-    const ripeLeft = Math.max(0, (b.plantedAt || t) + GROW_INTERVAL - t);
+    // 1. Rübe ist reif (Wachstum pausiert wenn das Beet trocken ist)
+    const waterUntilN = (typeof b.waterUntil === 'number') ? b.waterUntil : (b.wateredAt || b.plantedAt || t) + WATER_INTERVAL;
+    const dryElapsedN = (waterUntilN > t) ? 0 : Math.max(0, t - waterUntilN);
+    const ripeLeft = Math.max(0, (b.plantedAt || t) + dryElapsedN + GROW_INTERVAL - t);
     if (ripeLeft === 0 && !sentNotifications.has(b.id + '_reif')) {
       sentNotifications.add(b.id + '_reif');
       sendLocalNotification('🟫 Rübe reif!', `${name} ist jetzt reif und kann geerntet werden.`);
@@ -1439,11 +1441,15 @@ function renderCard(b) {
     ? b.waterUntil
     : (b.wateredAt || planted) + WATER_INTERVAL;
 
-  const ripeLeft  = Math.max(0, (planted + GROW_INTERVAL) - now());
-  const isRipe    = ripeLeft <= 0;
-
   const waterLeft = Math.max(0, waterUntil - now());
   const isWatered = waterLeft > 0;
+
+  // Wachstum pausiert sobald das Wasser ausgeht: die "trockene" Zeit zählt nicht zum Wachstum.
+  // effectivePlanted verschiebt sich entsprechend nach hinten, solange das Beet trocken ist.
+  const dryElapsed = isWatered ? 0 : Math.max(0, now() - waterUntil);
+  const effectivePlanted = planted + dryElapsed;
+  const ripeLeft  = Math.max(0, (effectivePlanted + GROW_INTERVAL) - now());
+  const isRipe    = ripeLeft <= 0;
 
   const waterEmptyAt = waterUntil;
   let rotLeft = ROT_INTERVAL;
@@ -1454,7 +1460,7 @@ function renderCard(b) {
     if (rotLeft <= 0) isRotten = true;
   }
 
-  const ripePct  = Math.min(100, ((now() - planted) / GROW_INTERVAL) * 100);
+  const ripePct  = Math.min(100, ((now() - effectivePlanted) / GROW_INTERVAL) * 100);
   const waterPct = Math.min(100, (waterLeft / waterDuration) * 100);
   const rotPct   = isWatered ? 0 : Math.min(100, ((now() - waterEmptyAt) / ROT_INTERVAL) * 100);
 
@@ -1623,10 +1629,14 @@ function renderListRow(b) {
     ? b.waterUntil
     : (b.wateredAt || planted) + WATER_INTERVAL;
 
-  const ripeLeft  = Math.max(0, (planted + GROW_INTERVAL) - now());
-  const isRipe    = ripeLeft <= 0;
   const waterLeft = Math.max(0, waterUntil - now());
   const isWatered = waterLeft > 0;
+
+  // Wachstum pausiert sobald das Wasser ausgeht (gleiche Logik wie in renderCard)
+  const dryElapsed = isWatered ? 0 : Math.max(0, now() - waterUntil);
+  const effectivePlanted = planted + dryElapsed;
+  const ripeLeft  = Math.max(0, (effectivePlanted + GROW_INTERVAL) - now());
+  const isRipe    = ripeLeft <= 0;
 
   let rotLeft = ROT_INTERVAL;
   let isRotten = false;
@@ -1892,7 +1902,9 @@ function getSortValue(b, sortKey) {
     : (b.wateredAt || planted) + WATER_INTERVAL;
   const waterLeft = Math.max(0, waterUntil - now());
   const isWatered = waterLeft > 0;
-  const ripeLeft = Math.max(0, (planted + GROW_INTERVAL) - now());
+  const dryElapsed = isWatered ? 0 : Math.max(0, now() - waterUntil);
+  const effectivePlanted = planted + dryElapsed;
+  const ripeLeft = Math.max(0, (effectivePlanted + GROW_INTERVAL) - now());
   const isRipe = ripeLeft <= 0;
   const fertAt = b.fertAt || 0;
   const fertLeft = isRipe ? 0 : Math.max(0, (fertAt + FERT_INTERVAL) - now());
