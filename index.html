@@ -780,34 +780,6 @@
     gap: 4px;
   }
 
-  .toast-container {
-    position: fixed;
-    top: 70px;
-    right: 16px;
-    z-index: 999;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    pointer-events: none;
-  }
-  .toast {
-    background: #1a1d27;
-    border: 1px solid var(--accent);
-    border-radius: 10px;
-    padding: 10px 14px;
-    font-size: 0.85rem;
-    color: var(--text);
-    max-width: 280px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-    animation: toastIn 0.3s ease;
-    pointer-events: all;
-  }
-  .toast-title { font-weight: 700; margin-bottom: 2px; }
-  .toast-body { color: var(--muted); font-size: 0.78rem; }
-  @keyframes toastIn {
-    from { opacity: 0; transform: translateX(20px); }
-    to { opacity: 1; transform: translateX(0); }
-  }
   .history-date { color: var(--muted); }
   .history-empty { color: var(--muted); justify-content: center; }
   .history-delete-btn {
@@ -856,14 +828,11 @@
   <div class="presence-info" id="presenceInfo" style="display:none">
     <span id="onlineCount" title="Aktive Nutzer">👥 –</span>
   </div>
-  <button class="btn-log-open" id="btnNotify" title="Benachrichtigungen aktivieren" style="display:none">🔔</button>
   <input type="file" id="importFileInput" accept=".json" style="display:none">
   <button class="btn-log-open" id="btnUnlockEdit" title="Zum Bearbeiten entsperren">🔒</button>
   <button class="btn-log-open" id="btnOpenActivityLog" title="Aktivitäts-Log">📋</button>
   <button class="btn-log-open" id="btnOpenLog" title=""><img src="data:image/png;base64,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" style="width:16px;height:auto;image-rendering:pixelated;vertical-align:middle;"></button>
 </header>
-
-<div class="toast-container" id="toastContainer"></div>
 
 <main>
 
@@ -1122,7 +1091,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
 import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, addDoc, query, orderBy, limit, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -1139,7 +1107,6 @@ const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 logEvent(analytics, 'page_view');
 const db = getFirestore(app);
-const messaging = getMessaging(app);
 const auth = getAuth(app);
 
 // --- Editier-Schutz: Passwort = "Ruebe" (gleich wie Besuchslog) ---
@@ -1179,150 +1146,6 @@ function updateLockUI() {
   if (!btn) return;
   btn.textContent = isUnlocked ? '🔓' : '🔒';
   btn.title = isUnlocked ? 'Bearbeiten freigeschaltet' : 'Zum Bearbeiten entsperren';
-}
-
-// --- Push-Benachrichtigungen Setup ---
-// VAPID Key aus Firebase Console → Projekteinstellungen → Cloud Messaging → Web Push Zertifikate
-const VAPID_KEY = 'BBjF6oos4jO7FX6iM3yFWjTD4wRJi0_G6mCOxouQmVecCVB0-CojpiiN5NnD6nn2lP5LRAm1DF7wggAnwwZEn84';
-
-async function setupNotifications() {
-  try {
-    if (!('Notification' in window)) return;
-
-    const btn = document.getElementById('btnNotify');
-
-    if (Notification.permission === 'granted') {
-      if (btn) btn.style.display = 'none';
-      return;
-    }
-
-    if (Notification.permission !== 'denied') {
-      if (btn) btn.style.display = 'flex';
-      btn.addEventListener('click', async () => {
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-          btn.style.display = 'none';
-        }
-      });
-    }
-  } catch (e) {
-    console.warn('[Rübe] Notification Setup fehlgeschlagen:', e);
-  }
-}
-
-async function registerFCM() {
-  // Nur wenn Service Worker verfügbar (für mobile Push)
-  try {
-    if (!('serviceWorker' in navigator)) return;
-    const reg = await navigator.serviceWorker.register('/ruebentimer/firebase-messaging-sw.js');
-    const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
-    if (token) {
-      let deviceId;
-      try {
-        deviceId = localStorage.getItem('rueben_device_id');
-        if (!deviceId) {
-          deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-          localStorage.setItem('rueben_device_id', deviceId);
-        }
-      } catch(e) { deviceId = SESSION_ID; }
-      await setDoc(doc(db, 'fcmTokens', deviceId), { token, updatedAt: now() });
-    }
-  } catch(e) {
-    console.warn('[Rübe] FCM nicht verfügbar:', e.message);
-  }
-}
-
-// Benachrichtigungen wenn App im Vordergrund ist
-onMessage(messaging, (payload) => {
-  const { title, body } = payload.notification;
-  if (Notification.permission === 'granted') {
-    new Notification(title, { body, icon: '/ruebentimer/icon-192.png' });
-  }
-});
-
-// --- Timer-Notifications: lokale Checks alle 60 Sekunden ---
-// Speichert welche Notifications schon geschickt wurden (pro Session)
-const sentNotifications = new Set();
-
-function checkTimerNotifications() {
-  const beetValues = Object.values(beete);
-  console.log('[Rübe] Check läuft, Beete:', beetValues.length, 'Notification:', Notification.permission, 'Beispiel:', beetValues[0]?.name);
-  beetValues.forEach(b => {
-    console.log('[Rübe] Prüfe Beet:', b?.name, b?.id);
-    const name = b.name || 'Unbekannt';
-    const t = now();
-
-    // 1. Rübe ist reif (Wachstum pausiert wenn das Beet trocken ist)
-    const waterUntilN = (typeof b.waterUntil === 'number') ? b.waterUntil : (b.wateredAt || b.plantedAt || t) + WATER_INTERVAL;
-    const dryElapsedN = (waterUntilN > t) ? 0 : Math.max(0, t - waterUntilN);
-    const ripeLeft = Math.max(0, (b.plantedAt || t) + dryElapsedN + GROW_INTERVAL - t);
-    if (ripeLeft === 0 && !sentNotifications.has(b.id + '_reif')) {
-      sentNotifications.add(b.id + '_reif');
-      sendLocalNotification('🟫 Rübe reif!', `${name} ist jetzt reif und kann geerntet werden.`);
-    }
-    // Reset wenn Beet neu gepflanzt
-    if (ripeLeft > 60000) sentNotifications.delete(b.id + '_reif');
-
-    // 2. Wasser läuft in 15 Min aus
-    const waterLeft = Math.max(0, (b.waterUntil || 0) - t);
-    console.log(`[Rübe] ${name}: waterLeft=${Math.round(waterLeft/60000)}min, sent=${sentNotifications.has(b.id + '_wasser15')}`);
-    if (waterLeft > 0 && waterLeft <= 15 * 60000
-        && !sentNotifications.has(b.id + '_wasser15')) {
-      sentNotifications.add(b.id + '_wasser15');
-      console.log('[Rübe] Sende Wasser-Notification!');
-      sendLocalNotification('💧 Wasser fast leer', `${name}: Wasser läuft in ~15 Min aus!`);
-    }
-    if (waterLeft > 16 * 60000) sentNotifications.delete(b.id + '_wasser15');
-
-    // 3. Wasser ist ausgelaufen
-    if (waterLeft === 0 && (b.waterUntil || 0) > 0 && !sentNotifications.has(b.id + '_wasserweg')) {
-      sentNotifications.add(b.id + '_wasserweg');
-      sendLocalNotification('🚱 Wasser leer!', `${name}: Kein Wasser mehr – Verdorrung läuft!`);
-    }
-    if (waterLeft > 60000) sentNotifications.delete(b.id + '_wasserweg');
-
-    // 4. Verdorrung in 1h, 30min, 10min
-    const isWatered = waterLeft > 0;
-    if (!isWatered) {
-      const waterUntil = b.waterUntil || 0;
-      const rotLeft = Math.max(0, waterUntil + ROT_INTERVAL - t);
-
-      [[60, '_rot60'], [30, '_rot30'], [10, '_rot10']].forEach(([mins, key]) => {
-        if (rotLeft <= mins * 60000 && !sentNotifications.has(b.id + key)) {
-          sentNotifications.add(b.id + key);
-          sendLocalNotification('⚠️ Verdorrung droht!', `${name}: Verdirbt in ~${mins} Min!`);
-        }
-        if (rotLeft > (mins + 1) * 60000) sentNotifications.delete(b.id + key);
-      });
-    }
-
-    // 5. Dünger in 30min und 15min
-    const fertAt = b.fertAt || 0;
-    const fertLeft = Math.max(0, fertAt + FERT_INTERVAL - t);
-    [[30, '_fert30'], [15, '_fert15']].forEach(([mins, key]) => {
-      if (fertLeft > 0 && fertLeft <= mins * 60000 && !sentNotifications.has(b.id + key)) {
-        sentNotifications.add(b.id + key);
-        sendLocalNotification('🌿 Dünger läuft ab', `${name}: Dünger endet in ~${mins} Min!`);
-      }
-      if (fertLeft > (mins + 1) * 60000) sentNotifications.delete(b.id + key);
-    });
-  });
-}
-
-function sendLocalNotification(title, body) {
-  // In-App Toast (immer sichtbar)
-  const container = document.getElementById('toastContainer');
-  if (container) {
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.innerHTML = `<div class="toast-title">${title}</div><div class="toast-body">${body}</div>`;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 6000);
-  }
-  // Browser-Notification (wenn Tab im Hintergrund)
-  if (Notification.permission === 'granted') {
-    new Notification(title, { body, icon: '/ruebentimer/icon-192.png' });
-  }
 }
 
 const colRef = collection(db, "beete");
@@ -1696,6 +1519,12 @@ function renderListRow(b) {
   const weightMult = parseFloat(mut.weightMult) || 1;
   const weightLabel = weightMult > 1 ? `${weightMult}x` : '–';
 
+  // Werte, die eine strukturelle Neugenerierung erfordern (Name, Mutation) als Fingerprint
+  const structFingerprint = JSON.stringify({ name: b.name, mut: b.mutations });
+  const needsFullRender = isNew || row.dataset.fp !== structFingerprint;
+
+  if (needsFullRender) {
+  row.dataset.fp = structFingerprint;
   row.innerHTML = `
     <span style="display:flex; align-items:center; gap:8px; overflow:hidden;">
       <input type="checkbox" class="select-checkbox row-select-cb" data-id="${b.id}" title="Auswählen">
@@ -1703,19 +1532,19 @@ function renderListRow(b) {
     </span>
     <div class="lr-stat">
       <span class="lr-stat-label">Bis reif</span>
-      <span class="lr-stat-value editable btn-edit-ripe">${isRipe ? 'REIF' : fmtTime(ripeLeft)}</span>
+      <span class="lr-stat-value editable btn-edit-ripe" data-f="ripeText">${isRipe ? 'REIF' : fmtTime(ripeLeft)}</span>
     </div>
     <div class="lr-stat">
       <span class="lr-stat-label">Wasser</span>
-      <span class="lr-stat-value editable btn-edit-water ${isWatered ? 'active-timer' : 'warning'}">${isWatered ? fmtTime(waterLeft) : '0s'}</span>
+      <span class="lr-stat-value editable btn-edit-water" data-f="waterText">${isWatered ? fmtTime(waterLeft) : '0s'}</span>
     </div>
     <div class="lr-stat">
       <span class="lr-stat-label">Verdorrung</span>
-      <span class="lr-stat-value ${isWatered ? '' : 'editable btn-edit-rot'} ${isRotten ? 'warning' : ''}">${isWatered ? 'pausiert' : (isRotten ? 'VERDORRT' : fmtTime(rotLeft))}</span>
+      <span class="lr-stat-value btn-edit-rot" data-f="rotText">${isWatered ? 'pausiert' : (isRotten ? 'VERDORRT' : fmtTime(rotLeft))}</span>
     </div>
     <div class="lr-stat">
       <span class="lr-stat-label">Dünger</span>
-      <span class="lr-stat-value editable btn-edit-fert" style="color:${isFertActive ? '#a3e635' : 'var(--muted)'};">${isFertActive ? fmtTime(fertLeft) : 'inaktiv'}</span>
+      <span class="lr-stat-value editable btn-edit-fert" data-f="fertText">${isFertActive ? fmtTime(fertLeft) : 'inaktiv'}</span>
     </div>
     <div class="lr-stat">
       <span class="lr-stat-label">Gewicht</span>
@@ -1725,7 +1554,7 @@ function renderListRow(b) {
       <span class="lr-stat-label">Mutation</span>
       <span class="lr-stat-value" title="${shapeLabel}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:165px;">${shapeLabel}</span>
     </div>
-    <span class="lr-price">${isRipe ? Math.round(calculatedPrice).toLocaleString('de-DE') + ' <img src="' + ICON_COIN + '" class="coin-icon" alt="">' : '–'}</span>
+    <span class="lr-price" data-f="priceHtml">${isRipe ? Math.round(calculatedPrice).toLocaleString('de-DE') + ' <img src="' + ICON_COIN + '" class="coin-icon" alt="">' : '–'}</span>
     <div class="lr-actions">
       <button class="lr-w12" title="Silberne Gießkanne (12h)"><img src="${ICON_CAN_SILVER}" class="btn-icon" alt=""></button>
       <button class="lr-w24" title="Goldene Gießkanne (24h)"><img src="${ICON_CAN_GOLD}" class="btn-icon" alt=""></button>
@@ -1735,11 +1564,6 @@ function renderListRow(b) {
     </div>
   `;
 
-  row.querySelector('.btn-edit-ripe').addEventListener('click', requireUnlock(() => openTimeModal(b.id, 'ripe', ripeLeft)));
-  row.querySelector('.btn-edit-water').addEventListener('click', requireUnlock(() => openTimeModal(b.id, 'water', waterLeft)));
-  const rotEl = row.querySelector('.btn-edit-rot');
-  if (rotEl) rotEl.addEventListener('click', requireUnlock(() => openTimeModal(b.id, 'rot', rotLeft)));
-  row.querySelector('.btn-edit-fert').addEventListener('click', requireUnlock(() => openTimeModal(b.id, 'fert', fertLeft)));
   row.querySelector('.lr-w12').addEventListener('click', requireUnlock(() => setWater(b.id, 12)));
   row.querySelector('.lr-w24').addEventListener('click', requireUnlock(() => setWater(b.id, 24)));
   row.querySelector('.lr-fert').addEventListener('click', requireUnlock(() => applyFertilizer(b.id)));
@@ -1752,6 +1576,38 @@ function renderListRow(b) {
   rowCb.addEventListener('click', (e) => e.stopPropagation());
 
   if (isNew) listContainer.appendChild(row);
+  } // Ende needsFullRender
+
+  // Zeit-Edit-Buttons müssen bei jedem Aufruf neu verdrahtet werden, da sich waterLeft/rotLeft/etc. ändern
+  row.querySelector('.btn-edit-ripe').onclick = requireUnlock(() => openTimeModal(b.id, 'ripe', ripeLeft));
+  row.querySelector('.btn-edit-water').onclick = requireUnlock(() => openTimeModal(b.id, 'water', waterLeft));
+  const rotEl = row.querySelector('.btn-edit-rot');
+  if (rotEl) rotEl.onclick = isWatered ? null : requireUnlock(() => openTimeModal(b.id, 'rot', rotLeft));
+  row.querySelector('.btn-edit-fert').onclick = requireUnlock(() => openTimeModal(b.id, 'fert', fertLeft));
+
+  // --- Leichtgewichtiges Update der Timer-Texte (kein DOM-Neuaufbau, kein Flackern) ---
+  const setText = (sel, val) => { const el = row.querySelector(`[data-f="${sel}"]`); if (el) el.textContent = val; };
+  const setHtml = (sel, val) => { const el = row.querySelector(`[data-f="${sel}"]`); if (el) el.innerHTML = val; };
+
+  setText('ripeText', isRipe ? 'REIF' : fmtTime(ripeLeft));
+  const waterTextEl = row.querySelector('[data-f="waterText"]');
+  if (waterTextEl) {
+    waterTextEl.textContent = isWatered ? fmtTime(waterLeft) : '0s';
+    waterTextEl.classList.toggle('active-timer', isWatered);
+    waterTextEl.classList.toggle('warning', !isWatered);
+  }
+  const rotTextEl = row.querySelector('[data-f="rotText"]');
+  if (rotTextEl) {
+    rotTextEl.textContent = isWatered ? 'pausiert' : (isRotten ? 'VERDORRT' : fmtTime(rotLeft));
+    rotTextEl.classList.toggle('warning', isRotten);
+    rotTextEl.classList.toggle('editable', !isWatered);
+  }
+  const fertTextEl = row.querySelector('[data-f="fertText"]');
+  if (fertTextEl) {
+    fertTextEl.textContent = isFertActive ? fmtTime(fertLeft) : 'inaktiv';
+    fertTextEl.style.color = isFertActive ? '#a3e635' : 'var(--muted)';
+  }
+  setHtml('priceHtml', isRipe ? Math.round(calculatedPrice).toLocaleString('de-DE') + ' <img src="' + ICON_COIN + '" class="coin-icon" alt="">' : '–');
 }
 
 function toggleSelect(id, checked) {
@@ -2897,9 +2753,6 @@ async function removePresence() {
 heartbeat();
 presenceTimer = setInterval(heartbeat, 20000);
 
-// Notifications deaktiviert
-// setupNotifications();
-
 // Besuch beim Öffnen der Seite loggen (mit Gerät + Browser)
 function detectBrowser(ua) {
   if (/Edg\//.test(ua)) return 'Edge';
@@ -3410,10 +3263,6 @@ onSnapshot(metaRef, (snap) => {
   }
   el.textContent = label;
 });
-
-// Notification-Check alle 30 Sekunden
-// setInterval(checkTimerNotifications, 30000);
-// checkTimerNotifications();
 </script>
 </body>
 </html>
