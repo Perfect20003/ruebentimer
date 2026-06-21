@@ -1474,7 +1474,10 @@ function renderCard(b) {
   const standzeit = now() - (b.firstPlantedAt || b.plantedAt || now());
   const standDays = Math.floor(standzeit / 86400000);
   const standHours = Math.floor((standzeit % 86400000) / 3600000);
-  const standzeitStr = standDays > 0 ? `${standDays}T ${standHours}h` : `${standHours}h`;
+  const standMinutes = Math.floor((standzeit % 3600000) / 60000);
+  const standzeitStr = standDays > 0
+    ? `${standDays}T ${standHours}h ${standMinutes}m`
+    : (standHours > 0 ? `${standHours}h ${standMinutes}m` : `${standMinutes}m`);
 
   // --- PREISBERECHNUNG ---
   const calculatedPrice = calcPrice(b);
