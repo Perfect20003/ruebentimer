@@ -152,27 +152,6 @@
     align-items: center;
     gap: 14px;
   }
-  .mult-calc {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.78rem;
-    color: var(--muted);
-  }
-  .mult-calc input {
-    width: 52px;
-    background: #1f2431;
-    border: 1px solid #2a2f45;
-    color: var(--text);
-    padding: 6px 8px;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-align: center;
-    outline: none;
-  }
-  .mult-calc input:focus { border-color: var(--accent); }
-  .mult-result { font-weight: 700; color: var(--accent); min-width: 28px; }
 
   .btn-log-open {
     background: transparent;
@@ -257,7 +236,6 @@
     z-index: 1;
   }
 
-  .hint { font-size: 0.78rem; color: var(--muted); margin-bottom: 16px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
   .grid .card { transition: transform 0.15s ease; }
 
@@ -445,7 +423,6 @@
     gap: 8px;
   }
   .mut-label { font-size: 0.88rem; font-weight: 600; color: var(--text); }
-  .mut-hint { font-size: 0.75rem; color: var(--muted); }
   .select-checkbox {
     width: 17px; height: 17px;
     appearance: none;
@@ -595,27 +572,6 @@
   }
   .mut-toggle.on { background: rgba(34,197,94,0.2); }
   .mut-toggle.on::after { left: 19px; background: var(--accent); }
-  .mut-select {
-    width: 100%;
-    background: #0b0e14;
-    border: 1px solid #2a2f45;
-    color: var(--text);
-    padding: 10px 36px 10px 14px;
-    border-radius: 14px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    outline: none;
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 16px;
-    cursor: pointer;
-    transition: border-color 0.15s;
-  }
-  .mut-select:hover { border-color: #3a4060; }
-  .mut-select:focus { border-color: var(--accent); }
 
   .custom-select { position: relative; width: 100%; }
   .custom-select-trigger {
@@ -2458,14 +2414,6 @@ async function resetBeet(id) {
     mutations: { gold: false, shapeKey: "", weightMult: 1 }
   });
   logActivity(id, b ? b.name : id, 'Beet zurückgesetzt (Neu)');
-}
-
-async function addTime(id, field, hours) {
-  const b = beete[id];
-  if (!b) return;
-  const key = field === 'water' ? 'wateredAt' : 'plantedAt';
-  const cur = b[key] || now();
-  await updateDoc(doc(db, 'beete', id), { [key]: cur + hours * 3600000 });
 }
 
 // Dünger: verschiebt Wachstum um -4h UND startet den 4h Dünger-Timer
