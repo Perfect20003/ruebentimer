@@ -1507,16 +1507,23 @@ function renderCard(b) {
   const fertPct = isFertActive ? Math.min(100, (fertLeft / FERT_INTERVAL) * 100) : 0;
 
   card.draggable = true;
+
+  // Werte, die eine strukturelle Neugenerierung erfordern (Name, Mutation, Notiz) als Fingerprint
+  const structFingerprint = JSON.stringify({ name: b.name, mut: b.mutations, note: b.note });
+  const needsFullRender = isNew || card.dataset.fp !== structFingerprint;
+
+  if (needsFullRender) {
+  card.dataset.fp = structFingerprint;
   card.innerHTML = `<div class="card-inner">
     <div class="card-header">
       <span style="display:flex; align-items:center; gap:8px; overflow:hidden;">
         <input type="checkbox" class="select-checkbox card-select-cb" data-id="${b.id}" title="Auswählen">
         <span class="card-title" title="${b.name}">${b.name}</span>
       </span>
-      <span class="status-text">${statusStr}</span>
+      <span class="status-text" data-f="statusStr">${statusStr}</span>
     </div>
     <div style="font-size:0.7rem; color:var(--muted); margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
-      <span>seit ${standzeitStr}</span>
+      <span data-f="standzeit">seit ${standzeitStr}</span>
       <button class="btn-note" title="${b.note ? 'Notiz bearbeiten' : 'Notiz hinzufügen'}">${b.note ? '📝 Notiz' : '+ Notiz'}</button>
     </div>
 
@@ -1532,27 +1539,27 @@ function renderCard(b) {
         <div class="stats">
           <div class="stat-row">
             <span class="stat-label">Bis reif</span>
-            <span class="stat-value editable btn-edit-ripe" title="Klicken zum Anpassen">${isRipe ? 'REIF' : fmtTime(ripeLeft)}</span>
+            <span class="stat-value editable btn-edit-ripe" data-f="ripeText" title="Klicken zum Anpassen">${isRipe ? 'REIF' : fmtTime(ripeLeft)}</span>
           </div>
-          <div class="progress-bar"><div class="progress-fill ripe" style="width:${ripePct}%"></div></div>
+          <div class="progress-bar"><div class="progress-fill ripe" data-f="ripeBar" style="width:${ripePct}%"></div></div>
 
           <div class="stat-row">
             <span class="stat-label">Wasser</span>
-            <span class="stat-value editable btn-edit-water ${isWatered ? 'active-timer' : 'warning'}" title="Klicken zum Anpassen">${isWatered ? fmtTime(waterLeft) : '0s'}</span>
+            <span class="stat-value editable btn-edit-water ${isWatered ? 'active-timer' : 'warning'}" data-f="waterText" title="Klicken zum Anpassen">${isWatered ? fmtTime(waterLeft) : '0s'}</span>
           </div>
-          <div class="progress-bar"><div class="progress-fill water" style="width:${waterPct}%"></div></div>
+          <div class="progress-bar"><div class="progress-fill water" data-f="waterBar" style="width:${waterPct}%"></div></div>
 
           <div class="stat-row">
             <span class="stat-label">Verdorrung</span>
-            <span class="stat-value ${isWatered ? '' : 'editable btn-edit-rot'} ${isRotten ? 'warning' : ''}" title="${isWatered ? '' : 'Klicken zum Anpassen'}">${isWatered ? 'pausiert' : (isRotten ? 'VERDORRT' : fmtTime(rotLeft))}</span>
+            <span class="stat-value ${isWatered ? '' : 'editable btn-edit-rot'} ${isRotten ? 'warning' : ''}" data-f="rotText" title="${isWatered ? '' : 'Klicken zum Anpassen'}">${isWatered ? 'pausiert' : (isRotten ? 'VERDORRT' : fmtTime(rotLeft))}</span>
           </div>
-          <div class="progress-bar"><div class="progress-fill rot" style="width:${rotPct}%"></div></div>
+          <div class="progress-bar"><div class="progress-fill rot" data-f="rotBar" style="width:${rotPct}%"></div></div>
 
           <div class="stat-row">
             <span class="stat-label">Dünger</span>
-            <span class="stat-value editable btn-edit-fert" style="color:${isFertActive ? '#a3e635' : 'var(--muted)'};" title="Klicken zum Anpassen">${isFertActive ? fmtTime(fertLeft) : 'inaktiv'}</span>
+            <span class="stat-value editable btn-edit-fert" data-f="fertText" style="color:${isFertActive ? '#a3e635' : 'var(--muted)'};" title="Klicken zum Anpassen">${isFertActive ? fmtTime(fertLeft) : 'inaktiv'}</span>
           </div>
-          <div class="progress-bar"><div class="progress-fill" style="width:${fertPct}%;background:#a3e635;"></div></div>
+          <div class="progress-bar"><div class="progress-fill" data-f="fertBar" style="width:${fertPct}%;background:#a3e635;"></div></div>
         </div>
       </div>
     </div>
@@ -1562,9 +1569,9 @@ function renderCard(b) {
       <span class="stat-value" style="font-weight:500; text-align:right; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${mutStr}</span>
     </div>
 
-    <div class="stat-row" style="margin-top: 2px; font-size: 0.9rem; color: #f59e0b; font-weight: bold; background: rgba(245,158,11,0.06); padding: 4px 6px; border-radius: 6px; ${isRipe ? '' : 'opacity:0.3;'}">
+    <div class="stat-row" data-f="priceRow" style="margin-top: 2px; font-size: 0.9rem; color: #f59e0b; font-weight: bold; background: rgba(245,158,11,0.06); padding: 4px 6px; border-radius: 6px; ${isRipe ? '' : 'opacity:0.3;'}">
       <span>Marktwert:</span>
-      <span>${isRipe ? Math.round(calculatedPrice).toLocaleString('de-DE') + ' <img src="' + ICON_COIN + '" class="coin-icon" alt="🪙">' : 'Noch nicht reif'}</span>
+      <span data-f="priceText">${isRipe ? Math.round(calculatedPrice).toLocaleString('de-DE') + ' <img src="' + ICON_COIN + '" class="coin-icon" alt="🪙">' : 'Noch nicht reif'}</span>
     </div>
 
     <div class="timer-btns" style="margin-top:4px;">
@@ -1587,10 +1594,6 @@ function renderCard(b) {
   card.querySelector('.btn-remove-water').addEventListener('click', requireUnlock(() => removeWater(b.id)));
   card.querySelector('.btn-add-p4').addEventListener('click', requireUnlock(() => applyFertilizer(b.id)));
 
-  card.querySelector('.btn-edit-water')?.addEventListener('click', requireUnlock(() => openTimeModal(b.id, 'water', waterLeft)));
-  card.querySelector('.btn-edit-rot')?.addEventListener('click', requireUnlock(() => openTimeModal(b.id, 'rot', rotLeft)));
-  card.querySelector('.btn-edit-ripe')?.addEventListener('click', requireUnlock(() => openTimeModal(b.id, 'ripe', ripeLeft)));
-  card.querySelector('.btn-edit-fert')?.addEventListener('click', requireUnlock(() => openTimeModal(b.id, 'fert', fertLeft)));
   card.querySelector('.btn-rename').addEventListener('click', requireUnlock(() => triggerRename(b.id)));
   card.querySelector('.btn-reset').addEventListener('click', requireUnlock(() => resetBeet(b.id)));
   card.querySelector('.btn-delete').addEventListener('click', requireUnlock(() => deleteBeet(b.id)));
@@ -1603,10 +1606,38 @@ function renderCard(b) {
 
   if (isNew) {
     grid.appendChild(card);
-    setupDragDrop(card);
-  } else {
-    setupDragDrop(card);
   }
+  setupDragDrop(card);
+  } // Ende needsFullRender
+
+  // Zeit-Edit-Buttons müssen bei jedem Aufruf neu verdrahtet werden, da sich waterLeft/rotLeft/etc. ändern
+  const editWater = card.querySelector('.btn-edit-water');
+  if (editWater) editWater.onclick = requireUnlock(() => openTimeModal(b.id, 'water', waterLeft));
+  const editRot = card.querySelector('.btn-edit-rot');
+  if (editRot) editRot.onclick = requireUnlock(() => openTimeModal(b.id, 'rot', rotLeft));
+  const editRipe = card.querySelector('.btn-edit-ripe');
+  if (editRipe) editRipe.onclick = requireUnlock(() => openTimeModal(b.id, 'ripe', ripeLeft));
+  const editFert = card.querySelector('.btn-edit-fert');
+  if (editFert) editFert.onclick = requireUnlock(() => openTimeModal(b.id, 'fert', fertLeft));
+
+  // --- Leichtgewichtiges Update der Timer-Texte/Balken (kein DOM-Neuaufbau, kein Flackern) ---
+  const setText = (sel, val) => { const el = card.querySelector(`[data-f="${sel}"]`); if (el) el.textContent = val; };
+  const setHtml = (sel, val) => { const el = card.querySelector(`[data-f="${sel}"]`); if (el) el.innerHTML = val; };
+  const setWidth = (sel, pct) => { const el = card.querySelector(`[data-f="${sel}"]`); if (el) el.style.width = pct + '%'; };
+
+  setText('statusStr', statusStr);
+  setText('standzeit', `seit ${standzeitStr}`);
+  setText('ripeText', isRipe ? 'REIF' : fmtTime(ripeLeft));
+  setWidth('ripeBar', ripePct);
+  setText('waterText', isWatered ? fmtTime(waterLeft) : '0s');
+  setWidth('waterBar', waterPct);
+  setText('rotText', isWatered ? 'pausiert' : (isRotten ? 'VERDORRT' : fmtTime(rotLeft)));
+  setWidth('rotBar', rotPct);
+  setText('fertText', isFertActive ? fmtTime(fertLeft) : 'inaktiv');
+  setWidth('fertBar', fertPct);
+  setHtml('priceText', isRipe ? Math.round(calculatedPrice).toLocaleString('de-DE') + ' <img src="' + ICON_COIN + '" class="coin-icon" alt="🪙">' : 'Noch nicht reif');
+  const priceRow = card.querySelector('[data-f="priceRow"]');
+  if (priceRow) priceRow.style.opacity = isRipe ? '1' : '0.3';
 }
 
 // --- Listen-Modus ---
