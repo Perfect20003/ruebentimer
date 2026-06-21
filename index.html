@@ -927,6 +927,7 @@
     <button id="bulkWater12">Wasser (12h)</button>
     <button id="bulkWater24">Wasser (24h)</button>
     <button id="bulkFert">Dünger</button>
+    <button id="bulkReset">Neu</button>
     <button class="bulk-delete" id="bulkDelete">Löschen</button>
     <button class="bulk-clear" id="bulkClear">Auswahl aufheben</button>
   </div>
@@ -1798,6 +1799,26 @@ async function bulkFertilize() {
   }
 }
 
+async function bulkReset() {
+  if (!selectedIds.size) return;
+  const count = selectedIds.size;
+  if (!confirm(`${count} Beet${count > 1 ? 'e' : ''} wirklich zurücksetzen?`)) return;
+  const ids = [...selectedIds];
+  for (const id of ids) {
+    const b = beete[id];
+    if (!b) continue;
+    await updateDoc(doc(db, 'beete', id), {
+      plantedAt: now(),
+      firstPlantedAt: now(),
+      waterUntil: now() + DEFAULT_WATER_DURATION,
+      waterDuration: DEFAULT_WATER_DURATION,
+      fertAt: 0,
+      mutations: { gold: false, shapeKey: "", weightMult: 1 }
+    });
+    logActivity(id, b.name, 'Beet zurückgesetzt (Neu) [Mehrfachauswahl]');
+  }
+}
+
 async function bulkDelete() {
   if (!selectedIds.size) return;
   const count = selectedIds.size;
@@ -1814,6 +1835,7 @@ async function bulkDelete() {
 document.getElementById('bulkWater12').addEventListener('click', requireUnlock(() => bulkSetWater(12)));
 document.getElementById('bulkWater24').addEventListener('click', requireUnlock(() => bulkSetWater(24)));
 document.getElementById('bulkFert').addEventListener('click', requireUnlock(bulkFertilize));
+document.getElementById('bulkReset').addEventListener('click', requireUnlock(bulkReset));
 document.getElementById('bulkDelete').addEventListener('click', requireUnlock(bulkDelete));
 document.getElementById('bulkClear').addEventListener('click', clearSelection);
 
