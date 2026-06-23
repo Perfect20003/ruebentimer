@@ -900,6 +900,22 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="posModal" style="display:none">
+  <div class="modal note-modal">
+    <h3 style="font-size:1rem; margin-bottom:12px; color:#fff;">Spiel-Position</h3>
+    <p style="font-size:0.78rem; color:var(--muted); margin-bottom:10px; line-height:1.4;">
+      Koordinate der Ecke des 2×2-Beets mit den <b>kleinsten</b> X- und Z-Werten.
+      Format: X,Y,Z (z.B. 63,100,-242). Wird von der Mod genutzt, um beim
+      Gießen/Düngen im Spiel automatisch das richtige Beet zu treffen.
+    </p>
+    <input type="text" id="posInput" placeholder="X,Y,Z" style="width:100%; padding:10px; border-radius:10px; background:#0b0e14; border:1px solid #2a2f45; color:var(--text); font-size:0.9rem; outline:none; box-sizing:border-box;">
+    <div class="time-modal-btns" style="margin-top:12px;">
+      <button class="btn-cancel-time" id="btnCancelPos">Abbrechen</button>
+      <button class="btn-apply" id="btnSavePos">Speichern</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="mutModal" style="display:none">
   <div class="modal">
     <div style="margin-bottom:16px;">
@@ -1292,7 +1308,7 @@ function renderCard(b) {
   card.draggable = true;
 
   // Werte, die eine strukturelle Neugenerierung erfordern (Name, Mutation, Notiz) als Fingerprint
-  const structFingerprint = JSON.stringify({ name: b.name, mut: b.mutations, note: b.note });
+  const structFingerprint = JSON.stringify({ name: b.name, mut: b.mutations, note: b.note, gamePos: b.gamePos });
   const needsFullRender = isNew || card.dataset.fp !== structFingerprint;
 
   if (needsFullRender) {
@@ -1307,7 +1323,10 @@ function renderCard(b) {
     </div>
     <div style="font-size:0.7rem; color:var(--muted); margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
       <span data-f="standzeit">seit ${standzeitStr}</span>
-      <button class="btn-note" title="${b.note ? 'Notiz bearbeiten' : 'Notiz hinzufügen'}">${b.note ? '📝 Notiz' : '+ Notiz'}</button>
+      <span style="display:flex; gap:6px;">
+        <button class="btn-note btn-pos" title="${b.gamePos ? 'Position: ' + b.gamePos : 'Spiel-Position setzen'}">${b.gamePos ? '📍 Pos' : '+ Pos'}</button>
+        <button class="btn-note" title="${b.note ? 'Notiz bearbeiten' : 'Notiz hinzufügen'}">${b.note ? '📝 Notiz' : '+ Notiz'}</button>
+      </span>
     </div>
 
     <div class="card-body-layout">
@@ -1380,7 +1399,8 @@ function renderCard(b) {
   card.querySelector('.btn-rename').addEventListener('click', requireUnlock(() => triggerRename(b.id)));
   card.querySelector('.btn-reset').addEventListener('click', requireUnlock(() => resetBeet(b.id)));
   card.querySelector('.btn-delete').addEventListener('click', requireUnlock(() => deleteBeet(b.id)));
-  card.querySelector('.btn-note').addEventListener('click', requireUnlock(() => openNoteModal(b.id, b.note || '')));
+  card.querySelector('.btn-note:not(.btn-pos)').addEventListener('click', requireUnlock(() => openNoteModal(b.id, b.note || '')));
+  card.querySelector('.btn-pos').addEventListener('click', requireUnlock(() => openPosModal(b.id, b.gamePos || '')));
 
   const cardCb = card.querySelector('.card-select-cb');
   cardCb.checked = selectedIds.has(b.id);
@@ -2532,6 +2552,51 @@ document.getElementById('btnSaveNote').addEventListener('click', saveNote);
 document.getElementById('btnCancelNote').addEventListener('click', closeNoteModal);
 document.getElementById('noteModal').addEventListener('click', (e) => {
   if (e.target === document.getElementById('noteModal')) closeNoteModal();
+});
+
+// --- Positions-Modal (Spiel-Koordinaten für die Mod) ---
+let activePosEdit = null;
+
+function openPosModal(id, currentPos) {
+  activePosEdit = id;
+  document.getElementById('posInput').value = currentPos || '';
+  document.getElementById('posModal').style.display = 'flex';
+  document.getElementById('posInput').focus();
+}
+
+function closePosModal() {
+  document.getElementById('posModal').style.display = 'none';
+  activePosEdit = null;
+}
+
+async function savePos() {
+  if (!activePosEdit) return;
+  let val = document.getElementById('posInput').value.trim();
+  // Leereingabe = Position entfernen
+  if (val === '') {
+    await updateDoc(doc(db, 'beete', activePosEdit), { gamePos: '' });
+    const b = beete[activePosEdit];
+    logActivity(activePosEdit, b ? b.name : activePosEdit, 'Position entfernt');
+    closePosModal();
+    return;
+  }
+  // Format prüfen: X,Y,Z (ganze Zahlen, auch negativ)
+  const parts = val.split(',').map(s => s.trim());
+  if (parts.length !== 3 || parts.some(p => !/^-?\d+$/.test(p))) {
+    alert('Bitte im Format X,Y,Z eingeben (z.B. 63,100,-242).');
+    return;
+  }
+  const normalized = parts.map(Number).join(',');
+  await updateDoc(doc(db, 'beete', activePosEdit), { gamePos: normalized });
+  const b = beete[activePosEdit];
+  logActivity(activePosEdit, b ? b.name : activePosEdit, `Position gesetzt (${normalized})`);
+  closePosModal();
+}
+
+document.getElementById('btnSavePos').addEventListener('click', savePos);
+document.getElementById('btnCancelPos').addEventListener('click', closePosModal);
+document.getElementById('posModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('posModal')) closePosModal();
 });
 
 function openMutModal(id) {
