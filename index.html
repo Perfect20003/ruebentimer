@@ -904,9 +904,9 @@
   <div class="modal note-modal">
     <h3 style="font-size:1rem; margin-bottom:12px; color:#fff;">Spiel-Position</h3>
     <p style="font-size:0.78rem; color:var(--muted); margin-bottom:10px; line-height:1.4;">
-      Koordinate der Ecke des 2×2-Beets mit den <b>kleinsten</b> X- und Z-Werten.
-      Format: X,Y,Z (z.B. 63,100,-242). Wird von der Mod genutzt, um beim
-      Gießen/Düngen im Spiel automatisch das richtige Beet zu treffen.
+      Spiel-Bereich des Beets. Wird beim Anpflanzen per Mod automatisch gesetzt
+      (zwei diagonale Ecken anklicken). Format: minX,Y,minZ,maxX,maxZ.
+      Manuelles Bearbeiten nur nötig, wenn du den Bereich korrigieren willst.
     </p>
     <input type="text" id="posInput" placeholder="X,Y,Z" style="width:100%; padding:10px; border-radius:10px; background:#0b0e14; border:1px solid #2a2f45; color:var(--text); font-size:0.9rem; outline:none; box-sizing:border-box;">
     <div class="time-modal-btns" style="margin-top:12px;">
@@ -2580,10 +2580,10 @@ async function savePos() {
     closePosModal();
     return;
   }
-  // Format prüfen: X,Y,Z (ganze Zahlen, auch negativ)
+  // Format prüfen: entweder X,Y,Z (3) oder minX,Y,minZ,maxX,maxZ (5), ganze Zahlen
   const parts = val.split(',').map(s => s.trim());
-  if (parts.length !== 3 || parts.some(p => !/^-?\d+$/.test(p))) {
-    alert('Bitte im Format X,Y,Z eingeben (z.B. 63,100,-242).');
+  if ((parts.length !== 3 && parts.length !== 5) || parts.some(p => !/^-?\d+$/.test(p))) {
+    alert('Bitte im Format minX,Y,minZ,maxX,maxZ eingeben (oder X,Y,Z).');
     return;
   }
   const normalized = parts.map(Number).join(',');
