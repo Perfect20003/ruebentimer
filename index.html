@@ -3181,6 +3181,10 @@ async function sendStatusToDiscord() {
     return;
   }
 
+  // Thumbnail-Bilder (öffentlich erreichbare URLs)
+  const THUMB_NORMAL = 'https://strapi.cytooxien.de/uploads/turnip_4_0a6a53c88a.png';
+  const THUMB_GOLD   = 'https://strapi.cytooxien.de/uploads/turnip_4_0a6a53c88a.png';
+
   const n = now();
   const embeds = [];
 
@@ -3199,23 +3203,25 @@ async function sendStatusToDiscord() {
     const fertAt = b.fertAt || 0;
     const fertLeft = isRipe ? 0 : Math.max(0, (fertAt + FERT_INTERVAL) - n);
     const isFertActive = fertLeft > 0;
+    const mut = b.mutations || {};
 
     // Discord-Live-Zeitstempel: <t:SEKUNDEN:R> -> "in 5 Stunden", zählt selbst runter
     const ts = (msFromNow) => `<t:${Math.floor((n + msFromNow) / 1000)}:R>`;
 
-    // Statuszeile + Farbe
-    let statusStr = isRipe ? '🌟 reif' : '🌱 wächst';
-    statusStr += isRotten ? ' + 💀 verdorrt' : (isWatered ? ' + 💧 bewässert' : ' + 🟠 trocken');
-    let color = 0x4ade80;          // grün
-    if (isRotten) color = 0x7f1d1d; // dunkelrot
-    else if (isRipe) color = 0xfacc15; // gelb (reif)
-    else if (!isWatered) color = 0xf97316; // orange (trocken)
+    // Statuszeile (ohne Emojis)
+    let statusStr = isRipe ? 'Reif' : 'Wächst';
+    statusStr += isRotten ? ', verdorrt' : (isWatered ? ', bewässert' : ', trocken');
 
-    // Felder der Karte
+    // Farbstreifen je nach Zustand
+    let color = 0x4ade80;
+    if (isRotten) color = 0x7f1d1d;
+    else if (isRipe) color = 0xfacc15;
+    else if (!isWatered) color = 0xf97316;
+
     const fields = [];
     fields.push({ name: 'Status', value: statusStr, inline: false });
-    fields.push({ name: 'Reif', value: isRipe ? '✅ **REIF**' : ts(ripeLeft), inline: true });
-    fields.push({ name: 'Wasser', value: isWatered ? ('leer ' + ts(waterLeft)) : '⚠️ trocken', inline: true });
+    fields.push({ name: 'Reif', value: isRipe ? '**REIF**' : ts(ripeLeft), inline: true });
+    fields.push({ name: 'Wasser', value: isWatered ? ('leer ' + ts(waterLeft)) : 'trocken', inline: true });
     if (!isWatered && !isRotten) {
       fields.push({ name: 'Verdorrt', value: ts(rotLeft), inline: true });
     }
@@ -3223,18 +3229,22 @@ async function sendStatusToDiscord() {
       fields.push({ name: 'Dünger', value: 'endet ' + ts(fertLeft), inline: true });
     }
 
-    // Mutationen/Gold falls gesetzt
-    const mut = b.mutations || {};
     let extra = [];
-    if (mut.gold) extra.push('🏆 Gold');
+    if (mut.gold) extra.push('Gold');
     if (mut.shapeKey) extra.push('Form: ' + mut.shapeKey);
     if (extra.length) fields.push({ name: 'Mutation', value: extra.join(', '), inline: false });
 
-    embeds.push({
-      title: '🥕 ' + (b.name || 'Beet'),
+    const embed = {
+      title: b.name || 'Beet',
       color: color,
       fields: fields
-    });
+    };
+    // Thumbnail je nach Gold-Status
+    const thumb = mut.gold ? THUMB_GOLD : THUMB_NORMAL;
+    if (thumb && !thumb.startsWith('DEINE_')) {
+      embed.thumbnail = { url: thumb };
+    }
+    embeds.push(embed);
   }
 
   if (embeds.length === 0) {
@@ -3242,7 +3252,6 @@ async function sendStatusToDiscord() {
     return;
   }
 
-  // Discord erlaubt max. 10 Embeds pro Nachricht -> in Blöcke aufteilen
   try {
     for (let i = 0; i < embeds.length; i += 10) {
       const chunk = embeds.slice(i, i + 10);
@@ -3255,7 +3264,6 @@ async function sendStatusToDiscord() {
         alert('Fehler beim Senden (HTTP ' + res.status + ').');
         return;
       }
-      // kleine Pause zwischen Nachrichten gegen Rate-Limit
       if (i + 10 < embeds.length) await new Promise(r => setTimeout(r, 600));
     }
     alert(embeds.length + ' Beet-Karten an Discord gesendet!');
