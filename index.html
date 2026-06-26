@@ -2583,8 +2583,12 @@ function closePosModal() {
 async function savePos() {
   if (!activePosEdit) return;
   let val = document.getElementById('posInput').value.trim();
-  // Leereingabe = Position entfernen
+  // Leereingabe: nur auf ausdrückliche Bestätigung die Position entfernen
   if (val === '') {
+    if (!confirm('Eingabefeld ist leer. Möchtest du die gespeicherte Position wirklich entfernen?')) {
+      closePosModal();
+      return;
+    }
     await updateDoc(doc(db, 'beete', activePosEdit), { gamePos: '' });
     const b = beete[activePosEdit];
     logActivity(activePosEdit, b ? b.name : activePosEdit, 'Position entfernt');
@@ -2622,11 +2626,10 @@ async function linkInGame() {
       }
     }
     await updateDoc(doc(db, 'beete', activePosEdit), { linkRequest: true });
-    const status = document.getElementById('linkStatus');
-    status.style.display = 'block';
-    status.innerHTML = '⏳ Wartet auf 2 Ecken im Spiel... Klicke jetzt im Spiel mit Rübensamen die zwei diagonalen Ecken an. Das Fenster kannst du schließen.';
-    status.style.color = '#4ade80';
-    if (b) logActivity(activePosEdit, b.name, 'Im-Spiel-Verknüpfung gestartet');
+    const b2 = beete[activePosEdit];
+    if (b2) logActivity(activePosEdit, b2.name, 'Im-Spiel-Verknüpfung gestartet');
+    alert('Verknüpfung gestartet! Klicke jetzt im Spiel mit Rübensamen die zwei diagonalen Ecken an.');
+    closePosModal();
   } catch (e) {
     alert('Fehler: ' + e.message);
   }
