@@ -909,6 +909,8 @@
       Manuelles Bearbeiten nur nötig, wenn du den Bereich korrigieren willst.
     </p>
     <input type="text" id="posInput" placeholder="X,Y,Z" style="width:100%; padding:10px; border-radius:10px; background:#0b0e14; border:1px solid #2a2f45; color:var(--text); font-size:0.9rem; outline:none; box-sizing:border-box;">
+    <button class="btn-apply" id="btnLinkInGame" style="width:100%; margin-top:10px; background:#1f6f3f;">🎮 Im Spiel verknüpfen (2 Ecken anklicken)</button>
+    <p id="linkStatus" style="font-size:0.72rem; color:var(--muted); margin-top:8px; display:none;"></p>
     <div class="time-modal-btns" style="margin-top:12px;">
       <button class="btn-cancel-time" id="btnCancelPos">Abbrechen</button>
       <button class="btn-apply" id="btnSavePos">Speichern</button>
@@ -1037,6 +1039,15 @@
           <button class="btn-clear-history" id="btnExport">Backup herunterladen</button>
           <button class="btn-clear-history" id="btnImport">Backup wiederherstellen</button>
         </div>
+      </div>
+
+      <div style="margin-top:16px; padding-top:16px; border-top:1px solid #2a2f45;">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+          <h3 style="margin:0; font-size:0.95rem;">Discord-Status</h3>
+          <button class="btn-clear-history" id="btnSendDiscord">Status an Discord senden</button>
+        </div>
+        <input type="text" id="discordWebhook" placeholder="Discord Webhook-URL hier einfügen" style="width:100%; padding:8px; border-radius:8px; background:#0b0e14; border:1px solid #2a2f45; color:var(--text); font-size:0.8rem; outline:none; box-sizing:border-box;">
+        <p style="font-size:0.7rem; color:var(--muted); margin-top:6px;">Die URL wird nur lokal in deinem Browser gespeichert. Discord-Kanal → Einstellungen → Integrationen → Webhooks.</p>
       </div>
 
       <div style="margin-top:16px; padding-top:16px; border-top:1px solid #2a2f45;">
@@ -2599,6 +2610,29 @@ document.getElementById('posModal').addEventListener('click', (e) => {
   if (e.target === document.getElementById('posModal')) closePosModal();
 });
 
+// "Im Spiel verknüpfen": setzt linkRequest=true, die Mod fragt das ab
+async function linkInGame() {
+  if (!activePosEdit) return;
+  const b = beete[activePosEdit];
+  try {
+    // alle anderen linkRequests zurücksetzen (immer nur eins gleichzeitig)
+    for (const id in beete) {
+      if (beete[id].linkRequest) {
+        await updateDoc(doc(db, 'beete', id), { linkRequest: false });
+      }
+    }
+    await updateDoc(doc(db, 'beete', activePosEdit), { linkRequest: true });
+    const status = document.getElementById('linkStatus');
+    status.style.display = 'block';
+    status.innerHTML = '⏳ Wartet auf 2 Ecken im Spiel... Klicke jetzt im Spiel mit Rübensamen die zwei diagonalen Ecken an. Das Fenster kannst du schließen.';
+    status.style.color = '#4ade80';
+    if (b) logActivity(activePosEdit, b.name, 'Im-Spiel-Verknüpfung gestartet');
+  } catch (e) {
+    alert('Fehler: ' + e.message);
+  }
+}
+document.getElementById('btnLinkInGame').addEventListener('click', requireUnlock(linkInGame));
+
 function openMutModal(id) {
   activeMutId = id;
   const b = beete[id];
@@ -3123,6 +3157,86 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
   const dateStr2 = new Date().toISOString().slice(0, 10);
   pdf.save(`marktpreis-verlauf-${dateStr2}.pdf`);
 });
+
+// --- Discord-Status senden ---
+// Webhook-URL lokal speichern/laden
+(function initDiscord() {
+  const input = document.getElementById('discordWebhook');
+  if (!input) return;
+  try {
+    const saved = localStorage.getItem('ruebe_discord_webhook');
+    if (saved) input.value = saved;
+  } catch (e) {}
+  input.addEventListener('change', () => {
+    try { localStorage.setItem('ruebe_discord_webhook', input.value.trim()); } catch (e) {}
+  });
+})();
+
+// Baut die Status-Tafel und schickt sie an den Discord-Webhook
+async function sendStatusToDiscord() {
+  const input = document.getElementById('discordWebhook');
+  const url = input ? input.value.trim() : '';
+  if (!url || !url.startsWith('https://discord.com/api/webhooks/')) {
+    alert('Bitte zuerst eine gültige Discord Webhook-URL eintragen.');
+    return;
+  }
+
+  const n = now();
+  const ripe = [], dry = [], rotten = [], soon = [], ok = [];
+
+  for (const id in beete) {
+    const b = beete[id];
+    const planted = b.plantedAt || n;
+    const waterDuration = b.waterDuration || WATER_INTERVAL;
+    const waterUntil = (typeof b.waterUntil === 'number') ? b.waterUntil : (b.wateredAt || planted) + WATER_INTERVAL;
+    const waterLeft = Math.max(0, waterUntil - n);
+    const isWatered = waterLeft > 0;
+    const dryElapsed = isWatered ? 0 : Math.max(0, n - waterUntil);
+    const ripeLeft = Math.max(0, (planted + dryElapsed + GROW_INTERVAL) - n);
+    const isRipe = ripeLeft <= 0;
+    let rotLeft = ROT_INTERVAL, isRotten = false;
+    if (!isWatered) { rotLeft = Math.max(0, (waterUntil + ROT_INTERVAL) - n); if (rotLeft <= 0) isRotten = true; }
+
+    const name = b.name || 'Beet';
+    if (isRipe) ripe.push(`🌟 **${name}** – reif zum Ernten!`);
+    else if (isRotten) rotten.push(`💀 **${name}** – VERDORRT`);
+    else if (!isWatered) dry.push(`🟠 **${name}** – trocken, verdorrt in ${fmtTime(rotLeft)}`);
+    else if (waterLeft <= 60 * 60 * 1000) soon.push(`💧 **${name}** – Wasser leer in ${fmtTime(waterLeft)}`);
+    else ok.push(`✅ ${name} – ok (reif in ${fmtTime(ripeLeft)})`);
+  }
+
+  let desc = '';
+  if (ripe.length)   desc += ripe.join('\n') + '\n';
+  if (rotten.length) desc += rotten.join('\n') + '\n';
+  if (dry.length)    desc += dry.join('\n') + '\n';
+  if (soon.length)   desc += soon.join('\n') + '\n';
+  if (ok.length)     desc += '\n' + ok.join('\n');
+  if (!desc) desc = 'Keine Beete vorhanden.';
+
+  const embed = {
+    title: '🥕 Rübentimer – Beet-Status',
+    description: desc.slice(0, 4000),
+    color: 0x4ade80,
+    footer: { text: 'Stand' },
+    timestamp: new Date().toISOString()
+  };
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ embeds: [embed] })
+    });
+    if (res.ok) {
+      alert('Status an Discord gesendet!');
+    } else {
+      alert('Fehler beim Senden (HTTP ' + res.status + ').');
+    }
+  } catch (e) {
+    alert('Fehler: ' + e.message);
+  }
+}
+document.getElementById('btnSendDiscord').addEventListener('click', sendStatusToDiscord);
 
 document.getElementById('btnExport').addEventListener('click', async () => {
   try {
