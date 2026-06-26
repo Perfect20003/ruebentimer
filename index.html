@@ -3172,7 +3172,7 @@ document.getElementById('btnExportPdf').addEventListener('click', async () => {
   });
 })();
 
-// Baut die Status-Tafel und schickt sie an den Discord-Webhook
+// Baut pro Beet eine Karte (Embed) mit Live-Timern und schickt sie an Discord
 async function sendStatusToDiscord() {
   const input = document.getElementById('discordWebhook');
   const url = input ? input.value.trim() : '';
@@ -3182,7 +3182,7 @@ async function sendStatusToDiscord() {
   }
 
   const n = now();
-  const ripe = [], dry = [], rotten = [], soon = [], ok = [];
+  const embeds = [];
 
   for (const id in beete) {
     const b = beete[id];
@@ -3196,42 +3196,69 @@ async function sendStatusToDiscord() {
     const isRipe = ripeLeft <= 0;
     let rotLeft = ROT_INTERVAL, isRotten = false;
     if (!isWatered) { rotLeft = Math.max(0, (waterUntil + ROT_INTERVAL) - n); if (rotLeft <= 0) isRotten = true; }
+    const fertAt = b.fertAt || 0;
+    const fertLeft = isRipe ? 0 : Math.max(0, (fertAt + FERT_INTERVAL) - n);
+    const isFertActive = fertLeft > 0;
 
-    const name = b.name || 'Beet';
-    if (isRipe) ripe.push(`🌟 **${name}** – reif zum Ernten!`);
-    else if (isRotten) rotten.push(`💀 **${name}** – VERDORRT`);
-    else if (!isWatered) dry.push(`🟠 **${name}** – trocken, verdorrt in ${fmtTime(rotLeft)}`);
-    else if (waterLeft <= 60 * 60 * 1000) soon.push(`💧 **${name}** – Wasser leer in ${fmtTime(waterLeft)}`);
-    else ok.push(`✅ ${name} – ok (reif in ${fmtTime(ripeLeft)})`);
+    // Discord-Live-Zeitstempel: <t:SEKUNDEN:R> -> "in 5 Stunden", zählt selbst runter
+    const ts = (msFromNow) => `<t:${Math.floor((n + msFromNow) / 1000)}:R>`;
+
+    // Statuszeile + Farbe
+    let statusStr = isRipe ? '🌟 reif' : '🌱 wächst';
+    statusStr += isRotten ? ' + 💀 verdorrt' : (isWatered ? ' + 💧 bewässert' : ' + 🟠 trocken');
+    let color = 0x4ade80;          // grün
+    if (isRotten) color = 0x7f1d1d; // dunkelrot
+    else if (isRipe) color = 0xfacc15; // gelb (reif)
+    else if (!isWatered) color = 0xf97316; // orange (trocken)
+
+    // Felder der Karte
+    const fields = [];
+    fields.push({ name: 'Status', value: statusStr, inline: false });
+    fields.push({ name: 'Reif', value: isRipe ? '✅ **REIF**' : ts(ripeLeft), inline: true });
+    fields.push({ name: 'Wasser', value: isWatered ? ('leer ' + ts(waterLeft)) : '⚠️ trocken', inline: true });
+    if (!isWatered && !isRotten) {
+      fields.push({ name: 'Verdorrt', value: ts(rotLeft), inline: true });
+    }
+    if (isFertActive) {
+      fields.push({ name: 'Dünger', value: 'endet ' + ts(fertLeft), inline: true });
+    }
+
+    // Mutationen/Gold falls gesetzt
+    const mut = b.mutations || {};
+    let extra = [];
+    if (mut.gold) extra.push('🏆 Gold');
+    if (mut.shapeKey) extra.push('Form: ' + mut.shapeKey);
+    if (extra.length) fields.push({ name: 'Mutation', value: extra.join(', '), inline: false });
+
+    embeds.push({
+      title: '🥕 ' + (b.name || 'Beet'),
+      color: color,
+      fields: fields
+    });
   }
 
-  let desc = '';
-  if (ripe.length)   desc += ripe.join('\n') + '\n';
-  if (rotten.length) desc += rotten.join('\n') + '\n';
-  if (dry.length)    desc += dry.join('\n') + '\n';
-  if (soon.length)   desc += soon.join('\n') + '\n';
-  if (ok.length)     desc += '\n' + ok.join('\n');
-  if (!desc) desc = 'Keine Beete vorhanden.';
+  if (embeds.length === 0) {
+    alert('Keine Beete vorhanden.');
+    return;
+  }
 
-  const embed = {
-    title: '🥕 Rübentimer – Beet-Status',
-    description: desc.slice(0, 4000),
-    color: 0x4ade80,
-    footer: { text: 'Stand' },
-    timestamp: new Date().toISOString()
-  };
-
+  // Discord erlaubt max. 10 Embeds pro Nachricht -> in Blöcke aufteilen
   try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ embeds: [embed] })
-    });
-    if (res.ok) {
-      alert('Status an Discord gesendet!');
-    } else {
-      alert('Fehler beim Senden (HTTP ' + res.status + ').');
+    for (let i = 0; i < embeds.length; i += 10) {
+      const chunk = embeds.slice(i, i + 10);
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ embeds: chunk })
+      });
+      if (!res.ok) {
+        alert('Fehler beim Senden (HTTP ' + res.status + ').');
+        return;
+      }
+      // kleine Pause zwischen Nachrichten gegen Rate-Limit
+      if (i + 10 < embeds.length) await new Promise(r => setTimeout(r, 600));
     }
+    alert(embeds.length + ' Beet-Karten an Discord gesendet!');
   } catch (e) {
     alert('Fehler: ' + e.message);
   }
