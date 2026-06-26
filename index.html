@@ -2628,10 +2628,21 @@ async function linkInGame() {
     await updateDoc(doc(db, 'beete', activePosEdit), { linkRequest: true });
     const b2 = beete[activePosEdit];
     if (b2) logActivity(activePosEdit, b2.name, 'Im-Spiel-Verknüpfung gestartet');
-    alert('Verknüpfung gestartet! Klicke jetzt im Spiel mit Rübensamen die zwei diagonalen Ecken an.');
-    closePosModal();
+    // dezente Statusmeldung im Modal statt störendem Popup
+    const status = document.getElementById('linkStatus');
+    if (status) {
+      status.style.display = 'block';
+      status.style.color = '#4ade80';
+      status.textContent = '✓ Im Spiel mit B die zwei diagonalen Ecken anklicken.';
+    }
+    setTimeout(() => { closePosModal(); }, 1500);
   } catch (e) {
-    alert('Fehler: ' + e.message);
+    const status = document.getElementById('linkStatus');
+    if (status) {
+      status.style.display = 'block';
+      status.style.color = '#f87171';
+      status.textContent = 'Fehler: ' + e.message;
+    }
   }
 }
 document.getElementById('btnLinkInGame').addEventListener('click', requireUnlock(linkInGame));
