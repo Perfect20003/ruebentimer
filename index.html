@@ -997,6 +997,11 @@
           <button class="btn-cancel-time" id="btnCloseActivityLog">Schließen</button>
         </div>
       </div>
+      <div style="margin-bottom:10px;">
+        <select id="activityPlayerFilter" style="width:100%;padding:8px;border-radius:8px;background:#0b0e14;border:1px solid #2a2f45;color:var(--text);font-size:0.82rem;outline:none;">
+          <option value="">Alle Spieler</option>
+        </select>
+      </div>
       <ul class="visit-log-list" id="activityLogList">
         <li style="color:var(--muted);font-size:0.78rem;padding:5px 8px;">Lade…</li>
       </ul>
@@ -2898,24 +2903,49 @@ let visitLogUnsubscribe = null;
 const activityLogQuery = query(activityLogRef, orderBy('timestamp', 'desc'), limit(200));
 let activityLogUnsubscribe = null;
 
+let activityLogDocs = []; // zwischengespeicherte Einträge für den Filter
+
 function openActivityLog() {
   document.getElementById('activityLogOverlay').style.display = 'flex';
   activityLogUnsubscribe = onSnapshot(activityLogQuery, (snap) => {
-    const list = document.getElementById('activityLogList');
-    if (!list) return;
-    if (snap.empty) {
-      list.innerHTML = '<li style="color:var(--muted);font-size:0.78rem;padding:5px 8px;">Noch keine Aktivität erfasst.</li>';
-      return;
-    }
-    const total = snap.size;
-    list.innerHTML = snap.docs.map((d, i) => {
-      const { timestamp: ts, beetName = '?', action = '?' } = d.data();
-      const dt = new Date(ts);
-      const dateStr = dt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      const timeStr = dt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-      return `<li><span class="log-num">#${total - i}</span><span class="log-date">${dateStr} ${timeStr} Uhr</span><span class="log-beetname" title="${beetName}">${beetName}</span><span class="log-action" title="${action}">${action}</span></li>`;
-    }).join('');
+    activityLogDocs = snap.docs.map(d => d.data());
+    updatePlayerFilterOptions();
+    renderActivityList();
   });
+}
+
+// Befüllt das Spieler-Dropdown mit allen vorkommenden Namen (Auswahl bleibt erhalten)
+function updatePlayerFilterOptions() {
+  const sel = document.getElementById('activityPlayerFilter');
+  if (!sel) return;
+  const current = sel.value;
+  const players = [...new Set(activityLogDocs.map(d => d.player).filter(p => p && p !== '?'))].sort();
+  sel.innerHTML = '<option value="">Alle Spieler</option>' +
+    players.map(p => `<option value="${p}">${p}</option>`).join('');
+  // vorherige Auswahl wiederherstellen, falls noch vorhanden
+  if (current && players.includes(current)) sel.value = current;
+}
+
+// Zeigt die Liste, gefiltert nach gewähltem Spieler
+function renderActivityList() {
+  const list = document.getElementById('activityLogList');
+  if (!list) return;
+  const filter = document.getElementById('activityPlayerFilter')?.value || '';
+  const docs = filter ? activityLogDocs.filter(d => d.player === filter) : activityLogDocs;
+
+  if (docs.length === 0) {
+    list.innerHTML = '<li style="color:var(--muted);font-size:0.78rem;padding:5px 8px;">Keine Aktivität' + (filter ? ' von ' + filter : '') + '.</li>';
+    return;
+  }
+  const total = docs.length;
+  list.innerHTML = docs.map((d, i) => {
+    const { timestamp: ts, beetName = '?', action = '?', player = '' } = d;
+    const dt = new Date(ts);
+    const dateStr = dt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const timeStr = dt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    const actionText = player ? `${action} · ${player}` : action;
+    return `<li><span class="log-num">#${total - i}</span><span class="log-date">${dateStr} ${timeStr} Uhr</span><span class="log-beetname" title="${beetName}">${beetName}</span><span class="log-action" title="${actionText}">${actionText}</span></li>`;
+  }).join('');
 }
 
 function closeActivityLogOverlay() {
@@ -2958,6 +2988,7 @@ document.getElementById('activityLogPasswordInput').addEventListener('keydown', 
   if (e.key === 'Enter') tryActivityLogLogin();
 });
 document.getElementById('btnCloseActivityLog').addEventListener('click', closeActivityLogOverlay);
+document.getElementById('activityPlayerFilter').addEventListener('change', renderActivityList);
 document.getElementById('activityLogOverlay').addEventListener('click', (e) => {
   if (e.target === document.getElementById('activityLogOverlay')) closeActivityLogOverlay();
 });
