@@ -1445,8 +1445,17 @@ function renderCard(b) {
   setWidth('ripeBar', ripePct);
   setText('waterText', isWatered ? fmtTime(waterLeft) : '0s');
   setWidth('waterBar', waterPct);
+  // Farbe des Wasser-Timers mit-aktualisieren (blau wenn bewässert, rot wenn leer)
+  const waterEl = card.querySelector('[data-f="waterText"]');
+  if (waterEl) {
+    waterEl.classList.toggle('active-timer', isWatered);
+    waterEl.classList.toggle('warning', !isWatered);
+  }
   setText('rotText', isWatered ? 'pausiert' : (isRotten ? 'VERDORRT' : fmtTime(rotLeft)));
   setWidth('rotBar', rotPct);
+  // Farbe des Verdorr-Timers mit-aktualisieren (rot wenn verdorrt)
+  const rotEl = card.querySelector('[data-f="rotText"]');
+  if (rotEl) rotEl.classList.toggle('warning', isRotten);
   setText('fertText', isFertActive ? fmtTime(fertLeft) : 'inaktiv');
   setWidth('fertBar', fertPct);
   setHtml('priceText', isRipe ? Math.round(calculatedPrice).toLocaleString('de-DE') + ' <img src="' + ICON_COIN + '" class="coin-icon" alt="🪙">' : 'Noch nicht reif');
