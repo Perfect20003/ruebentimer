@@ -1348,7 +1348,12 @@ function renderCard(b) {
       <div class="card-left-cell">
         <div class="turnip-img-box btn-trigger-mut">
           ${multiBadgeHtml}
-          <img src="${ICON_TURNIP}" class="turnip-icon" alt="Rübe">
+          <img 
+              src="${getBeetImageUrl(b)}" 
+              class="turnip-icon" 
+              alt="Rübe"
+              onerror="this.src='./rueben-bilder/normal.png';"
+          >
           ${mut.gold ? '<span class="gold-crown" title="Goldene Rübe"></span>' : ''}
         </div>
       </div>
@@ -3492,6 +3497,30 @@ onSnapshot(metaRef, (snap) => {
     label = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
   }
   el.textContent = label;
+
+ // ==================== RÜBEN BILDER FÜR KARTEN ====================
+function getBeetImageUrl(beet) {
+    if (!beet) return './rueben-bilder/normal.png';
+
+    const mut = beet.mutations || {};
+    const isGold = mut.gold === true;
+    let type = (beet.type || beet.mutationType || 'normal').toLowerCase().trim();
+
+    const imageMap = {
+        'normal': 'normal.png',
+        'stachelig': 'stachelig.png',
+        'quadratisch': 'quadratisch.png',
+        'explosiv': 'explosiv.png',
+        'lebendig': 'lebendig.png'
+    };
+
+    let filename = imageMap[type] || 'normal.png';
+
+    if (isGold) {
+        filename = filename.replace('.png', '_gold.png');
+    }
+
+    return './rueben-bilder/' + filename;
 });
 </script>
 </body>
