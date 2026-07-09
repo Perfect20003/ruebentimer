@@ -220,6 +220,8 @@
     white-space: nowrap;
     text-align: center;
   }
+  #activityLogList .log-auto-row .log-action { color: #38bdf8; }
+  #activityLogList .log-auto-row .log-beetname { color: #7dd3fc; }
   #activityLogList .log-action {
     color: var(--muted);
     overflow: hidden;
@@ -3026,12 +3028,15 @@ function renderActivityList() {
   }
   const total = docs.length;
   list.innerHTML = docs.map((d, i) => {
-    const { timestamp: ts, beetName = '?', action = '?', player = '' } = d;
+    const { timestamp: ts, beetName = '?', action = '?', player = '', auto = false } = d;
     const dt = new Date(ts);
     const dateStr = dt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const timeStr = dt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-    const actionText = player ? `${action} · ${player}` : action;
-    return `<li><span class="log-num">#${total - i}</span><span class="log-date">${dateStr} ${timeStr} Uhr</span><span class="log-beetname" title="${beetName}">${beetName}</span><span class="log-action" title="${actionText}">${actionText}</span></li>`;
+    const who = player ? `${action} · ${player}` : action;
+    // Automatische Änderungen der Mod (nach erkannter Mutation) mit 🤖 markieren
+    const actionText = auto ? `🤖 ${who}` : who;
+    const tip = auto ? `Automatisch durch die Mod: ${who}` : who;
+    return `<li${auto ? ' class="log-auto-row"' : ''}><span class="log-num">#${total - i}</span><span class="log-date">${dateStr} ${timeStr} Uhr</span><span class="log-beetname" title="${beetName}">${beetName}</span><span class="log-action" title="${tip}">${actionText}</span></li>`;
   }).join('');
 }
 
