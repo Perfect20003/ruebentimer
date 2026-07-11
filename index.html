@@ -2273,9 +2273,24 @@ function renderPriceChart(entriesAsc) {
 
   const wrap = svg.closest('.chart-wrap');
   svg.querySelectorAll('.chart-point').forEach(circle => {
-    const p = points[parseInt(circle.dataset.index, 10)];
+    const idx = parseInt(circle.dataset.index, 10);
+    const p = points[idx];
     const fullDateStr = new Date(p.e.timestamp).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
     const priceStr = Math.round(p.e.price).toLocaleString('de-DE');
+
+    // Veränderung zum vorherigen Eintrag in % (grün = gestiegen, rot = gefallen)
+    let changeHtml = '';
+    const prev = idx > 0 ? points[idx - 1] : null;
+    if (prev && prev.e.price > 0) {
+      const pct = (p.e.price - prev.e.price) / prev.e.price * 100;
+      const rounded = Math.round(pct * 10) / 10;
+      const color = rounded > 0 ? '#22c55e' : (rounded < 0 ? '#ef4444' : 'var(--muted)');
+      const arrow = rounded > 0 ? '▲' : (rounded < 0 ? '▼' : '±');
+      const sign = rounded > 0 ? '+' : '';
+      changeHtml = `<span style="color:${color}; font-weight:700;">${arrow} ${sign}${rounded.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</span>`;
+    } else {
+      changeHtml = `<span style="color:var(--muted);">Erster Eintrag</span>`;
+    }
 
     const positionTooltip = (evt) => {
       const rect = wrap.getBoundingClientRect();
@@ -2284,7 +2299,7 @@ function renderPriceChart(entriesAsc) {
     };
 
     circle.addEventListener('mouseenter', (evt) => {
-      tooltip.innerHTML = `<span>${fullDateStr}</span><span class="tooltip-price">${priceStr} <img src="${ICON_COIN}" class="coin-icon" alt=""></span>`;
+      tooltip.innerHTML = `<span>${fullDateStr}</span><span class="tooltip-price">${priceStr} <img src="${ICON_COIN}" class="coin-icon" alt=""></span>${changeHtml}`;
       tooltip.style.display = 'flex';
       circle.setAttribute('r', '5.5');
       positionTooltip(evt);
