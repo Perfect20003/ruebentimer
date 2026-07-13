@@ -844,6 +844,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
       </button>
       <div class="custom-select-options" id="listSortOptions">
+        <div class="custom-select-option" data-value="manual">Reihenfolge: Manuell</div>
         <div class="custom-select-option selected" data-value="rot">Sortieren: Verdorrung</div>
         <div class="custom-select-option" data-value="ripe">Sortieren: Bis reif</div>
         <div class="custom-select-option" data-value="water">Sortieren: Wasser</div>
@@ -1753,7 +1754,7 @@ function applyView() {
     listContainer.style.display = 'none';
     btnCards.classList.add('active');
     btnList.classList.remove('active');
-    sortCustom.style.display = 'none';
+    sortCustom.style.display = ''; // Sortierung jetzt auch in der Karten-Ansicht
   }
 }
 
@@ -1827,24 +1828,43 @@ function renderAll() {
   });
   updateBulkBar();
 
-  // Gespeicherte Reihenfolge nutzen, neue Beete ans Ende
-  const orderedIds = [
-    ...beetOrder.filter(id => beete[id]),
-    ...ids.filter(id => !beetOrder.includes(id)).sort((a, b) =>
-      (beete[a].name || '').localeCompare(beete[b].name || '', 'de', { numeric: true, sensitivity: 'base' })
-    )
-  ];
+  // Beide Ansichten nach der gleichen Sortierung ordnen
+  // ("manual" = gespeicherte Drag&Drop-Reihenfolge der Karten).
+  const orderedIds = getOrderedIds();
 
   orderedIds.forEach(id => renderCard(beete[id]));
+  reorderGridDom(orderedIds);
 
-  // Listen-Ansicht: nach gewähltem Kriterium sortiert
-  const listSortedIds = [...ids].sort((a, b) => getSortValue(beete[a], currentSort) - getSortValue(beete[b], currentSort));
-  listSortedIds.forEach(id => renderListRow(beete[id]));
-  reorderListDom(listSortedIds);
+  orderedIds.forEach(id => renderListRow(beete[id]));
+  reorderListDom(orderedIds);
 
   document.getElementById('emptyState').style.display = ids.length ? 'none' : 'block';
   renderTotalValue();
   renderTotalValueTest();
+}
+
+// Liefert die Beet-IDs in der aktuell gewählten Sortier-Reihenfolge (für Karten UND Liste).
+// "manual" = gespeicherte Drag&Drop-Reihenfolge (neue Beete alphabetisch ans Ende).
+function getOrderedIds() {
+  const ids = Object.keys(beete);
+  const nameCmp = (a, b) =>
+    (beete[a].name || '').localeCompare(beete[b].name || '', 'de', { numeric: true, sensitivity: 'base' });
+  if (currentSort === 'manual') {
+    return [
+      ...beetOrder.filter(id => beete[id]),
+      ...ids.filter(id => !beetOrder.includes(id)).sort(nameCmp)
+    ];
+  }
+  if (currentSort === 'name') return [...ids].sort(nameCmp);
+  return [...ids].sort((a, b) => getSortValue(beete[a], currentSort) - getSortValue(beete[b], currentSort));
+}
+
+// Bringt die Karten-Reihenfolge im Grid in die gewünschte Sortierung
+function reorderGridDom(sortedIds) {
+  sortedIds.forEach(id => {
+    const card = document.getElementById('card-' + id);
+    if (card) grid.appendChild(card);
+  });
 }
 
 // Gibt einen Sortier-Wert zurück: je kleiner, desto weiter oben in der Liste
@@ -1908,15 +1928,10 @@ function getSortValue(b, sortKey) {
 }
 
 // Bringt die DOM-Reihenfolge der Listenzeilen in die gewünschte Sortierung
+// (Reihenfolge kommt bereits fertig aus getOrderedIds()).
 function reorderListDom(sortedIds) {
   const listContainer = document.getElementById('listContainer');
-  let ids = sortedIds;
-  if (currentSort === 'name') {
-    ids = [...sortedIds].sort((a, b) =>
-      (beete[a].name || '').localeCompare(beete[b].name || '', 'de', { numeric: true, sensitivity: 'base' })
-    );
-  }
-  ids.forEach(id => {
+  sortedIds.forEach(id => {
     const row = document.getElementById('row-' + id);
     if (row) listContainer.appendChild(row);
   });
@@ -2326,10 +2341,11 @@ setInterval(() => {
     const rowEl = document.getElementById('row-' + b.id);
     if (rowEl) renderListRow(b);
   });
-  if (currentView === 'list') {
-    const ids = Object.keys(beete);
-    const listSortedIds = [...ids].sort((a, b) => getSortValue(beete[a], currentSort) - getSortValue(beete[b], currentSort));
-    reorderListDom(listSortedIds);
+  // Aktive Ansicht live nachsortieren (bei "Manuell" nicht, damit die Drag-Reihenfolge bleibt)
+  if (currentSort !== 'manual') {
+    const orderedIds = getOrderedIds();
+    if (currentView === 'list') reorderListDom(orderedIds);
+    else reorderGridDom(orderedIds);
   }
 }, 1000);
 
