@@ -2761,7 +2761,14 @@ document.querySelectorAll('.history-panel').forEach(panel => {
   if (localStorage.getItem(key) === '1') panel.classList.add('collapsed');
   h2.addEventListener('click', () => {
     panel.classList.toggle('collapsed');
-    localStorage.setItem(key, panel.classList.contains('collapsed') ? '1' : '0');
+    const collapsed = panel.classList.contains('collapsed');
+    localStorage.setItem(key, collapsed ? '1' : '0');
+    // Charts messen ihre Breite beim Rendern - eingeklappt (display:none) ist sie 0 und der
+    // Graph wird verzerrt. Deshalb beim Ausklappen neu zeichnen (jetzt korrekte Breite).
+    if (!collapsed) {
+      if (panel.id === 'panelMarkt') renderPriceChart(getFilteredEntries());
+      else if (panel.id === 'panelWeather') renderWeatherAll();
+    }
   });
 });
 
