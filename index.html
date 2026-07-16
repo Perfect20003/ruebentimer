@@ -717,6 +717,22 @@
     color: var(--muted); font-size: 0.82rem;
   }
 
+  /* Tages-Übersicht Gewitter & Mutationen */
+  .weather-days { position: absolute; inset: 0; overflow-y: auto; padding-right: 6px; }
+  .weather-days::-webkit-scrollbar { width: 6px; }
+  .weather-days::-webkit-scrollbar-track { background: #0b0e14; border-radius: 3px; }
+  .weather-days::-webkit-scrollbar-thumb { background: #fff; border-radius: 3px; }
+  .wday { padding: 8px 2px; border-bottom: 1px solid var(--border); }
+  .wday:last-child { border-bottom: none; }
+  .wday-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 0.85rem; }
+  .wday-date { font-weight: 700; color: #fff; white-space: nowrap; }
+  .wday-counts { font-weight: 600; white-space: nowrap; }
+  .wday-counts span { margin-left: 5px; }
+  .wday-dots { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
+  .wdot { width: 13px; height: 13px; border-radius: 3px; cursor: default; transition: transform 0.1s; }
+  .wdot:hover { transform: scale(1.35); }
+  .wextra { color: var(--muted); font-size: 0.78rem; margin-left: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 45%; }
+
   .chart-tooltip {
     position: absolute;
     display: none;
@@ -847,7 +863,7 @@
     </div>
     <div class="history-body">
       <div class="chart-wrap">
-        <svg id="weatherChart" viewBox="0 0 600 160"></svg>
+        <div id="weatherDays" class="weather-days"></div>
         <div class="chart-empty" id="weatherEmpty">Noch keine Ereignisse erfasst.</div>
         <div class="chart-empty" id="weatherAvgBox" style="display:none; flex-direction:column; text-align:left; align-items:flex-start; justify-content:center; padding:14px 18px; line-height:1.6; font-size:0.9rem; color:var(--text);"></div>
       </div>
@@ -2571,6 +2587,29 @@ function updateWeatherLast() {
     + ` &nbsp;·&nbsp; <span style="color:${WEATHER_META.mutation.color}">Mutation: ${m}</span>`;
 }
 
+function weatherEsc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Länge eines Gewitters (ms) als kurze Angabe.
+function fmtLen(ms) {
+  const s = Math.round(ms / 1000);
+  if (s < 60) return `${s} s`;
+  const m = Math.floor(s / 60), rs = s % 60;
+  if (m < 60) return rs ? `${m} min ${rs} s` : `${m} min`;
+  const h = Math.floor(m / 60), rm = m % 60;
+  return rm ? `${h} h ${rm} min` : `${h} h`;
+}
+
+// Voll-Text eines Ereignisses (Hover): Mutation = wann + Rübe, Gewitter = wann + Dauer.
+function weatherDetail(e) {
+  const t = new Date(e.timestamp).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
+  if (e.type === 'gewitter') {
+    return `Gewitter · ${t}` + (e.duration != null ? ` · Dauer ${fmtLen(Number(e.duration))}` : '');
+  }
+  return `Mutation · ${t}` + (e.ruebe ? ` · ${e.ruebe}` : '');
+}
+
 function renderWeatherList() {
   const list = document.getElementById('weatherList');
   const entries = weatherFiltered();
@@ -2581,8 +2620,12 @@ function renderWeatherList() {
   list.innerHTML = entries.map(e => {
     const meta = WEATHER_META[e.type] || { label: e.type, color: '#94a3b8' };
     const dateStr = new Date(e.timestamp).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
-    return `<li>
+    const extra = e.type === 'gewitter'
+      ? (e.duration != null ? `<span class="wextra">${fmtLen(Number(e.duration))}</span>` : '')
+      : (e.ruebe ? `<span class="wextra">${weatherEsc(e.ruebe)}</span>` : '');
+    return `<li title="${weatherEsc(weatherDetail(e))}">
       <span class="history-price" style="color:${meta.color}">${meta.label}</span>
+      ${extra}
       <span class="history-date">${dateStr}</span>
       <button class="history-delete-btn" data-id="${e._docId}" title="Eintrag löschen">✕</button>
     </li>`;
@@ -2597,79 +2640,55 @@ function renderWeatherList() {
   });
 }
 
-// Balkendiagramm: Ereignisse pro Tag (Gewitter + Mutation nebeneinander)
-function renderWeatherChart() {
-  const svg = document.getElementById('weatherChart');
+// Tages-Übersicht: pro Tag Anzahl Gewitter & Mutationen + ein Punkt je Ereignis (Hover = Details).
+function renderWeatherDays() {
+  const cont = document.getElementById('weatherDays');
   const empty = document.getElementById('weatherEmpty');
   const avgBox = document.getElementById('weatherAvgBox');
 
-  if (weatherAvgMode) { svg.innerHTML = ''; empty.style.display = 'none'; return; }
+  if (weatherAvgMode) { cont.innerHTML = ''; empty.style.display = 'none'; return; }
   avgBox.style.display = 'none';
 
   const entries = weatherFiltered();
   if (!entries.length) {
-    svg.innerHTML = '';
+    cont.innerHTML = '';
     empty.textContent = 'Noch keine Ereignisse erfasst.';
     empty.style.display = 'flex';
     return;
   }
   empty.style.display = 'none';
 
-  // Nach Tag bucketen
+  // Nach Tag gruppieren
   const dayKey = ts => { const d = new Date(ts); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; };
-  const buckets = new Map(); // key -> {ts, g, m}
+  const map = new Map();
   for (const e of entries) {
     const k = dayKey(e.timestamp);
-    if (!buckets.has(k)) {
-      const d = new Date(e.timestamp); d.setHours(0, 0, 0, 0);
-      buckets.set(k, { ts: d.getTime(), g: 0, m: 0 });
-    }
-    const b = buckets.get(k);
-    if (e.type === 'mutation') b.m++; else b.g++;
+    if (!map.has(k)) { const d = new Date(e.timestamp); d.setHours(0, 0, 0, 0); map.set(k, { ts: d.getTime(), events: [] }); }
+    map.get(k).events.push(e);
   }
-  const days = [...buckets.values()].sort((a, b) => a.ts - b.ts);
-  const maxCount = Math.max(1, ...days.map(d => Math.max(d.g, d.m)));
+  const days = [...map.values()].sort((a, b) => b.ts - a.ts); // neueste Tage oben
 
-  const H = 220, W = 900, PAD_TOP = 14, PAD_BOTTOM = 28, PAD_RIGHT = 12, PAD_LEFT = 40;
-  const plotW = W - PAD_LEFT - PAD_RIGHT, plotH = H - PAD_TOP - PAD_BOTTOM;
-  const toY = v => (H - PAD_BOTTOM) - (v / maxCount) * plotH;
-
-  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-
-  // Y-Gitter (ganzzahlige Ticks)
-  const tickStep = Math.max(1, Math.ceil(maxCount / 5));
-  let grid = '';
-  for (let t = 0; t <= maxCount + 0.001; t += tickStep) {
-    const y = toY(t).toFixed(1);
-    grid += `<line x1="${PAD_LEFT}" y1="${y}" x2="${W - PAD_RIGHT}" y2="${y}" stroke="rgba(255,255,255,0.06)"></line>`
-      + `<text x="${PAD_LEFT - 6}" y="${y}" fill="var(--muted)" font-size="11" text-anchor="end" dominant-baseline="middle">${t}</text>`;
-  }
-
-  const slot = plotW / days.length;
-  const barW = Math.max(2, Math.min(18, slot / 2 - 1));
-  const labelStep = Math.max(1, Math.ceil(days.length / 12));
-  let bars = '', labels = '';
-  days.forEach((d, i) => {
-    const cx = PAD_LEFT + i * slot + slot / 2;
-    const gx = cx - barW - 1, mx = cx + 1;
-    if (d.g > 0) bars += `<rect x="${gx.toFixed(1)}" y="${toY(d.g).toFixed(1)}" width="${barW.toFixed(1)}" height="${(toY(0) - toY(d.g)).toFixed(1)}" fill="${WEATHER_META.gewitter.color}" rx="1"><title>${new Date(d.ts).toLocaleDateString('de-DE')}: ${d.g} Gewitter</title></rect>`;
-    if (d.m > 0) bars += `<rect x="${mx.toFixed(1)}" y="${toY(d.m).toFixed(1)}" width="${barW.toFixed(1)}" height="${(toY(0) - toY(d.m)).toFixed(1)}" fill="${WEATHER_META.mutation.color}" rx="1"><title>${new Date(d.ts).toLocaleDateString('de-DE')}: ${d.m} Mutationen</title></rect>`;
-    if (i % labelStep === 0 || i === days.length - 1) {
-      const dt = new Date(d.ts);
-      labels += `<text x="${cx.toFixed(1)}" y="${H - 8}" fill="var(--muted)" font-size="11" font-weight="600" text-anchor="middle">${dt.getDate()}.${dt.getMonth() + 1}</text>`;
-    }
-  });
-
-  const yAxis = `<line x1="${PAD_LEFT}" y1="${PAD_TOP}" x2="${PAD_LEFT}" y2="${H - PAD_BOTTOM}" stroke="rgba(255,255,255,0.12)"></line>`;
-  // Legende
-  const leg = `<g font-size="11">
-    <rect x="${PAD_LEFT + 4}" y="${PAD_TOP}" width="10" height="10" fill="${WEATHER_META.gewitter.color}" rx="1"></rect>
-    <text x="${PAD_LEFT + 18}" y="${PAD_TOP + 9}" fill="var(--muted)">Gewitter</text>
-    <rect x="${PAD_LEFT + 78}" y="${PAD_TOP}" width="10" height="10" fill="${WEATHER_META.mutation.color}" rx="1"></rect>
-    <text x="${PAD_LEFT + 92}" y="${PAD_TOP + 9}" fill="var(--muted)">Mutation</text>
-  </g>`;
-
-  svg.innerHTML = grid + yAxis + bars + labels + leg;
+  cont.innerHTML = days.map(day => {
+    const evs = day.events.slice().sort((a, b) => a.timestamp - b.timestamp);
+    const g = evs.filter(e => e.type === 'gewitter').length;
+    const m = evs.filter(e => e.type === 'mutation').length;
+    const dateStr = new Date(day.ts).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: '2-digit' });
+    const dots = evs.map(e => {
+      const col = (WEATHER_META[e.type] || {}).color || '#94a3b8';
+      return `<span class="wdot" style="background:${col}" title="${weatherEsc(weatherDetail(e))}"></span>`;
+    }).join('');
+    return `<div class="wday">
+      <div class="wday-head">
+        <span class="wday-date">${dateStr}</span>
+        <span class="wday-counts">
+          <span style="color:${WEATHER_META.gewitter.color}">${g} Gewitter</span>
+          <span style="color:var(--muted)">·</span>
+          <span style="color:${WEATHER_META.mutation.color}">${m} Mutationen</span>
+        </span>
+      </div>
+      <div class="wday-dots">${dots}</div>
+    </div>`;
+  }).join('');
 }
 
 // Durchschnitts-Ansicht: Gesamtzahl, Ø Abstand, Ø pro Tag
@@ -2717,7 +2736,7 @@ function renderWeatherAvg() {
 function renderWeatherAll() {
   updateWeatherLast();
   renderWeatherList();
-  if (weatherAvgMode) renderWeatherAvg(); else renderWeatherChart();
+  if (weatherAvgMode) renderWeatherAvg(); else renderWeatherDays();
 }
 
 // Zeitraum-Buttons
@@ -2735,7 +2754,7 @@ document.getElementById('btnWeatherAvg').addEventListener('click', () => {
   weatherAvgMode = !weatherAvgMode;
   const btn = document.getElementById('btnWeatherAvg');
   btn.classList.toggle('active-range', weatherAvgMode);
-  btn.textContent = weatherAvgMode ? 'Graph' : 'Durchschnitt';
+  btn.textContent = weatherAvgMode ? 'Übersicht' : 'Durchschnitt';
   document.getElementById('weatherEmpty').style.display = 'none';
   renderWeatherAll();
 });
