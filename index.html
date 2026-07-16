@@ -827,6 +827,29 @@
     </div>
   </section>
 
+  <section class="history-panel">
+    <div class="history-header">
+      <h2>Gewitter &amp; Mutationen</h2>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <span id="weatherLast" title="Letztes Ereignis"
+              style="color:var(--muted); font-weight:600; white-space:nowrap; margin-right:4px;">–</span>
+        <button class="btn-clear-history btn-wrange" data-days="7">7T</button>
+        <button class="btn-clear-history btn-wrange active-range" data-days="30">1M</button>
+        <button class="btn-clear-history btn-wrange" data-days="90">3M</button>
+        <button class="btn-clear-history btn-wrange" data-days="0">Alles</button>
+        <button class="btn-clear-history" id="btnWeatherAvg">Durchschnitt</button>
+      </div>
+    </div>
+    <div class="history-body">
+      <div class="chart-wrap">
+        <svg id="weatherChart" viewBox="0 0 600 160"></svg>
+        <div class="chart-empty" id="weatherEmpty">Noch keine Ereignisse erfasst.</div>
+        <div class="chart-empty" id="weatherAvgBox" style="display:none; flex-direction:column; text-align:left; align-items:flex-start; justify-content:center; padding:14px 18px; line-height:1.6; font-size:0.9rem; color:var(--text);"></div>
+      </div>
+      <ul class="history-list" id="weatherList"></ul>
+    </div>
+  </section>
+
   <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-bottom:10px;">
     <select id="listSortSelect" style="display:none">
       <option value="rot">Sortieren: Verdorrung</option>
@@ -1153,6 +1176,7 @@ function updateLockUI() {
 const colRef = collection(db, "beete");
 const settingsRef = doc(db, "settings", "global");
 const historyColRef = collection(db, "settings", "global", "priceHistory");
+const weatherColRef = collection(db, "settings", "global", "weatherLog");
 const presenceColRef = collection(db, "presence");
 const metaRef = doc(db, "settings", "meta");
 const visitLogRef = collection(db, "visitLog");
@@ -2494,6 +2518,234 @@ onSnapshot(historyQuery, (snap) => {
   list.innerHTML = '<li class="history-empty">Fehler beim Laden – Firestore-Regeln prüfen (Konsole)</li>';
   chartEmpty.textContent = 'Fehler beim Laden – Firestore-Regeln prüfen';
   chartEmpty.style.display = 'flex';
+});
+
+// ===== Gewitter & Mutationen (aus settings/global/weatherLog) =====
+let weatherEventsDesc = [];       // {type, timestamp, _docId} neueste zuerst
+let weatherRangeDays = 30;        // 7 / 30 / 90 / 0(=Alles)
+let weatherAvgMode = false;       // Durchschnitts-Ansicht statt Graph
+
+const WEATHER_META = {
+  gewitter: { label: 'Gewitter', color: '#f59e0b', icon: '⛈️' },
+  mutation: { label: 'Mutation', color: '#a855f7', icon: '🧬' },
+};
+
+function weatherFiltered() {
+  if (weatherRangeDays === 0) return weatherEventsDesc;
+  const cutoff = now() - weatherRangeDays * 86400000;
+  return weatherEventsDesc.filter(e => (Number(e.timestamp) || 0) >= cutoff);
+}
+
+function fmtSince(ms) {
+  if (ms < 0) return 'nie';
+  const s = Math.floor(ms / 1000);
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+  if (d > 0) return `vor ${d}d ${h}h`;
+  if (h > 0) return `vor ${h}h ${m}m`;
+  if (m > 0) return `vor ${m}m`;
+  return 'gerade eben';
+}
+
+function fmtDur(ms) {
+  if (!isFinite(ms) || ms <= 0) return '–';
+  const h = ms / 3600000;
+  if (h < 1) return `${Math.round(ms / 60000)} min`;
+  if (h < 48) return `${(Math.round(h * 10) / 10).toLocaleString('de-DE')} h`;
+  return `${(Math.round(h / 24 * 10) / 10).toLocaleString('de-DE')} d`;
+}
+
+// Letztes-Ereignis-Anzeige im Header
+function updateWeatherLast() {
+  const el = document.getElementById('weatherLast');
+  if (!el) return;
+  const lastG = weatherEventsDesc.find(e => e.type === 'gewitter');
+  const lastM = weatherEventsDesc.find(e => e.type === 'mutation');
+  const g = lastG ? fmtSince(now() - lastG.timestamp) : 'nie';
+  const m = lastM ? fmtSince(now() - lastM.timestamp) : 'nie';
+  el.innerHTML = `<span style="color:${WEATHER_META.gewitter.color}">⛈️ ${g}</span>`
+    + ` &nbsp;·&nbsp; <span style="color:${WEATHER_META.mutation.color}">🧬 ${m}</span>`;
+}
+
+function renderWeatherList() {
+  const list = document.getElementById('weatherList');
+  const entries = weatherFiltered();
+  if (!entries.length) {
+    list.innerHTML = '<li class="history-empty">Noch keine Ereignisse.</li>';
+    return;
+  }
+  list.innerHTML = entries.map(e => {
+    const meta = WEATHER_META[e.type] || { label: e.type, color: '#94a3b8', icon: '•' };
+    const dateStr = new Date(e.timestamp).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
+    return `<li>
+      <span class="history-price" style="color:${meta.color}">${meta.icon} ${meta.label}</span>
+      <span class="history-date">${dateStr}</span>
+      <button class="history-delete-btn" data-id="${e._docId}" title="Eintrag löschen">✕</button>
+    </li>`;
+  }).join('');
+  list.querySelectorAll('.history-delete-btn').forEach(btn => {
+    btn.addEventListener('click', requireUnlock(async () => {
+      const docId = btn.dataset.id;
+      if (!docId) return;
+      if (!confirm('Diesen Eintrag löschen?')) return;
+      await deleteDoc(doc(db, 'settings', 'global', 'weatherLog', docId));
+    }));
+  });
+}
+
+// Balkendiagramm: Ereignisse pro Tag (Gewitter + Mutation nebeneinander)
+function renderWeatherChart() {
+  const svg = document.getElementById('weatherChart');
+  const empty = document.getElementById('weatherEmpty');
+  const avgBox = document.getElementById('weatherAvgBox');
+
+  if (weatherAvgMode) { svg.innerHTML = ''; empty.style.display = 'none'; return; }
+  avgBox.style.display = 'none';
+
+  const entries = weatherFiltered();
+  if (!entries.length) {
+    svg.innerHTML = '';
+    empty.textContent = 'Noch keine Ereignisse erfasst.';
+    empty.style.display = 'flex';
+    return;
+  }
+  empty.style.display = 'none';
+
+  // Nach Tag bucketen
+  const dayKey = ts => { const d = new Date(ts); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; };
+  const buckets = new Map(); // key -> {ts, g, m}
+  for (const e of entries) {
+    const k = dayKey(e.timestamp);
+    if (!buckets.has(k)) {
+      const d = new Date(e.timestamp); d.setHours(0, 0, 0, 0);
+      buckets.set(k, { ts: d.getTime(), g: 0, m: 0 });
+    }
+    const b = buckets.get(k);
+    if (e.type === 'mutation') b.m++; else b.g++;
+  }
+  const days = [...buckets.values()].sort((a, b) => a.ts - b.ts);
+  const maxCount = Math.max(1, ...days.map(d => Math.max(d.g, d.m)));
+
+  const H = 220, W = 900, PAD_TOP = 14, PAD_BOTTOM = 28, PAD_RIGHT = 12, PAD_LEFT = 40;
+  const plotW = W - PAD_LEFT - PAD_RIGHT, plotH = H - PAD_TOP - PAD_BOTTOM;
+  const toY = v => (H - PAD_BOTTOM) - (v / maxCount) * plotH;
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  // Y-Gitter (ganzzahlige Ticks)
+  const tickStep = Math.max(1, Math.ceil(maxCount / 5));
+  let grid = '';
+  for (let t = 0; t <= maxCount + 0.001; t += tickStep) {
+    const y = toY(t).toFixed(1);
+    grid += `<line x1="${PAD_LEFT}" y1="${y}" x2="${W - PAD_RIGHT}" y2="${y}" stroke="rgba(255,255,255,0.06)"></line>`
+      + `<text x="${PAD_LEFT - 6}" y="${y}" fill="var(--muted)" font-size="11" text-anchor="end" dominant-baseline="middle">${t}</text>`;
+  }
+
+  const slot = plotW / days.length;
+  const barW = Math.max(2, Math.min(18, slot / 2 - 1));
+  const labelStep = Math.max(1, Math.ceil(days.length / 12));
+  let bars = '', labels = '';
+  days.forEach((d, i) => {
+    const cx = PAD_LEFT + i * slot + slot / 2;
+    const gx = cx - barW - 1, mx = cx + 1;
+    if (d.g > 0) bars += `<rect x="${gx.toFixed(1)}" y="${toY(d.g).toFixed(1)}" width="${barW.toFixed(1)}" height="${(toY(0) - toY(d.g)).toFixed(1)}" fill="${WEATHER_META.gewitter.color}" rx="1"><title>${new Date(d.ts).toLocaleDateString('de-DE')}: ${d.g} Gewitter</title></rect>`;
+    if (d.m > 0) bars += `<rect x="${mx.toFixed(1)}" y="${toY(d.m).toFixed(1)}" width="${barW.toFixed(1)}" height="${(toY(0) - toY(d.m)).toFixed(1)}" fill="${WEATHER_META.mutation.color}" rx="1"><title>${new Date(d.ts).toLocaleDateString('de-DE')}: ${d.m} Mutationen</title></rect>`;
+    if (i % labelStep === 0 || i === days.length - 1) {
+      const dt = new Date(d.ts);
+      labels += `<text x="${cx.toFixed(1)}" y="${H - 8}" fill="var(--muted)" font-size="11" font-weight="600" text-anchor="middle">${dt.getDate()}.${dt.getMonth() + 1}</text>`;
+    }
+  });
+
+  const yAxis = `<line x1="${PAD_LEFT}" y1="${PAD_TOP}" x2="${PAD_LEFT}" y2="${H - PAD_BOTTOM}" stroke="rgba(255,255,255,0.12)"></line>`;
+  // Legende
+  const leg = `<g font-size="11">
+    <rect x="${PAD_LEFT + 4}" y="${PAD_TOP}" width="10" height="10" fill="${WEATHER_META.gewitter.color}" rx="1"></rect>
+    <text x="${PAD_LEFT + 18}" y="${PAD_TOP + 9}" fill="var(--muted)">Gewitter</text>
+    <rect x="${PAD_LEFT + 78}" y="${PAD_TOP}" width="10" height="10" fill="${WEATHER_META.mutation.color}" rx="1"></rect>
+    <text x="${PAD_LEFT + 92}" y="${PAD_TOP + 9}" fill="var(--muted)">Mutation</text>
+  </g>`;
+
+  svg.innerHTML = grid + yAxis + bars + labels + leg;
+}
+
+// Durchschnitts-Ansicht: Gesamtzahl, Ø Abstand, Ø pro Tag
+function renderWeatherAvg() {
+  const box = document.getElementById('weatherAvgBox');
+  const entries = weatherFiltered();
+  const rangeLabel = weatherRangeDays === 0 ? 'gesamter Zeitraum' : `letzte ${weatherRangeDays} Tage`;
+
+  function stats(type) {
+    const evs = entries.filter(e => e.type === type).map(e => Number(e.timestamp)).sort((a, b) => a - b);
+    const n = evs.length;
+    if (n === 0) return { n: 0 };
+    // Ø Abstand zwischen aufeinanderfolgenden Ereignissen
+    let avgGap = NaN;
+    if (n >= 2) {
+      let sum = 0;
+      for (let i = 1; i < n; i++) sum += evs[i] - evs[i - 1];
+      avgGap = sum / (n - 1);
+    }
+    // Ø pro Tag über die abgedeckte Spanne (mind. 1 Tag)
+    const spanMs = weatherRangeDays === 0 ? Math.max(86400000, (evs[n - 1] - evs[0]) || 86400000)
+                                          : weatherRangeDays * 86400000;
+    const perDay = n / (spanMs / 86400000);
+    return { n, avgGap, perDay };
+  }
+
+  function block(type) {
+    const meta = WEATHER_META[type];
+    const s = stats(type);
+    if (!s.n) return `<div><span style="color:${meta.color};font-weight:700">${meta.icon} ${meta.label}</span>: <span style="color:var(--muted)">keine Ereignisse</span></div>`;
+    const gap = isFinite(s.avgGap) ? `Ø alle ${fmtDur(s.avgGap)}` : 'nur 1 Ereignis';
+    const perDay = s.perDay >= 1 ? `${(Math.round(s.perDay * 10) / 10).toLocaleString('de-DE')}/Tag`
+                                 : `${(Math.round(s.perDay * 70) / 10).toLocaleString('de-DE')}/Woche`;
+    return `<div style="margin-bottom:6px">
+      <span style="color:${meta.color};font-weight:700">${meta.icon} ${meta.label}</span>:
+      <b>${s.n}</b> gesamt &nbsp;·&nbsp; ${gap} &nbsp;·&nbsp; Ø ${perDay}
+    </div>`;
+  }
+
+  box.innerHTML = `<div style="color:var(--muted);font-size:0.8rem;margin-bottom:8px">Durchschnitt (${rangeLabel})</div>`
+    + block('gewitter') + block('mutation');
+  box.style.display = 'flex';
+}
+
+function renderWeatherAll() {
+  updateWeatherLast();
+  renderWeatherList();
+  if (weatherAvgMode) renderWeatherAvg(); else renderWeatherChart();
+}
+
+// Zeitraum-Buttons
+document.querySelectorAll('.btn-wrange').forEach(btn => {
+  btn.addEventListener('click', () => {
+    weatherRangeDays = parseInt(btn.dataset.days, 10);
+    document.querySelectorAll('.btn-wrange').forEach(b => b.classList.remove('active-range'));
+    btn.classList.add('active-range');
+    renderWeatherAll();
+  });
+});
+
+// Durchschnitt-Button (Graph <-> Statistik umschalten)
+document.getElementById('btnWeatherAvg').addEventListener('click', () => {
+  weatherAvgMode = !weatherAvgMode;
+  const btn = document.getElementById('btnWeatherAvg');
+  btn.classList.toggle('active-range', weatherAvgMode);
+  btn.textContent = weatherAvgMode ? 'Graph' : 'Durchschnitt';
+  document.getElementById('weatherEmpty').style.display = 'none';
+  renderWeatherAll();
+});
+
+// Live-Sync
+const weatherQuery = query(weatherColRef, orderBy('timestamp', 'desc'), limit(10000));
+onSnapshot(weatherQuery, (snap) => {
+  weatherEventsDesc = [];
+  snap.forEach(d => weatherEventsDesc.push({ ...d.data(), _docId: d.id }));
+  renderWeatherAll();
+}, (err) => {
+  console.error('Gewitter-Sync-Fehler:', err);
+  const el = document.getElementById('weatherEmpty');
+  el.textContent = 'Fehler beim Laden – Firestore-Regeln prüfen';
+  el.style.display = 'flex';
 });
 
 async function addBeet() {
