@@ -658,7 +658,12 @@
     gap: 10px;
     margin-bottom: 10px;
   }
-  .history-header h2 { font-size: 1rem; font-weight: 700; color: #fff; }
+  .history-header h2 { font-size: 1rem; font-weight: 700; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 8px; user-select: none; }
+  .collapse-arrow { font-size: 0.7rem; color: var(--muted); transition: transform 0.15s; }
+  .history-panel.collapsed .collapse-arrow { transform: rotate(-90deg); }
+  .history-panel.collapsed .history-header { margin-bottom: 0; }
+  .history-panel.collapsed .history-header > div { display: none; }
+  .history-panel.collapsed .history-body { display: none; }
   .btn-clear-history {
     background: #1f2431; color: #fff; font-size: 0.75rem; font-weight: 600;
     padding: 6px 10px; border-radius: 8px; cursor: pointer;
@@ -803,9 +808,9 @@
 
 <main>
 
-  <section class="history-panel">
+  <section class="history-panel" id="panelMarkt">
     <div class="history-header">
-      <h2>Marktpreis-Verlauf</h2>
+      <h2><span class="collapse-arrow">▾</span>Marktpreis-Verlauf</h2>
       <div style="display:flex; gap:8px; align-items:center;">
         <span id="avgPrice" title="Ø Preis im gewählten Zeitraum"
               style="color:#f59e0b; font-weight:700; white-space:nowrap; margin-right:4px;">Ø –</span>
@@ -827,9 +832,9 @@
     </div>
   </section>
 
-  <section class="history-panel">
+  <section class="history-panel" id="panelWeather">
     <div class="history-header">
-      <h2>Gewitter &amp; Mutationen</h2>
+      <h2><span class="collapse-arrow">▾</span>Gewitter &amp; Mutationen</h2>
       <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
         <span id="weatherLast" title="Letztes Ereignis"
               style="color:var(--muted); font-weight:600; white-space:nowrap; margin-right:4px;">–</span>
@@ -2526,8 +2531,8 @@ let weatherRangeDays = 30;        // 7 / 30 / 90 / 0(=Alles)
 let weatherAvgMode = false;       // Durchschnitts-Ansicht statt Graph
 
 const WEATHER_META = {
-  gewitter: { label: 'Gewitter', color: '#f59e0b', icon: '⛈️' },
-  mutation: { label: 'Mutation', color: '#a855f7', icon: '🧬' },
+  gewitter: { label: 'Gewitter', color: '#f59e0b' },
+  mutation: { label: 'Mutation', color: '#a855f7' },
 };
 
 function weatherFiltered() {
@@ -2562,8 +2567,8 @@ function updateWeatherLast() {
   const lastM = weatherEventsDesc.find(e => e.type === 'mutation');
   const g = lastG ? fmtSince(now() - lastG.timestamp) : 'nie';
   const m = lastM ? fmtSince(now() - lastM.timestamp) : 'nie';
-  el.innerHTML = `<span style="color:${WEATHER_META.gewitter.color}">⛈️ ${g}</span>`
-    + ` &nbsp;·&nbsp; <span style="color:${WEATHER_META.mutation.color}">🧬 ${m}</span>`;
+  el.innerHTML = `<span style="color:${WEATHER_META.gewitter.color}">Gewitter: ${g}</span>`
+    + ` &nbsp;·&nbsp; <span style="color:${WEATHER_META.mutation.color}">Mutation: ${m}</span>`;
 }
 
 function renderWeatherList() {
@@ -2574,10 +2579,10 @@ function renderWeatherList() {
     return;
   }
   list.innerHTML = entries.map(e => {
-    const meta = WEATHER_META[e.type] || { label: e.type, color: '#94a3b8', icon: '•' };
+    const meta = WEATHER_META[e.type] || { label: e.type, color: '#94a3b8' };
     const dateStr = new Date(e.timestamp).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
     return `<li>
-      <span class="history-price" style="color:${meta.color}">${meta.icon} ${meta.label}</span>
+      <span class="history-price" style="color:${meta.color}">${meta.label}</span>
       <span class="history-date">${dateStr}</span>
       <button class="history-delete-btn" data-id="${e._docId}" title="Eintrag löschen">✕</button>
     </li>`;
@@ -2694,12 +2699,12 @@ function renderWeatherAvg() {
   function block(type) {
     const meta = WEATHER_META[type];
     const s = stats(type);
-    if (!s.n) return `<div><span style="color:${meta.color};font-weight:700">${meta.icon} ${meta.label}</span>: <span style="color:var(--muted)">keine Ereignisse</span></div>`;
+    if (!s.n) return `<div><span style="color:${meta.color};font-weight:700">${meta.label}</span>: <span style="color:var(--muted)">keine Ereignisse</span></div>`;
     const gap = isFinite(s.avgGap) ? `Ø alle ${fmtDur(s.avgGap)}` : 'nur 1 Ereignis';
     const perDay = s.perDay >= 1 ? `${(Math.round(s.perDay * 10) / 10).toLocaleString('de-DE')}/Tag`
                                  : `${(Math.round(s.perDay * 70) / 10).toLocaleString('de-DE')}/Woche`;
     return `<div style="margin-bottom:6px">
-      <span style="color:${meta.color};font-weight:700">${meta.icon} ${meta.label}</span>:
+      <span style="color:${meta.color};font-weight:700">${meta.label}</span>:
       <b>${s.n}</b> gesamt &nbsp;·&nbsp; ${gap} &nbsp;·&nbsp; Ø ${perDay}
     </div>`;
   }
@@ -2746,6 +2751,18 @@ onSnapshot(weatherQuery, (snap) => {
   const el = document.getElementById('weatherEmpty');
   el.textContent = 'Fehler beim Laden – Firestore-Regeln prüfen';
   el.style.display = 'flex';
+});
+
+// Panels ein-/ausklappen (Klick auf die Überschrift), Zustand pro Panel gespeichert
+document.querySelectorAll('.history-panel').forEach(panel => {
+  const h2 = panel.querySelector('h2');
+  if (!h2) return;
+  const key = 'collapsed_' + panel.id;
+  if (localStorage.getItem(key) === '1') panel.classList.add('collapsed');
+  h2.addEventListener('click', () => {
+    panel.classList.toggle('collapsed');
+    localStorage.setItem(key, panel.classList.contains('collapsed') ? '1' : '0');
+  });
 });
 
 async function addBeet() {
