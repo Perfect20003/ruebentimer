@@ -1277,6 +1277,9 @@ const testPriceInput = document.getElementById('testPrice');
 
 function now() { return Date.now(); }
 
+// Gewichts-Multiplikator auf 1 Nachkommastelle runden, unnötiges ".0" weglassen.
+function fmtWeight(w) { return (Math.round((parseFloat(w) || 1) * 10) / 10).toString(); }
+
 function fmtTime(ms) {
   if (ms <= 0) return '0s';
   const h = Math.floor(ms / 3600000);
@@ -1389,7 +1392,7 @@ function renderCard(b) {
   const activeMuts = [];
   if (mut.gold) activeMuts.push('Gold');
   if (shapeName) activeMuts.push(`${shapeName}`);
-  if (weightMult > 1) activeMuts.push(`Gewicht (${weightMult}x)`);
+  if (weightMult > 1) activeMuts.push(`Gewicht (${fmtWeight(weightMult)}x)`);
   if (activeMuts.length) mutStr = activeMuts.join(', ');
 
   // Gesamt-Anzeige-Multiplikator links auf dem Icon
@@ -1601,7 +1604,7 @@ function renderListRow(b) {
     shapeLabel = `${sb.name} (+${sb.bonus.toLocaleString('de-DE')})`;
   }
   const weightMult = parseFloat(mut.weightMult) || 1;
-  const weightLabel = weightMult > 1 ? `${weightMult}x` : '–';
+  const weightLabel = weightMult > 1 ? `${fmtWeight(weightMult)}x` : '–';
 
   // Werte, die eine strukturelle Neugenerierung erfordern (Name, Mutation) als Fingerprint
   const structFingerprint = JSON.stringify({ name: b.name, mut: b.mutations });
